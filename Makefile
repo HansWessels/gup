@@ -344,6 +344,7 @@ AUTOMAKE_OPTIONS = 1.4 dist-zip
 ACLOCAL_AMFLAGS = '-I m4'
 SUBDIRS = include lib compress arcman guplib unix
 EXTRA_DIST = acconfig.h
+GUP_EXE = ./unix/gup
 RPMROOT = /usr/src/redhat
 all: all-recursive
 
@@ -823,7 +824,7 @@ uninstall-am:
 dist-arj dist-gup: distdir
 	-chmod -R a+r $(distdir)
 	mv $(distdir) $(PACKAGE)
-	gup a -m1 $(distdir).arj $(PACKAGE)/*
+	$(GUP_EXE) a -m1 $(distdir).arj $(PACKAGE)/*
 	rm -rf $(PACKAGE)
 
 dist-bzip2: distdir
@@ -837,7 +838,7 @@ distall: distdir
 	$(TAR) --use-compress-program=bzip2 -chof $(distdir).tar.bz2 $(distdir)/*
 	zip -rq $(distdir).zip $(distdir)
 	mv $(distdir) $(PACKAGE)
-	gup a -m1 $(distdir).arj $(PACKAGE)/*
+	$(GUP_EXE) a -m1 $(distdir).arj $(PACKAGE)/*
 	rm -rf $(PACKAGE)
 
 dist-hook:
@@ -853,6 +854,10 @@ rpm: $(PACKAGE)-$(VERSION).tar.gz
 	cp $(distdir).tar.gz $(RPMROOT)/SOURCES
 	rpm -ba gup.spec
 	rm $(RPMROOT)/SOURCES/$(distdir).tar.gz
+
+test:
+	pwd
+	$(GUP_EXE) -h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
