@@ -1,0 +1,119 @@
+
+		.OFFSET   0
+
+GNUC equ 0
+
+;packstruct             /* Bij aanpassing van deze struct ook ENCODE.MAC aanpassen */
+;{
+;/* these variable are for internal use in encode.c */
+;/* encode.c internals */
+;  uint8 *fast_log;               /* pointer naar logtabel */
+fast_log:        ds.l 1;          /* pointer naar logtabel */
+;/* bit buffer */
+;  int bits_in_bitbuf;   (a0)+    /* # bits in bitbuf */
+bits_in_bitbuf:  ds.w 1;          /* # bits in bitbuf */
+;  unsigned long bitbuf; (a0)     /* slaat bits op die in de output file moeten worden gemoved */
+bitbuf:          ds.l 1;          /* slaat bits op die in de output file moeten worden gemoved */
+;/* encode variabelen */
+;  uint16 n_ptr;                  /* maximum aantal pointers */
+n_ptr:           ds.w 1;
+;  uint16 m_ptr_bit;              /* aantal bits voor een pointer */
+m_ptr_bit:       ds.w 1;
+;  int max_match;                 /* maximum match lengte voor gebruikte mode */
+max_match:       ds.w 1;          /* maximum match lengte voor gebruikte mode */
+;  c_codetype* chars;             /* buffer met code karakters */
+chars:           ds.l 1;          /* buffer met code karakters */
+;  c_codetype* charp;             /* pointer naar chars */
+charp:           ds.l 1;          /* pointer naar chars */
+;  pointer_type* pointers;        /* buffer met pointers */
+pointers:        ds.l 1;          /* buffer met pointers */
+;  pointer_type* ptrp;            /* pointer naar pointers */
+ptrp:            ds.l 1;          /* pointer naar pointers */
+;  uint8* matchstring;            /* Array waar eerste vier karakters
+matchstring:     ds.l 1;          /* Array waar eerste vier karakters
+;                                          van een match in zitten */
+;  uint8 *msp;                    /* pointer naar matchstring */
+msp:             ds.l 1;          /* pointer naar matchstring */
+;  uint8 *backmatch;              /* backmatch array */
+backmatch:       ds.l 1;
+;  uint8 *bmp;                    /* backmatch pointer */
+bmp:             ds.l 1;
+;  uint16 special_header;         /* geeft special header aan */
+special_header:  ds.w 1;
+
+;  uint8 *buffer_start;           /* echte start output buffer */
+buffer_start:    ds.l 1;          /* echte start output buffer */
+;  long buffer_size;              /* grootte van de buffer */
+buffer_size:     ds.l 1;          /* grootte van de buffer */
+;  uint8 *rbuf_start;             /* start output buffer */
+rbuf_start:      ds.l 1;          /* start output buffer */
+;  uint8 *rbuf_tail;              /* einde output buffer */
+rbuf_tail:       ds.l 1;          /* einde output buffer */
+;  uint8 *rbuf_current;           /* output buffer */
+rbuf_current:    ds.l 1;          /* output buffer */
+;  uint8 *bufbase;                /* base adres van encode buffers */
+bufbase:         ds.l 1;          /* base adres van encode buffers */
+;  uint16 hufbufsize;             /* grootte huffman buffers */
+hufbufsize:      ds.w 1;          /* grootte huffman buffers */
+;/* huffman buffers */
+;  uint8 *charlen;                /* karakter lengte */
+charlen:         ds.l 1;          /* karakter lengte */
+;  uint16 *char2huffman;          /* huffman codes van de karakters */
+char2huffman:    ds.l 1;          /* huffman codes van de karakters */
+;  uint8 *ptrlen;                 /* pointer lengte */
+ptrlen:          ds.l 1;          /* pointer lengte */
+;  uint16 *ptr2huffman;           /* huffman codes van de pointers */
+ptr2huffman:     ds.l 1;          /* huffman codes van de pointers */
+;  uint8 *ptrlen1;                /* pointer lengte */
+ptrlen1:         ds.l 1;          /* pointer lengte */
+;  uint16 *ptr2huffman1;          /* huffman codes van de pointers */
+ptr2huffman1:    ds.l 1;          /* huffman codes van de pointers */
+;/* sliding dictionary variabelen */
+;  int speed;                     /* kunnen we snelheid mee bepalen */
+speed:           ds.w 1;          /* kunnen we snelheid mee bepalen */
+;  node_type *link;               /* pointer naar link array */
+link:            ds.l 1;          /* pointer naar link array */
+;  int rle_size;                  /* grootte rle */
+rle_size:        ds.w 1;          /* grootte rle */
+;  uint16 rle_char;               /* karakter rle */
+rle_char:        ds.w 1;          /* karakter rle */
+;  uint16 rle_hash;               /* rle hash */
+rle_hash:        ds.w 1;          /* rle hash */
+;  uint16 last_pos;      let op!  /* laatst gedane positie */
+last_pos:        ds.w 1; (a0)+    /* laatst gedane positie */
+;  node_struct *tree;      /* sld tree */
+tree:            ds.l 1; (a0)+    /* sld tree */
+;  uint16 del_pos;                /* wis positie */
+del_pos:         ds.w 1; (a0)+    /* wis positie */
+;  uint8 *dictionary;             /* sliding dictionary */
+dictionary:      ds.l 1; (a0)+    /* sliding dictionary */
+;  uint16 delta_hash;             /* normal hash */
+delta_hash:      ds.w 1; (a0)+    /* normal hash */
+;  node_type *root;               /* normal root */
+root:            ds.l 1; (a0)+    /* normal root */
+;  int hist_index;                /* history index */
+hist_index:      ds.w 1; (a0)+    /* history index */
+;  history *hist;                 /* pointer naar history arrays */
+hist:            ds.l 1; (a0)+    /* pointer naar history arrays */
+;  pointer_type best_match_pos;   /* max_match positie in dictionary */
+best_match_pos:  ds.w 1; (a0)     /* max_match positie in dictionary */
+;  node_type *root2;              /* rle root */
+root2:           ds.l 1;          /* rle root */
+;  uint16 maxptr;                 /* maximale afstand binnen de dictionary */
+maxptr:          ds.w 1;
+;  long tree_size;                /* grootte van sld tree */
+tree_size:       ds.l 1;
+;  int small_code;                /* staat small code aan of uit? */
+small_code:      ds.w 1;
+;  uint16 andval;                 /* and value voor small code */
+andval:          ds.w 1;
+;  long packed_size;              /* file size in bytes */
+packed_size:     ds.l 1;          /* file size in bytes */
+;  int16 bits_rest;               /* number of bits not counted jet */
+bits_rest:       ds.w 1;          /* number of bits not counted jet */
+;  int16 use_align;               /* do we use store bits? */
+use_align:       ds.w 1;          /* do we use store bits? */
+
+
+
+ 

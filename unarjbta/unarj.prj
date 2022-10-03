@@ -1,0 +1,22 @@
+;>>>>>>> DEFAULT.PRJ for use with single module programs <<<<<<<<
+
+unarj.ttp              ; name of executable program is topmost window
+
+.C [ -Y -I..\include -I..\compress ]
+.L [ -V ]
+.S [ -Y ]
+=                  ; list of modules follows...
+
+e:\pc\lib\original\pcvstrtn.s          ; startup code
+
+unarj.c	(unarj.h)
+environ.c (unarj.h)
+..\arjbeta\file_buf.c (..\include\encode.h, ..\include\settings.h, ..\include\arj_err.h, ..\compress\st_opti\st_opti.h, ..\arjbeta\file_buf.h)
+..\arjbeta\arj_outp.c (..\arjbeta\arj_outp.h)
+..\compress\crc.c (..\include\crc.h)
+
+..\compress\compress.prj
+
+PCTOSLIB.LIB       ; TOS library
+PCSTDLIB.LIB       ; standard library
+PCEXTLIB.LIB       ; extended library

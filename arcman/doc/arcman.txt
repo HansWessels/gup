@@ -1,0 +1,114 @@
+Notes about the implementation of the archive manager.
+
+1. File headers and file trailers.
+
+GUP assumes that each file in an archive has a file header and a file
+trailer. A file header is located in front of the (compressed) file data and
+contains information about the file like date, time, size, file type and
+compression method. A file trailer is located after the file data and
+contains information which can not be known in advance like file CRC
+uncompressed size and compressed size.
+
+The following member functions of the archive class are available to read
+and write file headers and file trailers:
+
+arj_result write_file_header(const fileheader *header)
+arj_result write_file_trailer(const fileheader *header)
+fileheader *read_file_header(arj_result &result)
+arj_result read_file_trailer(fileheader *header)
+
+Note that many archive types (like ARJ and LZH) have no file trailers. The
+file headers contain all information about the file, including CRC etc. For
+these archive types the write_file_trailer function seeks back to the
+position of the file header and updates the file header with the missing
+information. Therefore the write_file_trailer and read_file_trailer should
+always be called, even if the archive type itself does not have file trailers.
+
+Note that although the compression method is assumed to be known in advance,
+it can change during compression in some cases (ARJ and LZH). On the other
+hand there are archive types (GZIP) which have file trailers, but place the
+method in the file header and do not change the method during compression.
+Therefore to be compatible with all archive types the method should be set
+in the fileheader class before write_file_header is called. Has the method
+been changed during compresssion (ARJ and LZH) then the write_file_trailer
+function updates the method in the header.
+
+Currently the original size, the compressed size and the CRC are the only
+variables that do not need to be set before calling write_file_header. All
+others should be set before calling this function.
+
+2. osstat structure
+
+osstat is a OS dependent structure containing the file attributes (file
+mode, modicication time, etc.) converted to the OS gup is running on. The
+file header class has one variabele of this type. The real archive type
+dependent file attributes are stored elsewhere in the file header class.
+
+The osstat structure is used within GUP for example to set the correct file
+attributes (permissions, time and date, etc.). The variables that contain the
+archive dependent file attributes are only used to correctly reconstruct a
+fileheader, that was read from an archive, when writing it again to an archive
+(for example when updating an archive).
+
+The current implementation stores the archive format dependent attributes in
+protected variables in the file header class (ARJ, LZH) and in lists of
+extended headers (LZH). The osstat structure is a protected member of the
+file header class. There are two member functions to read and write the
+osstat structure in this class:
+
+void set_file_stat(const osstat *stat);
+const osstat *get_file_stat(void) const;
+
+The osstat structure is a protected member to force the application to use
+the set_file_stat function to change the structure. When set_file_stat is
+called it updates the osstat structure in the file header and it updates the
+archive format dependent file attributes in the file header and the extended
+headers linked to the file header.
+
+On UNIX systems the user and group id members of the osstat structure are
+determined as follows from the archive type dependent file attributes:
+
+- If the user or group id is given as string and the user or group id exists
+  on the machine, the numeric value of the user or group id returned by the
+  getpwnam or getgrnam function is used in the osstat structure, even if the
+  user or group id is given in the archive type dependent file attributes as
+  a numeric value. This can cause the user or group id in the osstat
+  structure to differ from the numeric value of the user or group id in the
+  archive type dependent file attributes.
+
+- If the user or group id is only given as a numeric value, this value is
+  used in the osstat structure.
+
+- If the user or group id is neither given as string or numeric value, the
+  user or group id of the current user is used in the osstat structure.
+
+3. Multiple volume archives
+
+The 'totalsize' property of a file header contains after the last segment of
+a file has been compressed, the total size of all segments of the file.
+'origsize' is the size of the last compressed segment. 'compsize' is the
+compressed size of the last compressed segment.
+
+It is important that when compressing a file that is split over multiple
+volumes, the same instance of the fileheader class is used for each segment.
+Do not delete the file header and create a new one for the next segment,
+because important state information might be lost.
+
+The properties 'offset' and 'totalsize' are updated automatically by
+the archive manager. 'offset' is updated in
+fileheader::mv_set_segment_cnt(). This is the first function that should be
+called when compressing a volume (before write_file_header()). 'totalsize'
+is updated in archive::encode(), after the segment has been compressed.
+
+4. Handling of errors.
+
+- GUP_HDR_SIZE_OVF
+
+This error code indicates that a length field in a header or trailer has
+overflowed. If write_file_header() returns this error, it is possible to
+continue packing, because no data has been written to the archive. The file
+that caused the error is skipped.
+
+If write_file_trailer() returns this error, it is not possible to continue,
+because data related to the file has already been written to the archive
+(file header and compressed data).

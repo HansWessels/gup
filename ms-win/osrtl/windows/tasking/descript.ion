@@ -1,0 +1,5 @@
+tasking.h Component: Task control
+tasking.d Component: Task control
+mutex Module: Mutex semaphores
+physmux Module: Physical mutexes
+mutexid Module: Mutex IDs

@@ -1,0 +1,4 @@
+error.h Component: Error handling
+rescode Module: Result codes
+error.d Component: Error handling
+errmsg Module: Error messages

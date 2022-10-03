@@ -1,0 +1,15 @@
+settings.h Global settings for unit <osrtl>
+startup Component: Start-up
+basics Component: Basic definitions
+error Component: Error handling
+text Component: Textual data
+heap Component: Heap
+tasking Component: Task control
+window Component: Window management
+sound Component: Sounds
+drawing Component: Attributes for drawing
+hardware Component: Hardware characteristics
+scrnobj Component: Screen objects
+settings.d Global settings for unit <osrtl>
+osrtl.h Unit: NIL between program and (OS and RTL)
+osrtl.d Unit: NIL between program and (OS and RTL)

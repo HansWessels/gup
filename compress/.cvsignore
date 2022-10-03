@@ -1,0 +1,11 @@
+.deps
+crc.o
+decode.o
+encode.o
+evaluatr.o
+libcompress.a
+Makefile
+sld_indx.o
+sld_med.o
+sld_smll.o
+sld.o

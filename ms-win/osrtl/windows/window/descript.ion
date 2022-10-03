@@ -1,0 +1,7 @@
+window.h Component: Window management
+window.d Component: Window management
+window Module: Basic window
+admin Module: Window administration
+safewin Module: Generic window
+winfont Module: Window font
+winpaint Module: Window painter

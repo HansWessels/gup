@@ -1,0 +1,6 @@
+heap.h Component: Heap
+heap.d Component: Heap
+heap Module: Heap management
+safeheap Module: Checked heap
+heapadm Module: Heap administration
+heapblck Module: Heap blocks

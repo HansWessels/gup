@@ -1,0 +1,126 @@
+Titel:  Ontwerp archivestruct
+$Author: wklaren $
+$Date: 1996-11-18 21:46:34 +0100 (Mon, 18 Nov 1996) $
+$Revision: 51 $
+$Log$
+Revision 1.1  1996/11/18 20:46:34  wklaren
+Eerste versie ontwerp documenten.
+
+
+De archivestruct bevat alles wat direct met het archief te maken 
+heeft, of door het archief type bepaald wordt.
+
+Het archief object ziet er als volgt uit (C versie):
+
+typedef struct
+{
+	/*
+	 * Variabelen.
+	 */
+
+	int handle;					/* Filehandle van het geopende 
+								   volume. */
+	char *archive_name;			/* Filenaam van het archief (met 
+								   malloc() gealloceerd). */
+	char **volume_names;		/* Array met filenamen van de volumes 
+								   van het archief (zowel array als 
+								   filenamen met malloc() 
+								   gealloceerd). */
+	int n_volumes;				/* Aantal volumes in 'volume_names'. 
+								   */
+	int max_volumes;			/* Maximum aantal volumes in 
+								   'volume_names'. */
+	int vol_index;				/* Nummer van het geopende volume 
+								   (tevens index in volume_names). */
+	unsigned long volume_size;	/* Bij multiple volume de maximum 
+								   lengte van een archief. */
+	byte archive_flags;			/* Vlaggen uit de mainheader van het 
+								   eerste volume. */
+	byte volume_flags;			/* Vlaggen uit de mainheader van het 
+								   huidige volume. */
+	char tmp_flag;				/* Is deze vlag TRUE, gebruik dan 
+								   tijdens het schrijven tmpnam() 
+								   voor het bepalen van de naam van 
+								   een volume. */
+
+	/*
+	 * Functies voor het lezen van het archief.
+	 */
+
+	arj_result (*open_archive)(ARCHIVE *archive);
+	arj_result (*open_next_volume)(ARCHIVE *archive);
+	arj_result (*close_volume)(ARCHIVE *archive);
+
+	/*
+	 * Functies voor het schrijven van het archief.
+	 */
+
+	arj_result (*create_archive)(ARCHIVE *archive);
+	arj_result (*create_next_volume)(ARCHIVE *archive);
+	arj_result (*write_end_of_volume)(ARCHIVE *archive);
+
+	/*
+	 * Functies voor mainheaders.
+	 */
+
+	arj_result (*read_main_header)(ARCHIVE *archive, MAIN_HEADER 
+								   *header, ArjOptions *options);
+	arj_result (*write_main_header)(ARCHIVE *archive,				
+									MAIN_HEADER *header);
+	void (*free_main_header)(MAIN_HEADER *header);
+	arj_result (*init_main_header)(ARCHIVE *archive, MAIN_HEADER 
+								   *header, ArjOptions *options);
+	size_t (*main_header_len)(MAIN_HEADER *header);
+
+	/*
+	 * Functies voor fileheaders.
+	 */
+
+	arj_result (*read_file_header)(ARCHIVE *archive, FILE_HEADER 
+								   *header, ArjOptions *options);
+	arj_result (*write_file_header)(ARCHIVE *archive, FILE_HEADER 
+									*header);
+	void (*free_file_header)(FILE_HEADER *header);
+	arj_result (*init_file_header)(const char *filename, const char 
+								   *comment, FILE_HEADER *header, 
+								   ArjOptions *options);
+	size_t (*file_header_len)(FILE_HEADER *header);
+
+	/*
+	 * CRC functies.
+	 */
+
+	unsigned long (*crc)(byte *str, long len, unsigned long crc, void 
+						 *crc_table);
+	unsigned long (*init_crc)(void);
+	void (*free_crc_table)(void *table);
+	void *(*make_crc_table)(void);
+} ARCHIVE;
+
+Het gedeelte voor het lezen en schrijven van archieven (open, create) 
+is nog een beetje vaag. Ik weet niet of de genoemde functies 
+voldoende zijn en of de parameters kloppen.
+
+Ik denk dat ook de variabelen in de packstruct, waarin nu wordt 
+bijgehouden wat het aantal bytes dat tot nu toe geschreven is in het 
+volume ook in de archivestruct moeten (wat vind jij hiervan Hans?). 
+Deze variabelen hebben meer te maken met het archief dan met de 
+packer. De packer krijgt dan in de packstruct alleen nog maar een 
+variabele mee, die aangeeft hoeveel bytes maximaal gepackt mogen 
+worden. Om de functie encode() wordt een functie encode_mv() heen 
+gebouwd, die er voor zorgt dat de aanroep van encode() transparant 
+wordt voor multiple volume archieven.
+
+Zowel bij het lezen als het schrijven van een archief wordt een array 
+bijgehouden met de namen van alle volumes. Dit is vooral handig bij 
+het schrijven van een archief, wat (bijna) altijd gebeurt naar een 
+tijdelijk archief. De filenamen van de volumes worden hierbij 
+gegenereerd met de functie tmpnam(). Is het packen zonder fouten 
+verlopen, dan worden de volumes gekopieerd naar de uiteindelijke 
+bestemming, waarbij de volumes tevens hun uiteindelijke naam krijgen. 
+Is het archief een bestaand archief dat geupdate wordt en is het 
+aantal volumes kleiner geworden, dan kan met behulp van de 
+archivestructs van het source en destination archief bepaalt worden 
+welke van de oorspronkelijke volumes gedelete kan worden.
+
+Voor 'ArjOptions' zie de code van Ger.

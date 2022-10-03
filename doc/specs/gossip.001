@@ -1,0 +1,703 @@
+
+THE GUP DIRECTORY STRUCTURE
+===========================
+
+
+RCS information
+---------------
+
+@(#) ./doc/spec/gossip.001 - The GUP directory structure
+
+$RCSfile$
+$Author: erick $
+$Revision: 129 $
+$Date: 1998-12-09 19:59:33 +0100 (Wed, 09 Dec 1998) $
+$Log$
+Revision 1.1  1998/12/09 18:59:33  erick
+Added first revision of gossip.001.
+
+
+$NoKeywords:$
+
+
+Scope of this document
+----------------------
+
+This document presents the requirements that are imposed on the
+directory structure of the GUP project.  These requirements apply
+from the directory where GUP is developed to the directories that
+contain the individual files of each of GUP's modules.  This means
+that the requirements do not apply to the directories between the
+"system root" and the GUP development directory.  They also do not
+apply to the contents of the directories of GUP modules.
+
+
+Audience and purpose of this document
+-------------------------------------
+
+The intended readers of this document are
+
+   1. The current members of the GUP Development Forum.
+      This document contains the agreements that were reached by the
+      current Forum members after long discussions, the so-called
+      Directory Wars.  The document is useful as a reference to their
+      agreements.  It is also to be used to streamline possible future
+      re-negotiations of the directory structure.
+
+   2. New members of the GUP Development Forum.
+      New members must know why the directory structure was set up the
+      way it is.  They must know how to find their way in it.  If a new
+      Forum member wants to change or extend the directory structure,
+      this document allows him/her to open negotiations based on
+      knowledge of the backgrounds of the existing structure.
+
+   3. Any other users of the GUP sources.
+      The General Programming Public must know how to navigate through
+      the directory structure.  Navigating is easier if one knows the
+      high-level structure and the reasons for that structure.
+
+
+Definitions
+-----------
+
+GUP root    The GUP root is the directory in which GUP is developed.
+            This may differ from system to system.  In this document,
+            the GUP root is denoted by a single dot.
+
+Single      In a number of places, this document talks about a "single
+Directory   directory".  This phrase identifies the contents of the
+            referenced directory, or the contents of any of the sub-
+            directories of the referenced directory, down to any level
+            of nesting, unless specifically indicated otherwise.
+
+Platform    A unique combination of machine type and/or operating
+            system, and/or compiler.
+
+Module      A collection of related sources and other files that, after
+            compilation, result in a distinct building block of the GUP
+            program.  A module may be as small as a single source file
+            and its associated header file, but it will usually consist
+            of many source and header files, makefiles, documentation
+            files, and test files.
+
+< >         Angle brackets < and > around a word identify the word as
+            a placeholder.  For example, ./<module>/src is the src
+            directory of a module in the GUP root.  <module> stands
+            for any of the modules of GUP.
+
+
+Identification of requirements
+------------------------------
+
+Requirements in this document are identified by a code which consists
+of a single uppercase letter, followed by a three-digit number which
+starts at 001.  The letter identifies the category of the requirement;
+the number is a sequence number within that category.
+
+A sequence number shall never be re-assigned to a different
+requirement.  In other words, if a requirement R003 exists, and if
+this requirement is deleted in a future version of this document,
+the requirement ID R003 will never be used for a different
+requirement.
+
+Requirements may be followed by a short explanation of the reason for
+imposing that requirement.
+
+
+Objectives
+----------
+
+The requirements on the directory structure of the GUP project have
+the following objectives:
+
+   1. The directory structure must be as uniform as possible.
+      This allows developers to easily interface their modules
+      to the other modules of GUP.  It also allows for easy
+      maintenance of existing modules by different programmers.
+
+   2. Despite objective 1, the directory structure must be flexible
+      enough to account for the differences between the systems on
+      which GUP must run.
+
+   3. The directory structure must allow different programmers to
+      follow their favourite programming strategy.  Of course, the
+      freedom of an individual programmer is limited by objective 1,
+      but within the bounds of this limitation the programmer must be
+      free.
+
+   4. The directory structure must allow for easy selection of modules
+      that are needed for a particular purpose.  For example, it must
+      be possible to easily select only those modules that are needed
+      to compile GUP for a given target platform.  It must also be
+      possible to back up only one of GUP's modules.
+
+
+General requirements
+--------------------
+
+This section specifies the requirements that apply to the entire GUP
+project.  These requirements are generic, that is, they do not focus
+on any particular point.
+
+   G001. Names of directories and files must not depend on case.
+
+         Not all systems have case-sensitive names for directories and
+         files.  For example, if a file README and a file readme were
+         created in the same directory under UNIX, it would not be
+         possible to transfer these files to a VAX-VMS system.
+
+   G002. Names of directories and files must contain only the charac-
+         ters A through Z (either uppercase or lowercase), 0 through 9,
+         and _ (underscore).  In addition to this rule, names of files
+         may contain at most one dot, provided that the dot is not at
+         the start or the end of the name.
+
+         Only these characters are supported on all systems.  For file
+         systems that are case-sensitive, using both uppercase and
+         lowercase letters may improve clarity.  Using both uppercase
+         and lowercase letters does not harm case-insensitive file
+         systems, as long as no name clashes occur.  It is the
+         responsibility of the HoQ to prevent such name clashes.
+
+         It is common practice to use a dot to separate the actual
+         name of a file from an extension that identifies the type
+         of the file.  Not all systems allow dots to appear in
+         directory names.
+
+   G003. Names of directories and files must be such that the names
+         are valid on all systems on which these directories and files
+         are needed.
+
+         The purpose of this requirement needs no explanation.  Note
+         that this requirement means that generic modules, which are
+         needed on all systems, must conform to DOS' 8.3 convention.
+
+   G004. All files of GUP must reside in a single directory.  This
+         directory is called the GUP root.
+
+   G005. It must be possible to install the GUP root anywhere in the
+         system where there is enough place (enough free bytes).
+
+         This means that it must be possible to use any drive, any
+         directory anywhere in any directory tree, and any directory
+         name as the GUP root (provided that the selected place has
+         enough space to contain all of GUP, and that the limits that
+         are imposed by the operating system allows the GUP directory
+         tree to be stored in the selected place).
+
+
+The directory structure
+-----------------------
+
+This section presents an overview of the directory structure that is
+required for the GUP project.  The contents of each directory in this
+structure are detailed in the following sections.
+
+   S001. The GUP root shall have the following contents, unless other-
+         wise indicated in other requirements:
+
+            .
+            |
+            |---- <module>
+            |     |
+            |     |---- src
+            |     |     |
+            |     |     |---- <platform>
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     `---- <other>
+            |     |
+            |     |---- mak
+            |     |     |
+            |     |     `---- <platform>
+            |     |           |
+            |     |           `---- <other>
+            |     |
+            |     |---- doc
+            |     |     |
+            |     |     |---- <platform>
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     `---- <other>
+            |     |
+            |     |---- test
+            |     |     |
+            |     |     |---- <platform>
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     `---- <other>
+            |     |
+            |     |---- include
+            |     |     |
+            |     |     `---- <platform>
+            |     |
+            |     `---- <other>
+            |
+            |---- <platform>
+            |     |
+            |     |---- <module>
+            |     |     |
+            |     |     |---- src
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     |---- mak
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     |---- doc
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     |---- test
+            |     |     |     |
+            |     |     |     `---- <other>
+            |     |     |
+            |     |     |---- include
+            |     |     |
+            |     |     `---- <other>
+            |     |
+            |     `---- <other>
+            |
+            |---- lib
+            |     |
+            |     |---- src
+            |     |
+            |     |---- mak
+            |     |
+            |     |---- doc
+            |     |
+            |     |---- test
+            |     |
+            |     |---- include
+            |     |
+            |     `---- <other>
+            |
+            |---- doc
+            |     |
+            |     `---- spec
+            |
+            `---- include
+                  |
+                  |---- sysdep
+                  |     |
+                  |     `---- <other>
+                  |
+                  `---- <other>
+
+         In this tree, <module> stands for the name of a module.  There
+         is one <module> directory for each of the modules of GUP.  The
+         section "Module names" presents requirements on the names of
+         the modules.
+         <other> stands for "any other subdirectories that are needed".
+         Whether <other> subdirectories are created and, if they are,
+         how they are named, may be decided by the programmer who
+         creates them.
+         <platform> stands for a directory with platform-specific
+         contents.  The section "Platform names" presents requirements
+         on the names of the platforms.  <platform> subdirectories of
+         <module> directories, and <platform> directories in the GUP
+         root, may or may not be present, depending on the need for
+         them as described in the section "Contents of the directories".
+
+         If one of the directories of the above tree is empty, it is
+         allowed, but not required, to not create that directory.
+
+   S002. Directories that are not present in the tree of requirement
+         S001 shall not be created.
+
+
+Contents of the directories
+---------------------------
+
+This section lists requirements on the files that are present in the
+directories of requirement S001.
+
+   C001. The directory . must contain the files README , NEWS ,
+         INSTALL , COPYING , AUTHORS , and ChangeLog .  These files
+         must have the GNU standard contents.  The directory . may
+         also contain the files VERSION and THANKS ; these files must
+         have the GNITS standard contents.
+
+   C002. A module that is not platform-dependent must be stored in a
+         directory ./<module> .  This directory shall not contain
+         subdirectories <platform> in the directory level below the
+         module's subdirectories.
+
+   C003. A module that consists mainly of platform-independent code
+         but contains very small amounts of platform-dependent code,
+         must be stored in a directory ./<module> .  This directory
+         shall not contain subdirectories <platform> in the directory
+         level below the module's subdirectories.  The small amounts
+         of platform-dependent code shall be stored in the module's
+         source files, and conditional compilation shall be used to
+         compile the desired platform-dependent parts of the code.
+
+         It is up to the programmer(s) of the module to quantify the
+         phrase "very small amounts" in the above requirement text.
+
+   C004. A module that consists mainly of platform-independent code
+         but contains a limited but noticeable amount of platform-
+         dependent code, must be stored in a directory ./<module> .
+         This directory shall contain a subdirectory
+         ./<module>/src/<platform> for each of the platforms for which
+         platform-dependent code is supplied.  The platform-independent
+         code shall be stored in ./<module>/src ; the platform-
+         dependent code shall be stored in ./<module>/src/<platform> .
+         Conditional compilation in the source files in ./<module>/src
+         must be used to select the correct version of each part of the
+         code.
+
+         It is up to the programmer(s) of the module to quantify the
+         phrase "a limited but noticeable amount" in the above
+         requirement text.
+
+   C005. A module that consists mainly of platform-dependent code must
+         be stored in a directory ./<platform>/<module> .
+
+         It is up to the programmer(s) of the module to quantify the
+         word "mainly" in the above requirement text.
+
+   C006. The directories src must contain all source code of the module
+         and all internal header files of the module.  It is allowed
+         to divide source code and internal header files over sub-
+         directories of the src directories, provided that the internal
+         header files that belong to a certain source file reside in
+         the same directory as that source file.
+
+   C007. The directories mak must contain all files that are needed to
+         build the module.  This concerns makefiles, project files, or
+         any other files that govern the module's building process.
+
+         In the rest of this document, all these files are collectively
+         referred to as "makefiles".
+
+   C008. If a platform needs but a single makefile in the mak
+         directory, this makefile shall be stored in the mak directory
+         itself.  If possible, the name of the makefile shall be such
+         that it indicates the platform for which it is targeted.
+
+   C009. If a platform needs more than a single makefile in the mak
+         directory, these makefiles shall be stored in a dedicated
+         subdirectory of the mak directory.  The name of the sub-
+         directory shall be such that it indicates the platform for
+         which its contents are targeted.
+
+   C010. The HoQ shall approve of all names of makefiles and all names
+         of the subdirectories of the mak directory.  The HoQ shall
+         ensure that no name clashes occur.
+
+   C011. The directories ./<module>/doc and ./<platform>/<module>/doc
+         must contain all documentation files that document the module
+         as a whole.
+
+   C012. If there are separate documentation files for different plat-
+         forms for a module <module>, a directory
+         ./<module>/doc/<platform> must be created for each of the
+         platforms for which documentation files are supplied.  In that
+         case, ./<module>/doc must contain all platform-independent
+         documentation files, while ./<module>/doc/<platform> must
+         contain all platform-specific documentation files.
+
+   C013. The directories test must contain all files that are related
+         to testing the module.  If no such testing files are supplied
+         for a module, the related directory test shall not exist.
+
+   C014. If the directory ./<module>/test exists, and if there are
+         separate testing files for different platforms, a directory
+         ./<module>/test/<platform> must be created for each of the
+         platforms for which testing files are supplied.  In that case,
+         ./<module>/test must contain all platform-independent testing
+         files, while ./<module>/test/<platform> must contain all plat-
+         form-specific testing files.
+
+   C015. The directories ./<module>/include and
+         ./<platform>/<module>/include must contain the external header
+         files of the module <module>.  The external header files are
+         those header files that are intended to be included, directly
+         or indirectly, by source files of other modules.  They must
+         define (part of) the external interface of the module, and
+         nothing else.  If an external header file defines part of
+         the external interface of the module, this file must not be
+         called <module>.h .
+
+   C016. The directory ./<module>/include/<platform>, if it exists,
+         must contain the external header files of the <platform>-
+         specific part of the module <module>.  The external header
+         files are those header files that are intended to be included,
+         directly or indirectly, by source files of other modules.
+         They must define (part of) the external interface of the
+         <platform>-specific part of the module <module>, and nothing
+         else.  If an external header file defines part of the external
+         interface of the module, this file must not be called
+         <module>.h .
+
+   C017. It is strongly advised to create a "comprehensive" header
+         file in each of the directories ./<module>/include ,
+         ./<platform>/<module>/include , and
+         ./<module>/include/<platform> that are defined in C015 and
+         C016.  The name of this header file must be <module>.h ,
+         where <module> is identical to the name of the module
+         directory.  This header file must contain all declarations
+         that define the external interface of the module, and nothing
+         else.  It must either contain these declarations themselves,
+         or it must include other header files that contain these
+         declarations; these other header files may be the header files
+         that are mentioned in C015 and C016.  If the external header
+         file of a module includes other header files, it must include
+         only header files that are in the same directory as the
+         external header file, or in one of the subdirectories of that
+         directory, and it must include these header files using
+         relative paths that are relative to the directory that
+         contains the external header file.
+
+   C018. The directory ./doc must contain all documentation of the
+         GUP project that is not specific to one of the modules, except
+         for the main README file.
+
+   C019. The directory ./doc/spec must contain all specification and
+         requirement documents that are applicable to the GUP project,
+         with the exception of specification and requirement files that
+         are specific to a certain module or platform.
+
+   C020. The directory ./include must contain all header files of each
+         module in the project.  This means that ./include must contain
+         all files in ./<module>/include and
+         ./<platform>/<module>/include , and all files in all
+         directories below those directories.
+
+   C021. On platforms that support soft links, each header file in
+         ./include or in ./include/sysdep must be either a link
+         to the actual header file (in ./<module>/include or in
+         ./<platform>/<module>/include , respectively), or a header
+         file as explained in C022.
+
+   C022. On platforms that do not support soft links, each header file
+         in ./include or in ./include/sysdep must be a header file that
+         only includes the actual header file in
+         ./<module>/include or in ./<platform>/<module>/include ,
+         respectively.
+
+   C023. The HoQ shall approve of all names of header files and all
+         names of the subdirectories of the ./include directory.
+         The HoQ shall ensure that no name clashes occur.
+
+   C024. UNIX makefiles (or automake files) are the only files that
+         are allowed to reside in any directory.  These files must be
+         stored in places that are considered standard in the UNIX
+         community, even if that would mean that they are stored in,
+         for example, a src directory.  However, it is strongly advised
+         to store such makefiles in their own directories whenever
+         feasible.
+
+
+Module names
+------------
+
+This section presents requirements on the module names of all modules
+that are present in the GUP project.  The main purpose of this section
+is to provide a means for avoiding name clashes between module names.
+
+   M001. All module names are given in the file ./doc/spec/module.txt .
+         This file is maintained by the HoQ.
+
+   M002. A GUP developer who wants to add a new module to the GUP
+         project shall consult the file ./doc/spec/module.txt to
+         find a module name that is not yet in use.
+
+   M003. Before adding a new module to the GUP project, a GUP developer
+         shall consult the HoQ.  The new module shall not be added to
+         the project unless the HoQ has given explicit permission to
+         use a certain module name.
+
+   M004. The HoQ shall only approve of proposed new module names if
+         they are unique and if they follow the requirements set forth
+         in this document.
+
+   M005. After having given permission to use a certain module name,
+         the HoQ shall add the new module name to the file
+         ./doc/spec/module.txt .
+
+
+Platform names
+--------------
+
+This section presents requirements on the platform names of all plat-
+forms for which dedicated files exist.  The main purpose of this
+section is to provide a means for avoiding name clashes between plat-
+form names.  Another purpose is to align all directories anywhere in
+the GUP root or below: if both ./<module1>/src and ./<module2>/src
+contain a subdirectory for a certain platform, the names of those two
+subdirectories must be identical, even if the two modules are created
+by two different programmers.
+
+   P001. All platform names are given in the file
+         ./doc/spec/platform.txt .  This file is maintained by the HoQ.
+
+   P002. A GUP developer who wants to add a new platform to the GUP
+         project shall consult the file ./doc/spec/platform.txt to
+         find a platform name that is not yet in use.
+
+   P003. Before adding a new platform to the GUP project, a GUP
+         developer shall consult the HoQ.  The new platform shall not
+         be added to the project unless the HoQ has given explicit
+         permission to use a certain platform name.
+
+   P004. The HoQ shall only approve of proposed new platform names if
+         they are unique and if they follow the requirements set forth
+         in this document.
+
+   P005. After having given permission to use a certain platform name,
+         the HoQ shall add the new platform name to the file
+         ./doc/spec/platform.txt .
+
+
+Rationales
+----------
+
+This section explains the rationales behind the requirements in this
+document.  It aims at making the requirements understandable, thereby
+making the GUP directory structure appear more logical.
+
+The section "Objectives" provides the primary rationales that form the
+basis of the requirements.  Additional rationales are presented in the
+following paragraphs.
+
+GUP being a GNU project, all parts of GUP are intended to be provided
+"as is" to the general public.  This means that the directory struct-
+ure of GUP must be easy to comprehend.  Therefore, the GUP Development
+Forum decided that all files of GUP must reside in a single directory,
+so that they are easily found.  If the files were scattered over more
+than one directory, other persons might loose track of where the GUP
+files are.
+
+Two important means of assuring that the directory structure be easily
+understood are separation and similarity.  Separation means that
+different files must be stored in different directories.  Each module
+is stored in its own module directory, and each file type (like source
+files, makefiles, test files, and so on) is stored in its own sub-
+directory inside the module directory.  Similarity means that the
+contents of all module directories are identical.  Once you understand
+the set-up of one module directory, you understand the set-up of all
+module directories.
+
+The locations of the header files are determined by the following
+reasoning:
+
+   1. In general, each module has "internal" and "external" header
+      files.  The internal header files are used by other source
+      files of the same module; they are not intended to be used
+      by the source files of other modules.  The external header
+      files define the external interface of the module.  These
+      header files are intended to be used by the source files of
+      other modules, not by the source file of the same module.
+
+      For flexibility, a module is not required to provide its entire
+      external interface in a single, monolithic header file.  Instead,
+      it is allowed to provide several smaller external header files
+      that each provide part of the external interface of the module.
+      This gives the programmer of the module more freedom in defining
+      the external header files.
+
+      To allow easy inclusion of the entire interface of a module,
+      it is strongly advised that a module (also) provide a single
+      external header file that has the same name as the module.
+      This header file must then contain the entire external inter-
+      face of the module, either by directly providing the required
+      definitions, or by simply including the smaller partial external
+      header files that were mentioned in the previous paragraph.
+
+   2. The GUP Development Forum adopted the convention that source
+      files (C or C++ files) are stored in the same directory as the
+      related internal header files.  This is just one of several
+      possible conventions; the important thing is that all GUP
+      modules stick to the same convention.  The advantage of using
+      this convention is that this allows easy selection of all source
+      files and header files that belong to a module.
+
+      It is not necessary to have one header file for each source file:
+      one source file may have several header files, and one header
+      file may define the interface of several source files.
+
+   3. Since the external header files must be easily accessible to
+      other modules, they must be stored in the directory include
+      inside the module directory.
+
+   4. Some operating systems impose tight limits on the length of
+      command lines.  This means that the include path of the compiler
+      must be short.  Therefore, links to all external header files
+      must be present in the directory ./include .
+
+      Since ./include contains links to all external header files, it
+      is important to avoid name clashes between the header files.
+      This is easily achieved by naming these header files after the
+      modules to which they belong: module names do not clash since
+      all modules are present as directories in the GUP root.
+
+      If an external header file must include a platform-specific
+      header file, the platform-specific header file must be stored in
+      a subdirectory of ./<module>/include (requirement C014).  Copying
+      all subdirectory trees ./<module>/include to ./include automatic-
+      ally copies the platform-specific header files to subdirectories
+      of ./include .  Since the platform-specific header files of
+      several modules may be copied to the same ./include/sysdep
+      directory, avoiding name clashes is also important for the plat-
+      form-specific header files.  The easiest way to do this is to
+      assign the name of the module to all platform-specific header
+      files too.
+
+      Requirements C015 and C016 state that, if an external header file
+      includes other header files, the paths to these other header
+      files must be relative to the location of the generic external
+      header file.  The reasoning behind this requirement is that the
+      entire subdirectory tree of ./<module>/include may be copied to
+      ./include .  For the included header files to remain valid, the
+      path to them must be relative.
+
+The set-up of the module directories and the include files allows one
+to compile a module's source into a library file, move the library file
+to a library directory , move the module's external header files to
+./include , and delete all of the module's source files and internal
+header files.  This may save some disk space.
+
+The UNIX community has developed de-facto standards for the locations
+of its makefiles.  These standards do not easily fit in the framework
+of the GUP directory structure.  Yet, it would not be wise to deviate
+from the UNIX standards.  Therefore, requirement C024 allows UNIX make-
+files not to follow the requirements that apply to the rest of the GUP
+files.  In particular, requirement C024 allows UNIX makefiles to be
+stored anywhere in the GUP directory tree, even in src directories if
+necessary.
+
+Yet, it is strongly advised to store UNIX makefiles in their own
+directories whenever possible.  This is the only way to achieve a
+similar approach to files and directories throughout the GUP project.
+It is also the only way to avoid "pollution" of other GUP directories
+with UNIX makefiles.  Avoiding such pollution is especially important
+for non-UNIX platforms, where files that do not naturally belong in
+certain directories are considered distracting and, even, ugly.
+
+Currently, the compress directory contains the source of the compressor
+core for all platforms.  Inside this directory, separate directories
+contain optimised code for specific platforms.  The GUIs, on the other
+hand, are stored in separate module directories.
+
+The reason for this difference is that all platforms share most of the
+code of the compressor core; only part of the compressor core is diff-
+erent between the platforms.  Therefore, it is wise to create a single
+directory for all platform-independent compressor code.  The platform-
+specific compressor code overrides only part of the shared code base.
+
+Unlike the compressor, the GUIs share almost no code.  Creating a
+single directory gui en storing all platform-specific GUIs in sub-
+directories of gui therefore does not provide any benefit.  Therefore,
+the GUIs are stored as separate modules.
+
+If, in the future, it is found that some of the GUIs share a consider-
+able amount of code, the GUP Development Forum will reconsider the
+current set-up of the GUI directories.
+
+A similar statement holds for all other modules.

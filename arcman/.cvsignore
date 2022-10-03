@@ -1,0 +1,16 @@
+.deps
+arc_util.o
+archive.o
+arj_arc.o
+arj_hdr.o
+gz_arc.o
+gz_hdr.o
+header.o
+lha_arc.o
+lha_hdr.o
+libarcman.a
+Makefile
+unix_arj.o
+unix_gz.o
+unix_lha.o
+unix_utl.o

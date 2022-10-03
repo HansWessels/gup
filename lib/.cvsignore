@@ -1,0 +1,7 @@
+.deps
+gup_err.o
+gup_io.o
+libsupport.a
+Makefile
+matchpat.o
+strlwr.o

@@ -1,0 +1,4 @@
+hardware.h Component: Hardware characteristics
+hardware.d Component: Hardware characteristics
+mouse Module: Mouse hardware
+screen Module: Screen characteristics
