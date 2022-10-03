@@ -40,6 +40,8 @@
 
 #include "gup.h"
 
+#if ENABLE_DUMP_OUTPUT_MODES
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1577,4 +1579,6 @@ asmdump_archive::asmdump_archive()
 asmdump_archive::~asmdump_archive()
 {
 }
+
+#endif // ENABLE_DUMP_OUTPUT_MODES
 

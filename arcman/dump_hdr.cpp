@@ -29,6 +29,8 @@
 
 #include "gup.h"
 
+#if ENABLE_DUMP_OUTPUT_MODES
+
 #include <string.h>
 #include <sys/types.h>
 
@@ -400,3 +402,6 @@ int dump_fileheader::mv_is_continuation(void)
 {
 	return (flags & EXTFILE_FLAG) ? 1 : 0;
 }
+
+#endif // ENABLE_DUMP_OUTPUT_MODES
+

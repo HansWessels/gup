@@ -24,6 +24,10 @@
  */
 
 
+#include "gup.h"
+
+#if ENABLE_DUMP_OUTPUT_MODES
+
 /*
  * Main header class.
  */
@@ -124,3 +128,6 @@ class dump_fileheader : public fileheader
 
 	friend class arj_archive;
 };
+
+#endif // ENABLE_DUMP_OUTPUT_MODES
+

@@ -158,4 +158,8 @@ typedef long long int64;
 #include <dmalloc.h>
 #endif
 
+
+
+#define ENABLE_DUMP_OUTPUT_MODES  0
+
 #endif

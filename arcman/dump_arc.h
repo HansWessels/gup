@@ -30,6 +30,10 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
+#include "gup.h"
+
+#if ENABLE_DUMP_OUTPUT_MODES
+
 class dump_archive : public archive
 {
   private:
@@ -160,3 +164,5 @@ class asmdump_archive : public dump_archive
 	 * Functions for opening and closing the archive.
 	 */
 };
+
+#endif
