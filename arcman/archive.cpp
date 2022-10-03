@@ -998,6 +998,12 @@ archive_type get_arc_type(const char *filename)
 		return AT_LHA;
 	else if (match_pattern(filename, "*.[gG][zZ]"))
 		return AT_GZIP;
+	else if (match_pattern(filename, "*.[bB][iI][nN][dD][uU][mM][pP]"))
+		return AT_BINDUMP;
+	else if (match_pattern(filename, "*.[aA][sS][mM][dD][uU][mM][pP]"))
+		return AT_ASMDUMP;
+	else if (match_pattern(filename, "*.[cC][dD][uU][mM][pP]"))
+		return AT_CDUMP;
 	else
 		return AT_UNKNOWN;				/* Default is ARJ. */
 }
