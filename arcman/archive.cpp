@@ -65,6 +65,8 @@
 #include "gz_arc.h"
 #include "lha_hdr.h"
 #include "lha_arc.h"
+#include "dump_hdr.h"
+#include "dump_arc.h"
 #include "os.h"
 #include "support.h"
 
@@ -973,6 +975,12 @@ archive *new_archive(archive_type type)
 		return new lha_archive;
 	case AT_GZIP:
 		return new gzip_archive;
+	case AT_BINDUMP:
+		return new bindump_archive;
+	case AT_ASMDUMP:
+		return new asmdump_archive;
+	case AT_CDUMP:
+		return new cdump_archive;
 	default:
 		return NULL;
 	}

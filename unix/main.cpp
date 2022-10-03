@@ -613,8 +613,6 @@ int main(int argc, char *argv[])
 		case AT_ASMDUMP:
 			if (default_mode)
 				opts.mode = GNU_ARJ_MODE_7;     // GNU_ARJ_MODE_8? or something...
-				fprintf(stderr, "dump mode!\n");
-				exit(1);
 			break;
 		}
 

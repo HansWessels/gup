@@ -283,8 +283,15 @@ int compress(OPTIONS *opts)
 		if ((opts->type = get_arc_type(opts->arj_name)) == AT_UNKNOWN)
 			opts->type = AT_ARJ;
 	}
+	
+	printf("#d: output type AT: %d\n", __LINE__, opts->type);
 
 	archive = new_archive((archive_type) opts->type);
+	if (archive == NULL)
+	{
+		fprintf(stderr, "Fatal error: unsupported output format: %d\n", opts->type);
+		exit(42);
+	}
 
 	archive->arcctl(ARC_MV_MODE, &mv_mode);
 

@@ -114,7 +114,7 @@ libarcman_a_AR = $(AR) $(ARFLAGS)
 am_libarcman_a_OBJECTS = arc_util.$(OBJEXT) archive.$(OBJEXT) \
 	arj_arc.$(OBJEXT) arj_hdr.$(OBJEXT) gz_arc.$(OBJEXT) \
 	gz_hdr.$(OBJEXT) header.$(OBJEXT) lha_arc.$(OBJEXT) \
-	lha_hdr.$(OBJEXT)
+	lha_hdr.$(OBJEXT) dump_arc.$(OBJEXT) dump_hdr.$(OBJEXT)
 libarcman_a_OBJECTS = $(am_libarcman_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -133,6 +133,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/arc_util.Po ./$(DEPDIR)/archive.Po \
 	./$(DEPDIR)/arj_arc.Po ./$(DEPDIR)/arj_hdr.Po \
+	./$(DEPDIR)/dump_arc.Po ./$(DEPDIR)/dump_hdr.Po \
 	./$(DEPDIR)/gz_arc.Po ./$(DEPDIR)/gz_hdr.Po \
 	./$(DEPDIR)/header.Po ./$(DEPDIR)/lha_arc.Po \
 	./$(DEPDIR)/lha_hdr.Po ./$(DEPDIR)/unix_arj.Po \
@@ -327,7 +328,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libarcman.a
 libarcman_a_SOURCES = arc_util.cpp archive.cpp arj_arc.cpp arj_hdr.cpp \
-					  gz_arc.cpp gz_hdr.cpp header.cpp lha_arc.cpp lha_hdr.cpp
+					  gz_arc.cpp gz_hdr.cpp header.cpp lha_arc.cpp lha_hdr.cpp \
+					  dump_arc.cpp dump_hdr.cpp
 
 EXTRA_libarcman_a_SOURCES = unix_arj.cpp unix_gz.cpp unix_lha.cpp \
 							unix_utl.cpp w32_arj.cpp w32_gz.cpp \
@@ -337,7 +339,7 @@ libarcman_a_LIBADD = @AMOSDEPOBJS@
 libarcman_a_DEPENDENCIES = $(libarcman_a_LIBADD)
 noinst_HEADERS = arc_util.h arcctl.h archive.h arj_arc.h arj_hdr.h \
 				 gz_arc.h gz_hdr.h header.h \
-				 lha_arc.h lha_hdr.h os.h
+				 lha_arc.h lha_hdr.h os.h #
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
@@ -392,6 +394,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arj_arc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arj_hdr.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dump_arc.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dump_hdr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gz_arc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gz_hdr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Po@am__quote@ # am--include-marker
@@ -570,6 +574,8 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/archive.Po
 	-rm -f ./$(DEPDIR)/arj_arc.Po
 	-rm -f ./$(DEPDIR)/arj_hdr.Po
+	-rm -f ./$(DEPDIR)/dump_arc.Po
+	-rm -f ./$(DEPDIR)/dump_hdr.Po
 	-rm -f ./$(DEPDIR)/gz_arc.Po
 	-rm -f ./$(DEPDIR)/gz_hdr.Po
 	-rm -f ./$(DEPDIR)/header.Po
@@ -632,6 +638,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/archive.Po
 	-rm -f ./$(DEPDIR)/arj_arc.Po
 	-rm -f ./$(DEPDIR)/arj_hdr.Po
+	-rm -f ./$(DEPDIR)/dump_arc.Po
+	-rm -f ./$(DEPDIR)/dump_hdr.Po
 	-rm -f ./$(DEPDIR)/gz_arc.Po
 	-rm -f ./$(DEPDIR)/gz_hdr.Po
 	-rm -f ./$(DEPDIR)/header.Po
@@ -681,6 +689,7 @@ uninstall-am:
 
 .PRECIOUS: Makefile
 
+				 dump_arc.h dump_hdr.h 
 
 dist-hook:
 	mkdir -p $(distdir)/include/unix
