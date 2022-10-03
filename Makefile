@@ -247,12 +247,12 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
-LIBOBJS =  ${LIBOBJDIR}${LIBOBJDIR}${LIBOBJDIR}strlwr$U.o
+LIBOBJS =  ${LIBOBJDIR}strlwr$U.o
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
-LTLIBOBJS =  ${LIBOBJDIR}${LIBOBJDIR}${LIBOBJDIR}strlwr$U.lo
+LTLIBOBJS =  ${LIBOBJDIR}strlwr$U.lo
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
 MAKEINFO = ${SHELL} '/home/hans/ni_pack/gup/missing' makeinfo
@@ -862,11 +862,15 @@ gup:
 test: gup
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
+	echo "=== show EXTENDED on-line help output ==="
+	$(GUP_EXE) -h
 	echo "=== compressing Calgary Corpus ==="
 	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
 	./test_check_archive_size.sh  test.arj
+	echo "=== testing DUMP MODES ==="
+	$(GUP_EXE) a test.cdump *.spec
 
 .PHONY: gup test dist-hook distall
 

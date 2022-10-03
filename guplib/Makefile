@@ -281,12 +281,12 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
-LIBOBJS =  ${LIBOBJDIR}${LIBOBJDIR}${LIBOBJDIR}strlwr$U.o
+LIBOBJS =  ${LIBOBJDIR}strlwr$U.o
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
-LTLIBOBJS =  ${LIBOBJDIR}${LIBOBJDIR}${LIBOBJDIR}strlwr$U.lo
+LTLIBOBJS =  ${LIBOBJDIR}strlwr$U.lo
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
 MAKEINFO = ${SHELL} '/home/hans/ni_pack/gup/missing' makeinfo
@@ -385,7 +385,7 @@ EXTRA_libgup_la_SOURCES = unix_arj.cpp unix_gz.cpp unix_lha.cpp \
                           unix_utl.cpp w32_arj.cpp w32_gz.cpp w32_lha.cpp \
 						  w32_utl.cpp
 
-libgup_la_LIBADD =  ${LIBOBJDIR}${LIBOBJDIR}${LIBOBJDIR}strlwr$U.lo  unix_arj.lo unix_gz.lo unix_lha.lo unix_utl.lo
+libgup_la_LIBADD =  ${LIBOBJDIR}strlwr$U.lo  unix_arj.lo unix_gz.lo unix_lha.lo unix_utl.lo
 libgup_la_DEPENDENCIES = $(libgup_la_LIBADD)
 libgup_la_LDFLAGS = -version-info 0:0:0
 noinst_HEADERS = arc_util.h arcctl.h archive.h arj_arc.h arj_hdr.h decode.h \
