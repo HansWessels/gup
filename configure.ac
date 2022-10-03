@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.69)
-AC_INIT([gup], [0.0.7])
+AC_PREREQ([2.71])
+AC_INIT([gup],[0.0.7])
 AC_CONFIG_SRCDIR([compress/crc.c])
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(include/config.h)
 AC_CONFIG_MACRO_DIRS([m4])
@@ -39,14 +39,22 @@ AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_TOOL(NM, nm, :)
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AM_DISABLE_STATIC
-AM_PROG_LIBTOOL
+AC_DISABLE_STATIC([])
+LT_INIT
 
 dnl Checks for libraries.
 AM_WITH_DMALLOC
 
 dnl Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS(unistd.h rx.h regex.h io.h)
 GUP_INTS_H
 
@@ -87,6 +95,9 @@ dnl The following two lines are needed for autoconf 2.12 and earlier.
 LTLIBOBJS="`echo ${LIBOBJS} | sed 's/\.o/.lo/g'`"
 AC_SUBST(LTLIBOBJS)
 
-AC_OUTPUT(Makefile lib/Makefile compress/Makefile include/Makefile
-          include/sysdep/Makefile arcman/Makefile guplib/Makefile
-          unix/Makefile gup.spec)
+AC_CONFIG_FILES([Makefile lib/Makefile compress/Makefile])
+AC_OUTPUT
+AC_CONFIG_FILES([include/Makefile include/sysdep/Makefile arcman/Makefile guplib/Makefile unix/Makefile])
+AC_OUTPUT
+AC_CONFIG_FILES([gup.spec])
+AC_OUTPUT

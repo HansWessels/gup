@@ -9,10 +9,8 @@
 *.ttp
 
 /autom4te.cache
-/config.guess
 /config.log
 /config.status
-/config.sub
 
 .libs
 stamp-h1
