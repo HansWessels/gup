@@ -48,3 +48,5 @@ test:
 	pwd
 	$(GUP_EXE) -h
 
+.PHONY: test dist-hook distall
+
