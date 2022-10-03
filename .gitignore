@@ -1,3 +1,5 @@
+# ignore autoconf, gcc, PureC, VisualC (MSVC) outputs:
+
 .deps/
 *.bak
 *.o
