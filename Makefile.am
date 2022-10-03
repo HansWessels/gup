@@ -44,9 +44,19 @@ rpm: $(PACKAGE)-$(VERSION).tar.gz
 	rpm -ba gup.spec
 	rm $(RPMROOT)/SOURCES/$(distdir).tar.gz
 
-test:
-	pwd
-	$(GUP_EXE) -h
+gup:
+	cd unix
+	make
 
-.PHONY: test dist-hook distall
+test: gup
+	echo "=== show on-line help output ==="
+	$(GUP_EXE) 
+	echo "=== compressing Calgary Corpus ==="
+	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
+	echo "=== testing Calgary Corpus ARJ archive ==="
+	$(GUP_EXE) t test.arj
+	./test_check_archive_size.sh  test.arj
+
+.PHONY: gup test dist-hook distall
+
 

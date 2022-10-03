@@ -18,3 +18,5 @@ stamp-h1
 *.lo
 
 *~
+/test.arj
+/unix/gup
