@@ -1,0 +1,3083 @@
+
+
+                        --  CODING STANDARD  --
+
+
+              FOR PROJECTS OF THE EASY PROGRAMMING GROUP
+
+
+
+0  -  TABLE OF CONTENTS
+
+ 0  -  Table of contents  . . . . . . . . . . . . . . . . . . . . . .   10
+ 1  -  Revision record  . . . . . . . . . . . . . . . . . . . . . . .  100
+       1.1  -  RCS-compatible revision record . . . . . . . . . . . .  102
+       1.2  -  Detailed revision record . . . . . . . . . . . . . . .  111
+ 2  -  Scope  . . . . . . . . . . . . . . . . . . . . . . . . . . . .  572
+ 3  -  Tailoring the Coding Standard  . . . . . . . . . . . . . . . .  603
+ 4  -  Programming language . . . . . . . . . . . . . . . . . . . . .  626
+ 5  -  Functional decomposition of a project  . . . . . . . . . . . .  631
+ 6  -  Directory tree . . . . . . . . . . . . . . . . . . . . . . . .  669
+ 7  -  File names . . . . . . . . . . . . . . . . . . . . . . . . . .  839
+ 8  -  Contents of the module files . . . . . . . . . . . . . . . . .  864
+       8.1  -  Contents of the module source files  . . . . . . . . .  866
+       8.2  -  Contents of the module header files  . . . . . . . . .  989
+       8.3  -  Contents of the module documentation files . . . . . . 1098
+ 9  -  Contents of the component files  . . . . . . . . . . . . . . . 1241
+       9.1  -  Contents of the component header files . . . . . . . . 1243
+       9.2  -  Contents of the component documentation files  . . . . 1367
+10  -  Contents of the unit files . . . . . . . . . . . . . . . . . . 1452
+       10.1  -  Contents of the unit header files . . . . . . . . . . 1454
+       10.2  -  Contents of the unit documentation files  . . . . . . 1563
+       10.3  -  Contents of the unit global settings files  . . . . . 1653
+11  -  Contents of the global files . . . . . . . . . . . . . . . . . 1757
+       11.1  -  Contents of the global include file . . . . . . . . . 1759
+12  -  NILs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1839
+13  -  Naming conventions . . . . . . . . . . . . . . . . . . . . . . 1864
+14  -  Lay-out of the source code . . . . . . . . . . . . . . . . . . 1952
+       14.1  -  Line length . . . . . . . . . . . . . . . . . . . . . 1954
+       14.2  -  Header blocks . . . . . . . . . . . . . . . . . . . . 1968
+       14.3  -  Declaring types . . . . . . . . . . . . . . . . . . . 1990
+       14.4  -  Declaring variables . . . . . . . . . . . . . . . . . 2028
+       14.5  -  Function headers  . . . . . . . . . . . . . . . . . . 2050
+       14.6  -  Code blocks . . . . . . . . . . . . . . . . . . . . . 2110
+       14.7  -  Empty statements  . . . . . . . . . . . . . . . . . . 2144
+       14.8  -  Exit points . . . . . . . . . . . . . . . . . . . . . 2180
+15  -  Re-entrancy  . . . . . . . . . . . . . . . . . . . . . . . . . 2193
+16  -  Typecasting  . . . . . . . . . . . . . . . . . . . . . . . . . 2200
+17  -  Using enumerated values  . . . . . . . . . . . . . . . . . . . 2244
+18  -  Constructors and destructors . . . . . . . . . . . . . . . . . 2257
+19  -  Preventing copying, assignment, or default construction  . . . 2292
+20  -  <const> declarations . . . . . . . . . . . . . . . . . . . . . 2376
+       20.1  -  <const> functions . . . . . . . . . . . . . . . . . . 2378
+       20.2  -  <const> data  . . . . . . . . . . . . . . . . . . . . 2393
+       20.3  -  <const> function arguments  . . . . . . . . . . . . . 2412
+21  -  Handling non-nominal conditions  . . . . . . . . . . . . . . . 2419
+22  -  Referring to identifiers in comments and documentation . . . . 2442
+23  -  Variables  . . . . . . . . . . . . . . . . . . . . . . . . . . 2463
+       23.1  -  The scope of variables  . . . . . . . . . . . . . . . 2465
+       23.2  -  Global variables  . . . . . . . . . . . . . . . . . . 2504
+24  -  Boolean values . . . . . . . . . . . . . . . . . . . . . . . . 2514
+25  -  Accessing global data and functions  . . . . . . . . . . . . . 2566
+26  -  Interface to code written by third parties . . . . . . . . . . 2579
+27  -  Debugging  . . . . . . . . . . . . . . . . . . . . . . . . . . 2602
+28  -  Identifying code that needs additional work  . . . . . . . . . 2675
+       28.1  -  Identifying unfinished code . . . . . . . . . . . . . 2677
+       28.2  -  Identifying points of improvement . . . . . . . . . . 2700
+29  -  Change control . . . . . . . . . . . . . . . . . . . . . . . . 2719
+       29.1   -  Definition of a change . . . . . . . . . . . . . . . 2721
+       29.2   -  Levels of change control . . . . . . . . . . . . . . 2736
+       29.3   -  Format of revision numbers . . . . . . . . . . . . . 2755
+       29.4   -  Formal handling of changes . . . . . . . . . . . . . 2779
+       29.5   -  Generating new revisions of files  . . . . . . . . . 2786
+       29.6   -  Generating new revisions of functions  . . . . . . . 2854
+       29.7   -  Generating new revisions of modules  . . . . . . . . 2868
+       29.8   -  Generating new revisions of components . . . . . . . 2883
+       29.9   -  Generating new revisions of units  . . . . . . . . . 2898
+       29.10  -  Generating new revisions of the project  . . . . . . 2913
+30  -  Configuration control  . . . . . . . . . . . . . . . . . . . . 2928
+       30.1  -  Introduction  . . . . . . . . . . . . . . . . . . . . 2930
+       30.2  -  Configuration control for files . . . . . . . . . . . 2942
+       30.3  -  Configuration control for functions . . . . . . . . . 2952
+       30.4  -  Configuration control for modules . . . . . . . . . . 2958
+       30.5  -  Configuration control for components  . . . . . . . . 2970
+       30.6  -  Configuration control for units . . . . . . . . . . . 2986
+       30.7  -  Configuration control for the project . . . . . . . . 3002
+       30.8  -  Revision control and configuration control  . . . . . 3017
+31  -  Documentation  . . . . . . . . . . . . . . . . . . . . . . . . 3033
+Appendix A  -  RCS-compatible revision record . . . . . . . . . . . . 3071
+
+   The numbers at the right side of the table of contents are the line
+numbers of the titles of the corresponding sections.  Line numbers are used
+instead of page numbers because the EASy Programming Group has a policy not
+to print anything.  This saves natural resources, which are becoming as
+scarce as resources in Windows.
+   Despite the fact that we at the EASy Programming Group are all C++
+programmers, the first line is assigned line number 1, not 0.  This was done
+to comply with the convention of almost all the editors and viewers we use.
+
+
+1  -  REVISION RECORD
+
+1.1  -  RCS-Compatible Revision Record
+
+   This section lists the revision history of this document as the RCS
+sees it.  Refer to section 28.5 for a description of the relation between
+this RCS-compatible revision record and the detailed revision record of
+section 1.2 of this Coding Standard.
+   The actual RCS-compatible revision record is given in appendix A.  
+
+
+1.2  -  Detailed Revision Record
+
+   This section lists the detailed revision history of this document.
+Unfortunately, the environment that is used to generate and maintain this
+document does not allow to automatically generate change bars.  Therefore,
+this revision record is the only place where changes to this document are
+recorded.
+
+.----------.---------------------------------------------------------------.
+| Revision | Concise description of the changes                            |
+| Dates    |                                                               |
+| Author   |                                                               |
+|----------+---------------------------------------------------------------|
+|  0.0.000 | First issue of this document.  On 19970128, this version was  |
+| 19970112 | given to the GNU Arj development forum for commenting.        |
+| 19970128 |                                                               |
+| EAS      |                                                               |
+|----------+---------------------------------------------------------------|
+|  0.0.001 | - A section on revision control has been added.  This update  |
+| 19970204 |   incorporates a comment H. Wessels gave at 19970128.         |
+| 19970205 | - Requirements on revision tracking in source files (up to    |
+| EAS      |   the level of individual functions) have been added.  This   |
+|          |   update incorporates a comment H. Wessels gave at 19970128.  |
+|          | - Inline member functions have been described.                |
+|          | - The document has been revised slightly to improve its       |
+|          |   internal consistency.                                       |
+|          | - The required programming language has been described.       |
+|          | - A section on target platforms has been added.               |
+|          | - A section on the separation of the source code over the     |
+|          |   source modules has been added.                              |
+|          | On 19970205, this version was given to the GNU Arj            |
+|          | development forum for commenting.                             |
+|----------+---------------------------------------------------------------|
+|  0.0.002 | - Section 3 (programming language): An example of the use of  |
+| 19970208 |   non-ANSI constructions has been added to the section.  This |
+| 19970212 |   update incorporates a comment R. Klaren gave at 19970202 on |
+| EAS      |   section 9.5 (function headers).                             |
+|          | - Section 7.1 (contents of the code modules), point 4:        |
+|          |   a remark has been added that explains that <#define>s are   |
+|          |   nearly obsolete in C++.  This update incorporates a comment |
+|          |   R. Klaren gave at 19970202.                                 |
+|          | - Section 7.2 (contents of the header modules), end of the    |
+|          |   section: A remark has been added that explains that private |
+|          |   parts of classes _must_ be exported because the C++         |
+|          |   language requires so.  This update incorporates a comment   |
+|          |   R. Klaren gave at 19970202.                                 |
+|          | - Section 8 (naming conventions): The text that explains the  |
+|          |   naming convention for defined constants has been extended.  |
+|          |   It now includes variables that are declared as <const>.     |
+|          |   This update incorporates a comment R. Klaren gave at        |
+|          |   19970202.                                                   |
+|          | - A new section 9.1 (line length) has been inserted in        |
+|          |   section 9 (lay-out of the source code).  This section       |
+|          |   requires the line length to be 76 characters.  This update  |
+|          |   incorporates a comment that R. Klaren gave at 19970202.     |
+|          | - Section 9.3 (declaring types): The requirement on the parts |
+|          |   of a class has been clarified.  This update incorporates a  |
+|          |   comment that R. Klaren gave at 19970202.                    |
+|          | - Section 15 (calling C functions) has been renamed to        |
+|          |   "accessing global data and functions".  The contents of the |
+|          |   section have been rewritten.  The original section required |
+|          |   extensive code modifications to overload a global function  |
+|          |   in a class.                                                 |
+|          | - A new section 16 (interface to other parts of GNU Arj) has  |
+|          |   been added.  This update incorporates a comment that        |
+|          |   R. Klaren gave at 19970202.  E.A. Silkens elaborated on     |
+|          |   this comment.                                               |
+|----------+---------------------------------------------------------------|
+|  0.0.003 | All requirements on exceptions have been deleted.  Instead,   |
+| 19970215 | a new requirement has been added to section 3 (programming    |
+| 19970215 | language) that specifies that exceptions shall not be used.   |
+| EAS      | Exceptions are not handled well by all compilers, and it was  |
+|          | found that the old C method of indicating errors by returning |
+|          | an error code is easier to use.  Also, a Windows program      |
+|          | needs to use call-back functions; throwing an exception in a  |
+|          | call-back function is disastrous.  Finally, the other parts   |
+|          | of GNU Arj don't use exceptions either.                       |
+|----------+---------------------------------------------------------------|
+|  0.0.004 | - Section 18 (revision control) has been renamed to "change   |
+| 19970216 |   control".  A new section 19 (configuration control) has     |
+| 19970223 |   been added.  These updates incorporate comments that        |
+| EAS      |   H. Wessels gave at 19970207 and comments that W. Klaren     |
+|          |   gave at 19970209.  E.A. Silkens elaborated on these         |
+|          |   comments.                                                   |
+|          | - Sections 7.1 and 7.2 have been updated.  The requirements   |
+|          |   on the headers of source modules, header files and          |
+|          |   functions have been updated to match the updated interface  |
+|          |   between the shell and the RCS.  This update incorporates a  |
+|          |   comment that W. Klaren gave at 19970209.  E.A. Silkens      |
+|          |   elaborated on his comment.                                  |
+|          | - Section 18.3 (generating new revisions of files) has been   |
+|          |   extended with a description of the relation between the     |
+|          |   RCS-compatible revision record and the detailed revision    |
+|          |   record of a file.  This update is an elaboration on a       |
+|          |   comment that W. Klaren gave at 19970209.                    |
+|----------|---------------------------------------------------------------|
+|  0.0.005 | - A new section 12 (constructors and destructors) has been    |
+| 19970223 |   added.  This section limits the use of <inline> for         |
+| 19970223 |   constructors and destructors, and it requires destructors   |
+| EAS      |   to be <virtual> if a class contains one or more virtual     |
+|          |   member functions.                                           |
+|          | - A new section 13 (<const> declarations) has been added.     |
+|          |   This section contains requirements on using <const>         |
+|          |   functions and data.                                         |
+|          | - A statement has been added to section 2.  This statement    |
+|          |   identifies the target audience for this Coding Standard to  |
+|          |   consist of smart programmers who know the do's and don't's  |
+|          |   of programming.                                             |
+|          | - Section 12 (constructors and destructors) has been extended |
+|          |   with a statement that requires that constructors and        |
+|          |   destructors do not perform any operation that may fail.     |
+|          | - A naming convention for files has been added to section 8   |
+|          |   (naming conventions).                                       |
+|          | - The template for header files has been extended with a      |
+|          |   safeguard against multiple inclusion of a header file.      |
+|          | - A requirement has been added to section 9.3 (declaring      |
+|          |   types) that requires new types to be created for specific   |
+|          |   kinds of information (like error codes).                    |
+|          | - A new section 14 (handling non-nominal conditions) has been |
+|          |   inserted.                                                   |
+|          | - The string "@(#)" must be included in the header of each    |
+|          |   source or header module (section 7.1 (contents of the code  |
+|          |   modules) and section 7.2 (contents of the header modules)). |
+|          | - A new section 10 (re-entrancy) has been inserted.  This     |
+|          |   section requires that all code be re-entrant.               |
+|          | - The function header that is described in section 7.1        |
+|          |   (contents of the code modules) has been extended with the   |
+|          |   entries "Input:", "Output:" and "Assumes:".                 |
+|          | - A requirement has been added to section 24.1 (set-up of     |
+|          |   the documentation) that requires all comment texts and all  |
+|          |   documentation to be written in correct English.             |
+|----------|---------------------------------------------------------------|
+|  0.0.006 | This revision is the result of an internal review of revision |
+| 19970225 | 0.0.005 by the EASy Programming Group.  All comments have     |
+| 19970225 | been incorporated in the document.                            |
+| EAS      | - The scope of this Coding Standard (section 2) has been      |
+|          |   extended.                                                   |
+|          | - Section 2 (scope) now explains the meanings of words like   |
+|          |   "shall", "must", "may", "should" and "ought".               |
+|          | - Section 3 (programming language) now specifies what to do   |
+|          |   if it is not possible to adhere to the ANSI C++ language.   |
+|          | - Section 5 (location of the program files) now specifies the |
+|          |   location of the configuration-control files that are the    |
+|          |   subject of section 23 (configuration control).              |
+|          | - The text of the requirements on the RCS information in      |
+|          |   the headers of code modules (section 7.1 (contents of the   |
+|          |   code modules), point 2) and header modules (section 7.2     |
+|          |   (contents of the header modules), point 2) has been         |
+|          |   changed.  The text no longer contains recognisable RCS key- |
+|          |   words.  This prevents the RCS from substituting its own     |
+|          |   information for these keywords.                             |
+|          | - The text of the header-like statement that is the subject   |
+|          |   of point 12 of section 7.1 (contents of the code modules)   |
+|          |   and of point 10 of section 7.2 (contents of the header      |
+|          |   modules) has been corrected.  It is now usable by any       |
+|          |   member of the EASy Programming Group, not just by the       |
+|          |   head of the group.                                          |
+|          | - A new point c has been added to point 5 of section 7.1      |
+|          |   (contents of the code modules) to cope with C++ libraries.  |
+|          | - The definition of "the filename of the header file" in      |
+|          |   point 4 of section 7.2 (contents of the header modules) has |
+|          |   been extended.                                              |
+|          | - The use of prefixes and postfixes has almost been forbidden |
+|          |   in section 8 (naming conventions).                          |
+|          | - Point 3 in section 9.5 (function headers) has been extended |
+|          |   to explain that this point contains the only part of a      |
+|          |   function header that does not conform to the ANSI C++       |
+|          |   language.                                                   |
+|          | - The use of the keyword "static" has been mentioned as yet   |
+|          |   another exception to the rule that the function header be   |
+|          |   identical in the definition and the declaration of the      |
+|          |   function in section 9.5 (function headers).                 |
+|          | - A rationale has been added to section 9.5 (function         |
+|          |   headers).                                                   |
+|          | - A rationale has been added to section 9.6 (code blocks).    |
+|          | - A rationale has been added to section 11 (typecasting).     |
+|          | - At the end of section 21 (identifying unfinished code), the |
+|          |   text "the code" has been replaced with "human-generated     |
+|          |   files".                                                     |
+|          | - A rationale has been added to section 21 (identifying       |
+|          |   unfinished code).                                           |
+|          | - The requirement on the format of the major revision number  |
+|          |   in section 22.2 (format of revision numbers) has been made  |
+|          |   more restrictive.                                           |
+|          | - Section 22.3 (generating new revisions of files) now        |
+|          |   explains the relation between a formal revision number and  |
+|          |   the corresponding internal revision numbers.                |
+|          | - The scope of section 24.1 (set-up of the documentation) has |
+|          |   been extended from "comment texts" to "texts of comments    |
+|          |   and documentation".                                         |
+|          | - The texts in sections 24.2 (the external interface of a     |
+|          |   source module), 24.3 (the operations performed by a source  |
+|          |   module), 24.4 (details on a source module) and 24.5         |
+|          |   generic documentation) have been transformed into true      |
+|          |   requirements by using the word "shall".                     |
+|          | - The order of the parts "public:", "protected:" and          |
+|          |   "private:" has been changed (it was the other way around)   |
+|          |   in the part of section 9.3 (declaring types) that deals     |
+|          |   with <struct>s.  The new order is identical to the order    |
+|          |   that is specified in the part that deals with classes.      |
+|----------|---------------------------------------------------------------|
+|  1.0.000 | First formal issue of this document.  This revision is        |
+| 19970225 | identical to revision 0.0.006.                                |
+| 19970225 |                                                               |
+| EAS      |                                                               |
+|----------|---------------------------------------------------------------|
+|  1.0.001 | - Section 13 (constructors and destructors) now requires that |
+| 19970228 |   a class always contain a virtual destructor, even if this   |
+| 19970302 |   destructor is empty.  This prevents a problem in the        |
+| EAS      |   following situation:                                        |
+|          |      class base                                               |
+|          |      {                                                        |
+|          |         // ...                                                |
+|          |         public:                                               |
+|          |            base();                                            |
+|          |            ~base();                                           |
+|          |      };                                                       |
+|          |      class derived : public base                              |
+|          |      {                                                        |
+|          |         //...                                                 |
+|          |         public:                                               |
+|          |            derived();                                         |
+|          |            ~derived();                                        |
+|          |      };                                                       |
+|          |      base *  p = new derived(123); // derived::derived called |
+|          |      delete p;                     // base::~base called      |
+|          |   If base::~base would have been virtual, derived::~derived   |
+|          |   would have been called instead of base::~base .             |
+|          | - In section 7.1 (contents of the source modules), point 5    |
+|          |   (the list of include files) now requires that the list of   |
+|          |   include files be preceded by a header that reads "Imported  |
+|          |   modules.".  This explicitly identifies this section of the  |
+|          |   source module to be a separate section.                     |
+|          | - In section 7.2 (contents of the header modules), point 4    |
+|          |   (prevent multiple inclusion) now reads "all characters that |
+|          |   are not alphanumeric" instead of "all path characters that  |
+|          |   are not alphanumeric".  This accounts for non-alphanumeric  |
+|          |   characters in filenames.                                    |
+|          | - Point 11.b (the function header) of section 7.1 (contents   |
+|          |   of the source modules) now refers to section 9.5 (function  |
+|          |   headers) for requirements on function headers.  This change |
+|          |   brings section 7.1 in line with section 9.5.                |
+|          | - Section 9.4 (declaring variables) now requires variables to |
+|          |   be declared at the beginning of a code block only.          |
+|          | - The RCS-compatible revision record has been moved from      |
+|          |   section 1.1 (RCS-compatible revision record) to a new       |
+|          |   appendix A (RCS-compatible revision record).  This was done |
+|          |   because the RCS-compatible revision record is written by    |
+|          |   the RCS when this file is formalised.  In doing so, the     |
+|          |   line numbers of all sections following the RCS-compatible   |
+|          |   revision record are changed; this makes the line numbers in |
+|          |   the table of contents invalid.  Moving the RCS-compatible   |
+|          |   revision record to the very end of the document eliminates  |
+|          |   this problem.                                               |
+|          | - A new section 14 (preventing copying, assignment or default |
+|          |   construction) has been inserted.  This section contains     |
+|          |   requirements on how to prevent copying, assigning instances |
+|          |   of a class, or invoking a default constructor for instances |
+|          |   of a class.                                                 |
+|          | - Point 5 (imported modules) of section 7.1 (contents of the  |
+|          |   code modules) now requires that a code module include only  |
+|          |   those include files that it needs.                          |
+|          | - The requirement in section 13 (constructors and             |
+|          |   destructors) that every class has a virtual destructor has  |
+|          |   been made less stringent.  Now, only base classes are       |
+|          |   required to provide a virtual destructor.                   |
+|----------|---------------------------------------------------------------|
+|  1.1.002 | - The revision number of this file has been increased from    |
+| 19970305 |   1.0.001 to 1.1.002.  This accounts for the fact the CVS     |
+| 19970317 |   starts numbering at revision 1.1.  For this reason, the     |
+| EAS      |   first formal revision of this file is known to CVS as       |
+|          |   revision 1.1, not as revision 1.0 as originally indicated   |
+|          |   in this revision record.                                    |
+|          | - In section 7.1 (contents of the code modules), point 2      |
+|          |   (the header with RCS information), the CVS keyword          |
+|          |   "RCSFile" has been changed into "RCSfile".  CVS doesn't     |
+|          |   understand the previous spelling.                           |
+|          | - In section 7.2 (contents of the header modules), point 2    |
+|          |   (the header with RCS information), the CVS keyword          |
+|          |   "RCSFile" has been changed into "RCSfile".  CVS doesn't     |
+|          |   understand the previous spelling.                           |
+|          | - In appendix A (RCS-compatible revision record), the keyword |
+|          |   "RCSFile" has been changed into "RCSfile".  CVS doesn't     |
+|          |   understand the previous spelling.                           |
+|          | - Section 8 (naming conventions) now indicates that the       |
+|          |   prefix string "priv_" for private identifiers shall always  |
+|          |   be spelled in lower case, regardless of the naming convent- |
+|          |   ion that applies to the identifier to which "priv_" is      |
+|          |   prefixed.                                                   |
+|          | - Sections 23.2 (format of revision numbers) and 23.3         |
+|          |   (generating new revisions of files) have been updated.      |
+|          |   The system of revision numbering is now compliant to the    |
+|          |   numbering system that CVS (the formal tool used by the HoQ) |
+|          |   uses.  CVS starts numbering at 1 instead of 0, both for the |
+|          |   major revision number and for the minor revision number.    |
+|          | - Point 4 (preventing multiple inclusion of header files) of  |
+|          |   section 7.2 (contents of the header files) has been         |
+|          |   updated; the defined symbol that is used to prevent         |
+|          |   multiple inclusion now includes a prefix string "GNU_ARJ_". |
+|          |   This prevents possible clashes with symbols that may be     |
+|          |   defined by the standard header files.                       |
+|----------|---------------------------------------------------------------|
+|  1.1.003 | - Section 13 (constructors and destructors) now allows a      |
+| 19970323 |   constructor to be <inline> also if the class is a derived   |
+| 19970327 |   class, provided that all base classes of the derived class  |
+| EAS      |   are declared in the same source file as the derived class.  |
+|          |   This accounts for the situation where a concept is best     |
+|          |   represented by a generic base class and a specific derived  |
+|          |   class that has the same purpose as the generic base class.  |
+|          | - In section 7.1 (contents of the code modules) and section   |
+|          |   7.2 (contents of the header modules), the colon at the end  |
+|          |   of each RCS keyword has been removed.  These colons are     |
+|          |   superfluous.                                                |
+|          | - Section 14 (preventing copying, assignment or default       |
+|          |   construction) now allows the dummy private member functions |
+|          |   to be inlined by adding an empty function block to the      |
+|          |   dummy private functions.  Sections 9.5 (function headers)   |
+|          |   and 13 (constructors and destructors) have been changed to  |
+|          |   comply with the new text of section 14.                     |
+|          | - Two new points have been added to section 7.2 (contents of  |
+|          |   the header modules).  These points state that member        |
+|          |   functions of template classes, and template functions,      |
+|          |   must be defined in the header module.  This is necessary    |
+|          |   to enable the compiler to instantiate the templates in      |
+|          |   other modules.                                              |
+|----------|---------------------------------------------------------------|
+|  1.1.004 | - Section 11 (typecasting) has been extended with paragraphs  |
+| 19970405 |   on typecasting to and from enumerated types.  The addition  |
+| 19970405 |   of these paragraphs brings this Coding Standard in line     |
+| EAS      |   with the definition of the C++ language.                    |
+|----------|---------------------------------------------------------------|
+|  1.1.005 | - In point 11.a of section 7.1 (contents of the code          |
+| 19970508 |   modules), the items 5 ("Assumes:") and 6 ("Returns") have   |
+| 19970525 |   been interchanged: now, "Returns:" comes before "Assumes:". |
+| EAS      |   It is more logical to group "Returns:" with "Input:" and    |
+|          |   "Output:".                                                  |
+|          | - In point 11.a of section 7.1 (contents of the code          |
+|          |   modules), a new item "Document:" has been inserted between  |
+|          |   the items "Remarks:" and "History:".  This item links the   |
+|          |   source code to its documentation.                           |
+|          | - In point 11.a of section 7.1 (contents of the code          |
+|          |   modules), it has been made explicit that "-" must be listed |
+|          |   for the items "Input:", "Output:" and "Assumes:" if the     |
+|          |   item is empty.                                              |
+|          | - A new section 23.2 (definition of a change) has been        |
+|          |   inserted.  This section explicitly defines that any action  |
+|          |   that changes the binary representation of a human-generated |
+|          |   file must be considered a change, even if the compiler      |
+|          |   produces the same output before and after such a change.    |
+|          | - A reference to the ISO standard has been added to section   |
+|          |   25.1 (set-up of the documentation).                         |
+|          | - A new item 1.c has been added to section 7.1 (contents of   |
+|          |   the code modules).  This item links the code module to its  |
+|          |   documentation.                                              |
+|          | - A new item 1.c has been added to section 7.2 (contents of   |
+|          |   the header modules).  This item links the code module to    |
+|          |   its documentation.                                          |
+|          | - Section 24 (configuration control) and all its subsections  |
+|          |   have been updated: all texts have been reformulated in the  |
+|          |   "requirements way".  This means that texts now read "shall" |
+|          |   instead of "is".                                            |
+|          | - Section 25.4 (details on a source module) has been extended |
+|          |   with detailed requirements on the contents of the document- |
+|          |   ation file for a source module.                             |
+|          | - Section 16 (handling non-nominal conditions) has been       |
+|          |   improved.  The statement that "every <if> statement must    |
+|          |   have an <else> branch except if such an <else> branch does  |
+|          |   not exist", which was nonsensical, has been replaced with   |
+|          |   more a more sensible statement.  This update incorporates   |
+|          |   a comment Hans Wessels gave at 19970512.                    |
+|          | - A new section 22 (debugging) has been added to this Coding  |
+|          |   Standard.  It contains requirements on inserting debugging  |
+|          |   code into the actual code.  This addition incorporates a    |
+|          |   comment Wout Klaren and Hans Wessels gave at 19970517.      |
+|          | - The syntax of <const> data has been brought in line with    |
+|          |   the syntax that is used in the code.  Now, a pointer to a   |
+|          |   <const> <int> is declared as <int const *> instead of       |
+|          |   <const int *>.                                              |
+|          | - Section 26 (documentation) has been improved.  The text     |
+|          |   "source module" has been replaced with the text "module".   |
+|          | - In section 26.4 (details on a module), a new chapter 4      |
+|          |   (design and implementation considerations) has been         |
+|          |   required.  Addition of such a chapter to the documentation  |
+|          |   files is useful to those who need the documentation.        |
+|----------|---------------------------------------------------------------|
+|  1.1.006 | - In the entire document, colons have been added to the end   |
+| 19970530 |   of each RCS keyword.  This undoes the removal of these      |
+| 19970621 |   colons in revision 1.1.003.  Even if the colons may be      |
+| EAS      |   superfluous, they do no harm, and some third-party tools    |
+|          |   may, erroneously or not, depend on the presence of the      |
+|          |   colons.  Source with colons is therefore safer than source  |
+|          |   without colons.                                             |
+|          | - The Coding Standard has been rewritten in order to make it  |
+|          |   applicable to all projects of the EASy Programming Group,   |
+|          |   not just to the Windows shell for GNU Arj.  Most of the     |
+|          |   changes made in this revision are a result of this effort.  |
+|          |   The individual sections that are affected by this rewriting |
+|          |   are not mentioned individually in this revision record -    |
+|          |   that would make this revision record too long.  Only the    |
+|          |   most important changes are mentioned here.                  |
+|          | - A new section 3 (customisation of the Coding Standard) has  |
+|          |   been created.  This section handles the relation between    |
+|          |   this generic Coding Standard and the specific Coding        |
+|          |   Standard that must be written for each project.             |
+|          | - A new section 5 (functional decomposition of a program) has |
+|          |   been created.  This section explains the parts of which a   |
+|          |   program consists.                                           |
+|          | - A new section 11 (NIL layers) has been inserted.            |
+|----------|---------------------------------------------------------------|
+|  1.1.007 | - The revision records for functions have been deleted.  This |
+| 19970622 |   change affects sections 8.1 (contents of the module source  |
+| 19970723 |   files) and 28.6 (generating new revisions of functions).    |
+| EAS      |   It incorporates a comment that was given at the design      |
+|          |   review of the project team at 19970621.                     |
+|          | - The amount of information in the headers of functions has   |
+|          |   (section 8.1 (contents of the module source files) been     |
+|          |   reduced significantly.  From now on, the header must        |
+|          |   contain only the fully qualified function name.             |
+|          |   This change incorporates a comment that was given at the    |
+|          |   design review of the project team at 19970621.              |
+|          | - The directory tree in section 6 (directory tree) has been   |
+|          |   extended with a repository directory.                       |
+|          | - The requirements on documentation have been adapted to suit |
+|          |   the actual, reasonable needs of projects.                   |
+|          | - A global include file has been introduced.  This change     |
+|          |   affects section 6 (directory tree) and the new sections 11  |
+|          |   (contents of the global files) and 11.1 (contents of the    |
+|          |   global include file).                                       |
+|          | - Points of improvement must now be indicated with the string |
+|          |   "**POI**" (without the quotes).  This requirement has been  |
+|          |   added to section 28.2 (identifying points of improvement).  |
+|          | - The requirement that the documentation of a module,         |
+|          |   component or unit describe why that module, component or    |
+|          |   unit has been given its current position in the hierarchy   |
+|          |   has been released.  Now, such a description must be given   |
+|          |   only if special considerations apply to the position of the |
+|          |   module, component or unit.                                  |
+|          |   This change affects points 4 of section 8.3 (contents of    |
+|          |   the module documentation files), 9.2 (contents of the       |
+|          |   component documentation files), and 10.2 (contents of the   |
+|          |   unit documentation files).                                  |
+|----------+---------------------------------------------------------------|
+|  1.1.008 | - A few minor changes have been made to section 30            |
+| 19970820 |   (configuration control).  These changes have no impact on   |
+| 19970826 |   the meaning of that section.                                |
+| EAS      | - In section 30.2 (configuration control for files), all      |
+|          |   references to revision numbers for functions have been      |
+|          |   removed.  This brings section 30.2 in line with the rest    |
+|          |   of this document.                                           |
+|          | - In section 10.2 (contents of the unit header files), point  |
+|          |   4, "<UNIT>_SETTINGS" has been replaced with "<UNIT>" (two   |
+|          |   times).  This corrects a mistake.                           |
+|          | - Section 30.2 has been changed.  Because header files may    |
+|          |   also contain functions, configuration control must be done  |
+|          |   for header files too.  The configuration-control file must  |
+|          |   list all functions that constitute a header file.  This     |
+|          |   brings configuration control for header files in line with  |
+|          |   configuration control for source files.                     |
+`----------'---------------------------------------------------------------'
+
+
+2  -  SCOPE
+
+   This document describes the Coding Standard that must be used for all
+projects that are made by any member of the EASy Programming Group.  It
+provides requirements on
+
+      1. the locations of the project's files in a directory tree
+      2. the organisation of the code in units, components and modules
+      3. the contents of the source files (both code and header files)
+      4. naming conventions to be used in the source files
+      5. conventions on the lay-out of the source code
+      6. the use of some of the features of the C++ language
+      7. change control and configuration control
+      8. how to document the project
+
+It is meant to make the design and implementation of the project traceable
+and auditable.
+   In this Coding Standard, the words "shall" and "must" indicate that it is
+obligatory to follow the stated requirement.  The word "may" indicates that
+the stated requirement may, but needs not, be followed.  The words "should"
+and "ought" indicate that it is strongly recommended, but not obligatory, to
+follow the stated requirement.
+   The Coding Standard is meant for experienced, reasonable programmers.  It
+does not cover the "art of programming".  This means that it does not forbid
+as much as possible; instead, it leaves it to the programmer to decide what
+is good programming practice and what is not.  For example, the Coding
+Standard allows to put an entire program in a single source file, regardless
+of the size of the program.  The programmer is assumed to be smart enough
+not to do this because he/she knows that this is bad programming practice.
+
+
+3  -  TAILORING THE CODING STANDARD
+
+   Normally, this Coding Standard applies to all projects that are written
+by the EASy Programming Group, even if programmed by a contractor, regard-
+less of the size of the project (program, library, utility function, ...).
+However, it is allowed to tailor this Coding Standard to a specific
+programming project.  If the customer has requirements that are not
+compatible with this Coding Standard, it is allowed to use the customer's
+standards instead of this Coding Standard.  However, it is not allowed not
+to use any standard at all: some standard shall be used at all times.
+   For each project, a dedicated Coding Standard shall be written that is
+tailored to that project.  The tailored Coding Standard shall explicitly
+refer to this generic Coding Standard.  It shall explicitly indicate which
+parts of this generic Coding Standard are either modified or not applicable
+to that project.
+   Even if a project fully adheres to this generic Coding Standard, it must
+provide its own, specific Coding Standard, if only to explicitly state the
+full adherence of the project to this generic Coding Standard.
+   A copy of this generic Coding Standard shall be added to the project's
+documentation.  This prevents future changes in this generic Coding Standard
+from invalidating a project's tailored Coding Standard.
+           
+
+4  -  PROGRAMMING LANGUAGE
+
+   All code shall be programmed in ANSI C++.
+
+
+5  -  FUNCTIONAL DECOMPOSITION OF A PROJECT
+
+   A project consists of a number of parts; each of these parts consists of
+a number of smaller parts, and so on.  Projects of the EASy Programming
+Group shall use the following functional decomposition:
+
+   - A project consists of a number of units.
+     Examples of units are
+        - File I/O; this is a low-level, service-type unit.
+        - Object recognition; for example, to identify objects that are
+          viewed with a camera.
+        - Sensor reading; to read data from physical sensors.
+   - A unit consists of a number of components.
+     In a unit that performs object recognition, examples of components are
+        - Clustering; this component clusters pixels from the camera to
+          shapes that might be objects.
+        - Shape finding; this component analyses shapes and possibly groups
+          them, in order to find shapes.
+        - Shape identification; this component matches the shapes that
+          result from the camera image to known shapes.
+   - A component consists of a number of modules.
+     In a component that clusters pixels from a camera to shapes, examples
+     of modules are
+        - Shape database; this module manages a set of shapes that have
+          already been identified.
+        - Shape extraction; this module finds adjacent pixels of the same
+          color and groups them to shapes.
+   - A module consists of a single source file and its associated header
+     file.  The source file contains the implementation of the module, the
+     header file contains the module's interface definition.
+
+   Each module shall consist of exactly one source file, exactly one header
+file, and exactly one documentation file.  Each module shall contain code
+that implements a distinguishable part of the project's functionality.  Code
+that implements such a single functionality shall not be split over several
+modules.  One module shall not implement more than a single functionality.
+
+
+6  -  DIRECTORY TREE
+
+   To keep the - possibly large - number of files that make up the project
+manageable, the project's files shall be stored in dedicated directories.
+The directory tree shall reflect the functional decomposition of the project
+as identified in section 5.
+   The directory tree shall be set up as follows:
+
+       1. A project directory shall be created for all the project's files.
+          Only the final output of the project (for example an executable
+          program file, or a compiled library) and related files like map
+          files and files with debug information shall reside in the project
+          directory.  The project directory may reside anywhere in the
+          directory tree of the host disk.  None of the project's files
+          shall reside outside the project directory.
+          The name of the project directory shall be directly derived from
+          the name of the project.
+       2. In the project directory, a unit directory shall be created for
+          each of the units of which the project consists.  Exactly three
+          files shall reside in a unit directory: the header file for the
+          unit, the documentation file for the unit, and the global settings
+          file for the unit.
+          The name of a unit directory shall be the name of the unit.
+       3. In each unit directory, a component directory shall be created for
+          each of the components of which the unit consists.  Exactly two
+          files shall reside in a component directory: the header file for
+          the component, and the documentation file for the component.
+          The name of a component directory shall be the name of the
+          component.
+       4. In each component directory, a module directory shall be created
+          for each of the modules of which the component consists.  Each
+          module directory shall contain the source file (if it exists), the
+          header file and the documentation file of the module.
+       5. In the project directory, a project binary directory shall be
+          created for all compiler outputs except the final compiler outputs
+          as described in point 1.  The project binary directory shall
+          contain the compiled library files of all units of which the
+          project consists.
+          The name of the project binary directory shall be "binary".
+       6. In the project binary directory, a unit binary directory shall be
+          created for each of the units of which the project consists.  The
+          unit binary directory shall contain the compiled library files of
+          all components of which the unit consists.
+          The name of a unit binary directory shall be the name of the unit.
+       7. In each unit binary directory, a component binary directory shall
+          be created for each of the components of which the unit consists.
+          The component binary directory shall contain the compiled object
+          files of all modules of which the component consists.
+       8. In the project directory, a global directory shall be created for
+          all settings and definitions that apply to the entire project.
+          The global directory shall contain all global include files of the
+          project.
+          The name of the global directory shall be "global".
+       9. In the project directory, a software development environment
+          directory shall be created for make files and related project-
+          management files.
+          The name of the software development environment directory shall
+          be "sde".
+      10. In the project directory, a tools directory shall be created for
+          all tools that are used while developing the project.  The action
+          list shall also reside in the tools directory.
+          The name of the tools directory shall be "tools".
+      11. In the project directory, a documentation directory shall be
+          created for all documentation files that do not belong to any
+          of the units.
+          The name of the documentation directory shall be "doc".
+      12. In the project directory, a configuration-control directory shall
+          be created for configuration-control files.
+          The name of the configuration-control directory shall be
+          "confctrl".
+      13. In the project directory, a repository directory shall be created
+          for storing all human-generated files that are not currently used
+          by the project but that may be used in the future.
+          The name of the repository directory shall be "reposit".
+      14. In the project directory, an archive directory shall be created
+          for archiving all versions of the project.
+          The name of the archive directory shall be "archive".
+
+Graphically, this is equivalent to the following scheme.  The files in each
+directory are mentioned between brackets.
+
+project (final output of the compiler and related files)
+   |
+   |---- unit 1 (header, doc file for unit 1, global settings for unit 1)
+   |        |
+   |        |---- component 1.1 (header, doc file for component 1.1)
+   |        |        |
+   |        |        |---- module 1.1.1 (src, hdr, doc file of module 1.1.1)
+   |        |        |---- module 1.1.2 (src, hdr, doc file of module 1.1.2)
+   |        |        |---- module 1.1.3 (src, hdr, doc file of module 1.1.3)
+   |        |        `---- ...
+   |        |
+   |        |---- component 1.2 (header, doc file for component 1.2)
+   |        |        |
+   |        |        |---- module 1.2.1 (src, hdr, doc file of module 1.2.1)
+   |        |        |---- module 1.2.2 (src, hdr, doc file of module 1.2.2)
+   |        |        `---- ...
+   |        |
+   |        `---- ...
+   |
+   |---- unit 2 (header, doc file for unit 2, global settings for unit 2)
+   |        |
+   |        |---- component 2.1 (header, doc file of component 2.1)
+   |        |        |
+   |        |        |---- module 2.1.1 (src, hdr, doc file of module 2.1.1)
+   |        |        |---- module 2.1.2 (src, hdr, doc file of module 2.1.2)
+   |        |        `---- ...
+   |        |
+   |        |---- component 2.2 (header, doc file of component 2.2)
+   |        |        |
+   |        |        |---- module 2.2.1 (src, hdr, doc file of module 2.2.1)
+   |        |        |---- module 2.2.2 (src, hdr, doc file of module 2.2.2)
+   |        |        |---- module 2.2.3 (src, hdr, doc file of module 2.2.3)
+   |        |        `---- ...
+   |        |
+   |        `---- ...
+   |
+   |---- ...
+   |
+   |---- binary (compiled library file of unit 1)
+   |        |   (compiled library file of unit 2)
+   |        |   ...
+   |        |
+   |        |---- unit 1 binary (compiled library file of component 1.1)
+   |        |        |          (compiled library file of component 1.2)
+   |        |        |          ...
+   |        |        |
+   |        |        |---- component 1.1 binary (comp'd obj file mod. 1.1.1)
+   |        |        |                          (comp'd obj file mod. 1.1.2)
+   |        |        |                          (comp'd obj file mod. 1.1.3)
+   |        |        |                          ...
+   |        |        |
+   |        |        |---- component 1.2 binary (comp'd obj file mod. 1.2.1)
+   |        |        |                          (comp'd obj file mod. 1.2.2)
+   |        |        |                          ...
+   |        |        |
+   |        |        `---- ...
+   |        |
+   |        |---- unit 2 binary (compiled library file of component 2.1)
+   |        |        |          (compiled library file of component 2.2)
+   |        |        |          ...
+   |        |        |
+   |        |        |---- component 2.1 binary (comp'd obj file mod. 2.1.1)
+   |        |        |                          (comp'd obj file mod. 2.1.2)
+   |        |        |                          ...
+   |        |        |
+   |        |        |---- component 2.2 binary (comp'd obj file mod. 2.2.1)
+   |        |        |                          (comp'd obj file mod. 2.2.2)
+   |        |        |                          (comp'd obj file mod. 2.2.3)
+   |        |        |                          ...
+   |        |        |
+   |        |        `----
+   |        |
+   |        `---- ...
+   |
+   |---- global (global include files)
+   |
+   |---- sde
+   |
+   |---- tools
+   |
+   |---- doc
+   |
+   |---- confctrl
+   |
+   |---- reposit
+   |
+   `---- archive
+
+
+7  -  FILE NAMES
+
+   All files and paths shall be named according to the ISO 8.3 convention.
+File names and path names shall consist of alphanumeric characters and
+underscores.  This allows the widest possible distribution and re-use of the
+files.
+   For each module, the source file, the header file, the documentation file
+and the compiled module file shall have the same name.
+   For each component, the component directory, the component binary
+directory, and the compiled component library file shall have the same name.
+   For each unit, the unit directory, the unit binary directory, and the
+compiled unit library file shall have the same name.
+   Files shall have the following extensions:
+
+      1. All source files shall have the extension .cpp , even if they
+         contain nothing but C-style functions.
+      2. All header files shall have the extension .h .
+      3. All documentation files, except for this generic Coding Standard,
+         shall have the extension .d .
+      4. This generic Coding Standard shall have the extension .gen .
+      5. All configuration-control files shall have the extension .cc .
+      6. Binary files shall have the extensions that are the defaults for
+         the compiler that created them.
+
+
+8  -  CONTENTS OF THE MODULE FILES
+
+8.1  -  Contents Of The Module Source Files
+
+   Each source file shall consist of the following parts, in the specified
+order:
+
+       1. A header that contains
+             a. Under the keyword "File:":
+                The filename of the source file.
+             b. Under the keyword "Contents:":
+                A short description of the contents of the source file.
+             c. Under the keyword "Document:":
+                The filename of the file that contains documentation on the
+                module to which this source file belongs, or "-" if the
+                module is not documented.
+       2. A header that reads "RCS information.", followed by the following
+          lines, each of which starts in the leftmost column:
+             // @(#) <file>  -  <contents>
+
+             // >RCSfile:<
+             // >Author:<
+             // >Revision:<
+             // >Date:<
+             // >Log:<
+          Note the empty line!  In the first line, <file> must be replaced
+          with the filename of the source file (point 1.a) and <contents>
+          must be replaced with the description of the contents of the
+          source file (point 1.b).  In the other lines, both angle brackets
+          > and < must be replaced with dollar signs.  The dollar signs are
+          not used in this file to prevent the RCS from replacing the above
+          lines with RCS information.
+       3. A header that reads "Detailed history.", followed by a revision
+          record that is formatted like the revision record in section 1.2
+          of this Coding Standard.  This revision record must contain the
+          revision number, the date when the revision was started, the date
+          when the revision was completed, the author of the changes, and a
+          concise description of the changes with respect to the previous
+          revision of the source file.
+          Refer to section 29 for requirements on revision tracking.
+       4. If  the source file contains <#define>s:
+          A header that reads "Definitions.", followed by the <#define>s
+          that apply to the entire source file.
+          Note that <#define>s are nearly obsolete in C++.
+       5. A header that reads "Imports.", followed by a list of header
+          files.  A source file shall include only those header files that
+          are needed by the source file itself, or by one of the other
+          header files that are included by the source file.  The header
+          files shall be listed in the following order:
+             a. The global include file (section 11.1).
+             b. The global settings file for the unit to which the module
+                belongs.  This global settings file is detailed in
+                section 10.3.
+             c. Header files for resources.
+             d. Header files for other units of the project, starting with
+                the most basic unit and ending with the most sophisticated
+                unit.  All these units must be at a lower hierarchical level
+                than the unit to which the current source file belongs.
+             e. Header files for other components of the unit to which the
+                current source file belongs, starting with the most basic
+                component and ending with the most sophisticated component.
+                All these components must be at a lower hierarchical level
+                than the module to which the current source file belongs.
+             f. Header files for other modules of the component to which the
+                current source file belongs, starting with the most basic
+                module and ending with the most sophisticated module.  All
+                these modules must be at a lower hierarchical level than the
+                module to which the current source file belongs.
+             g. The header file that belongs to the current source file.
+       6. If local constants are defined:
+          A header that reads "Local constants.", followed by the
+          definitions of the local constants.
+       7. If local types are defined:
+          A header that reads "Local types.", followed by the declarations
+          of the local types.
+       8. If local functions are defined:
+          A header that reads "Local functions.", followed by the
+          declarations (prototypes) of the local functions.
+       9. If the source file exports data:
+          A header that reads "Exported data.", followed by the definitions
+          of the exported data.
+      10. If local data are defined:
+          A header that reads "Local data.", followed by the definitions of
+          the local data.
+      11. For each function in the source file, whether global (exported)
+          or local:
+             a. A header that contains the keyword "Function:", followed by
+                the fully qualified name of the function.
+             b. The definition of the function.
+                Refer to section 14.5 for requirements on the function
+                header.
+      12. A header-like statement that reads (without the quotes)
+             "This module was written by <author>, <function>.  You may"
+             "freely use this code for your own purposes without paying"
+             "any fee.  However, if you use this code, either literally"
+             "or modified, you are obliged to mention the name of the"
+             "original author, <author>."
+          In this statement, "<author>" must be replaced with the name of
+          the author of the change, and "<function>" must be replaced with
+          the function of the author in the EASy Programming Group.
+      13. A header that reads "End of <name> .", where <name> is the
+          filename of the source file.
+
+   Refer to section 14 for detailed requirements on the lay-out of the parts
+of a source file.
+
+Reason: - Requiring all source files to have the same set-up eases mainten-
+          ance of the code.
+        - The string "@(#)" is used by some much-used file-handling tools.
+          The UNIX tools "what" and "ident" are examples of such tools.
+        - Including the most basic header files first allows the project to
+          be organised such that the compilation process starts at the most
+          basic modules.  More sophisticated modules, that are higher in the
+          hierarchy of modules, are compiled only when all underlying
+          modules have been compiled successfully.  This ensures that, if a
+          module must be changed to remove a problem, no other modules that
+          depend on it must be re-compiled; this minimises total compilation
+          time.
+        - Including the header file that belongs to the module itself allows
+          the compiler to check if the declarations in the header file are
+          consistent with the definitions in the source file.
+        - Including the name of the module source file both at the start and
+          at the end of the file eases recognition of print-outs.
+
+
+8.2  -  Contents Of The Module Header Files
+
+   Each module header file shall consist of the following parts, in the
+indicated order:
+
+       1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the header file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the header file.
+            c. Under the keyword "Document:":
+               The filename of the file that contains documentation on the
+               module to which this header file belongs, or "-" if the
+               module is not documented.
+       2. A header that reads "RCS information.", followed by the following
+           lines, each of which starts in the leftmost column:
+              // @(#) <file>  -  <contents>
+
+              // >RCSfile:<
+              // >Author:<
+              // >Revision:<
+              // >Date:<
+              // >Log:<
+          Note the empty line!  In the first line, <file> must be replaced
+          with the filename of the header file (point 1.a) and <contents>
+          must be replaced with the description of the contents of the
+          header file (point 1.b).  In the other lines, both angle brackets
+          > and < must be replaced with dollar signs.  The dollar signs are
+          not used in this file to prevent the RCS from replacing the above
+          lines with RCS information.
+       3. A header that reads "Detailed history.", followed by a revision
+          record that is formatted like the revision record in section 1.2
+          of this Coding Standard.  This revision record must contain the
+          revision number, the date when the revision was started, the date
+          when the revision was completed, the author of the changes, and a
+          concise description of the changes with respect to the previous
+          revision.
+          Refer to section 29 for requirements on revision tracking.
+       4. A header that reads "Prevent multiple inclusion.", followed by the
+          following two lines:
+             #ifndef <UNIT>_<COMPONENT>_<MODULE>
+             #define <UNIT>_<COMPONENT>_<MODULE>
+          In these two lines, <UNIT> must be replaced with the name of the
+          unit to which the header file belongs, <COMPONENT> must be
+          replaced with the name of the component to which the header file
+          belongs, and <MODULE> must be replaced with the name of the module
+          to which the header file belongs.
+       5. If the module exports macros:
+          A header that reads "Exported macros.", followed by the
+          definitions of the exported macros.
+       6. If the module exports constants:
+          A header that reads "Exported constants.", followed by the
+          definitions of the exported constants.
+       7. If the module exports types:
+          A header that reads "Exported types.", followed by the
+          declarations of the exported types.
+       8. If the module exports functions:
+          A header that reads "Exported functions.", followed by the
+          declarations (prototypes) of the exported functions.
+       9. If the module exports data:
+          A header that reads "Exported data.", followed by the declarations
+          of the exported data.
+      10. If the module exports classes that have inline member functions:
+          The definitions of the inline member functions.  The inline member
+          functions must be preceded by a header as described under point
+          11.a in section 8.1.
+      11. If the module exports template classes: The definitions of the
+          non-inline member functions of the template classes.  These
+          functions must be preceded by a header as described under point
+          11.a in section 8.1.
+      12. If the module exports template functions: The definitions of the
+          template functions.  These functions must be preceded by a header
+          as described under point 11.a in section 8.1.
+      13. A header that reads "Prevent multiple inclusion.", followed by the
+          following line:
+             #endif
+      14. A header-like statement that reads (without the quotes)
+             "This module was written by <author>, <function>.  You may"
+             "freely use this code for your own purposes without paying"
+             "any fee.  However, if you use this code, either literally"
+             "or modified, you are obliged to mention the name of the"
+             "original author, <author>."
+          In this statement, "<author>" must be replaced with the name of
+          the author of the change, and "<function>" must be replaced with
+          the function of the author in the EASy Programming Group.
+      15. A header that reads "End of <name>.", where <name> is the filename
+          of the module header file.
+
+A module header file shall not include other header files.
+   A module header file shall export only those parts of the module that
+need be exported.  Note that this includes any private parts of classes,
+because the C++ language requires such private parts to be exported.
+
+Reason: - Requiring all module header files to have the same set-up eases
+          maintenance of the code.
+        - Preventing multiple inclusion of a header file eliminates lots of
+          errors.
+        - The string "@(#)" is used by some much-used file-handling tools.
+          The UNIX tools "what" and "ident" are examples of such tools.
+        - Including the name of the module header file both at the start and
+          at the end of the file eases recognition of print-outs.
+        - Templates are like declarations, not like definitions; for
+          example, they do not generate code by themselves.  Therefore,
+          templates belong in a header file, not in a source file.  Another
+          reason to include templates in a header file rather than in a
+          source file is that this is the only way to allow the compiler to
+          instantiate the template for any required type.
+
+
+8.3  -  Contents Of The Module Documentation Files
+
+   Details on the operations performed by a module shall be documented
+in a separate documentation file that is specific to that module.  The
+documentation shall consist of a thorough description of the external inter-
+face of the module, the actions that are performed by every function in the
+module, and the algorithms (including the backgrounds) that are implemented
+to perform those actions.  This documentation is intended for the novice
+programmer.
+   Each module documentation file shall consist of the following parts, in
+the indicated order:
+
+      1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the documentation file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the module
+               (not of the contents of the documentation file).  This
+               short description shall be identical to the description
+               that is listed in the source module according to point 1.b
+               of section 8.1.
+            c. Under the keyword "Module:":
+               The name of the module to which the documentation file
+               applies.
+      2. A header that reads "RCS information", followed by the following
+         lines, each of which starts in the leftmost column:
+            ---  @(#) <file>  -  <contents>
+            ---
+            ---  >RCSfile:<
+            ---  >Author:<
+            ---  >Revision:<
+            ---  >Date:<
+            ---  >Log:<
+         Note the empty line!  In the first line, <file> must be replaced
+         with the filename of the documentation file (point 1.a) and
+         <contents> must be replaced with the description of the contents of
+         the documentation file (point 1.b).  In the other lines, both angle
+         brackets > and < must be replaced with dollar signs.  The dollar
+         signs are not used in this file to prevent the RCS from replacing
+         the above lines with RCS information.
+      3. A header that reads "Detailed history", followed by a revision
+         record that is formatted like the revision record in section 1.2
+         of this Coding Standard.  The revision record must contain the
+         revision number, the date when the revision was started, the date
+         when the revision was completed, the author of the changes, and a
+         concise description of the changes with respect to the previous
+         revision.
+         Refer to section 29 for requirements on revision tracking.
+      4. A header that reads "Chapter 1  -  Purpose of the module
+         <unit><component><module>".
+         In this header, <unit> must be replaced with the name of the unit
+         to which the module belongs, surrounded by angle brackets < and >;
+         <component> must be replaced with the name of the component to
+         which the module belongs, surrounded by angle brackets < and >;
+         and <module> must be replaced with the name of the module to
+         which the documentation file applies, surrounded by angle brackets
+         < and >.
+         The header must be followed by a high-level description of the
+         purpose of the module.  This description must provide a defining
+         overview of the module that describes what the module does and what
+         purpose it serves.  If applicable, the description must also
+         explain how the module fits in with the component of which it
+         is a part: it must explain the position of the module in the
+         hierarchy of modules, and it must explain how the module is
+         connected to the rest of the component.
+      5. A header that reads "Chapter 2  -  Using the module
+         <unit><component><module>".
+         In this header, <unit> must be replaced with the name of the unit
+         to which the module belongs, surrounded by angle brackets < and >;
+         <comopnent> must be replaced with the name of the component to
+         which the module belongs, surrounded by angle brackets < and >;
+         and <module> must be replaced with the name of the module to
+         which the documentation file applies, surrounded by angle brackets
+         < and >.
+         The header must be followed by a description that explains how the
+         module must be used (by other modules).  This description must
+         form a user's guide that explains on code level how the module's
+         services must be used.  It needs not explain all details of those
+         services, algorithms, or other details of the module.
+      6. A header that reads "Chapter 3  -  Dependencies", followed by a
+         list of the units, components and modules on which the subject
+         module depends (these are the units, components and modules that
+         the subject module <#include>s).  For each of these units,
+         components and modules, the following information must be supplied:
+            a. The name of the unit, component or module that is
+               <#include>d.
+            b. The reason why this unit, component or module must be
+               included.
+      7. A header that reads "Chapter 4  -  Detailed explanation of the
+         module <unit><component><module>".  In this header, <unit> must be
+         replaced with the name of the unit to which the module belongs,
+         surrounded by angle brackets < and >; <component> must be replaced
+         with the name of the component to which the module belongs, sur-
+         rounded by angle brackets < and >; and <module> must be replaced
+         with the name of the module to which the documentation file
+         applies, surrounded by angle brackets < and >.
+         The header must be followed by a list of all parts of which
+         the module consists.  For each of these parts, the following
+         information shall be given:
+            a. The declaration of the part.
+            b. A description that explains (not necessarily in the indicated
+               order)
+                  1. The goal of the part.
+                  2. How this goal is reached.
+                  3. Other parts to which the part is related.
+                  4. Dependencies between the part and other parts of the
+                     module or of other modules.
+                  5. If the part is a function:
+                        a. The algorithm that the function uses, and the
+                           reason for using that algorithm.
+                        b. Any information that is needed to understand the
+                           function and its set-up.
+                        c. The assumptions that must be met for the function
+                           to function correctly.
+      8. A header that reads "Chapter 5  -  Design and implementation
+         considerations".
+         The header must be followed by a description of the design and
+         implementation considerations that are applicable to the module.
+         This description must provide backgrounds and rationales that
+         explain why the module has been set up in its current form.  The
+         contents of this section are limited to the design and implement-
+         ation considerations that apply to the module as a whole; design
+         and implementation considerations that apply only to one specific
+         part of the module are described in chapter 5 of the documentation
+         file (point 7 of this section).
+      9. A header that reads "End of file <file> .", where "<file>" must be
+         replaced with the actual filename of the documentation file.
+
+   The module documentation file must have the same name as the module.
+This file must reside in the same directory as the source file and the
+header file of the module.
+   Note that sections 1, 2 and 5 of the module documentation file contain a
+"programmer's reference manual".  Sections 3, 4 and 5 provide a "detailed
+design description".
+
+Reason: The details of a module must be documented, but they must not be
+        scattered over the module itself, and they must not obfuscate the
+        source.  Therefore, these details are documented in separate
+        documentation files.  Another advantage of having separate
+        documentation files is that this makes it easy to collect all
+        documentation one needs to understand (part of) the project.
+
+
+9  -  CONTENTS OF THE COMPONENT FILES
+
+9.1  -  Contents Of The Component Header Files
+
+   Each component header file shall consist of the following parts, in the
+indicated order:
+
+       1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the header file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the header file.
+            c. Under the keyword "Document:":
+               The filename of the file that contains documentation on the
+               component to which this header file belongs, or "-" if the
+               component is not documented.
+       2. A header that reads "RCS information.", followed by the following
+          lines, each of which starts in the leftmost column:
+              // @(#) <file>  -  <contents>
+
+              // >RCSfile:<
+              // >Author:<
+              // >Revision:<
+              // >Date:<
+              // >Log:<
+          Note the empty line!  In the first line, <file> must be replaced
+          with the filename of the header file (point 1.a) and <contents>
+          must be replaced with the description of the contents of the
+          header file (point 1.b).  In the other lines, both angle brackets
+          > and < must be replaced with dollar signs.  The dollar signs are
+          not used in this file to prevent the RCS from replacing the above
+          lines with RCS information.
+       3. A header that reads "Detailed history.", followed by a revision
+          record that is formatted like the revision record in section 1.2
+          of this Coding Standard.  This revision record must contain the
+          revision number, the date when the revision was started, the date
+          when the revision was completed, the author of the changes, and a
+          concise description of the changes with respect to the previous
+          revision.
+          Refer to section 29 for requirements on revision tracking.
+       4. A header that reads "Prevent multiple inclusion.", followed by the
+          following two lines:
+             #ifndef <UNIT>_<COMPONENT>
+             #define <UNIT>_<COMPONENT>
+          In these two lines, <UNIT> must be replaced with the name of the
+          unit to which the header file belongs, and <COMPONENT> must be
+          replaced with the name of the component to which the header file
+          belongs.
+       5. A header that reads "Imports.", followed by a list of header
+          files.  A component header file shall include only those header
+          files that are needed by the component header file itself, or by
+          one of the other header files that are included by the component
+          header file.  The header files shall be listed in the following
+          order:
+             a. The global settings file for the unit to which the module
+                belongs.  This global settings file is detailed in
+                section 10.3.
+             b. Header files for resources.
+             c. Header files for other units of the project, starting with
+                the most basic unit and ending with the most sophisticated
+                unit.  All these units must be at a lower hierarchical level
+                than the unit to which the current component header file
+                belongs.
+             d. Header files for other components of the unit to which the
+                current component header file belongs, starting with the
+                most basic component and ending with the most sophisticated
+                component.  All these components must be at a lower hier-
+                archical level than the component to which the current
+                component header file belongs.
+             e. Header files for modules of the unit to which the current
+                component header file belongs, starting with the most basic
+                module and ending with the most sophisticated module.
+       6. If the component exports constants:
+          A header that reads "Exported constants.", followed by the
+          definitions of the exported constants.
+       7. If the component exports types:
+          A header that reads "Exported types.", followed by the
+          declarations of the exported types.
+       8. If the component exports functions:
+          A header that reads "Exported functions.", followed by the
+          declarations (prototypes) of the exported functions.
+       9. If the component exports data:
+          A header that reads "Exported data.", followed by the declarations
+          of the exported data.
+      10. If the component exports classes that have inline member
+          functions: The definitions of the inline member functions.  The
+          inline member functions must be preceded by a header as described
+          under point 11.a in section 8.1.
+      11. If the component exports template classes: The definitions of the
+          non-inline member functions of the template classes.  These
+          functions must be preceded by a header as described under point
+          11.a in section 8.1.
+      12. If the component exports template functions: The definitions of
+          the template functions.  These functions must be preceded by a
+          header as described under point 11.a in section 8.1.
+      13. A header that reads "Prevent multiple inclusion.", followed by the
+          following line:
+             #endif
+      14. A header-like statement that reads (without the quotes)
+             "This module was written by <author>, <function>.  You may"
+             "freely use this code for your own purposes without paying"
+             "any fee.  However, if you use this code, either literally"
+             "or modified, you are obliged to mention the name of the"
+             "original author, <author>."
+          In this statement, "<author>" must be replaced with the name of
+          the author of the change, and "<function>" must be replaced with
+          the function of the author in the EASy Programming Group.
+      15. A header that reads "End of <name>.", where <name> is the filename
+          of the component header file.
+
+   A component header file shall export only those parts of the component
+that need be exported.  Note that this includes any private parts of
+classes, because the C++ language requires such private parts to be
+exported.  It also includes anything that is exported by one of the modules
+of the component.
+
+Reason: - Requiring all component header files to have the same set-up eases
+          maintenance of the code.
+        - Preventing multiple inclusion of a header file eliminates lots of
+          errors.
+        - The string "@(#)" is used by some much-used file-handling tools.
+          The UNIX tools "what" and "ident" are examples of such tools.
+        - Including the name of the component header file both at the start
+          and at the end of the file eases recognition of print-outs.
+
+
+9.2  -  Contents Of The Component Documentation Files
+
+   Details on the functionality provided by a component shall be documented
+in a separate documentation file that is specific to that component.  The
+documentation shall consist of a thorough description of the external inter-
+face of the component and the actions that are performed by every function
+in the component.  This documentation is intended for the novice programmer.
+   Each component documentation file shall consist of the following parts,
+in the indicated order:
+
+      1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the documentation file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the component
+               (not of the contents of the documentation file).
+            c. Under the keyword "Component:":
+               The name of the component to which the documentation file
+               applies.
+      2. A header that reads "RCS information", followed by the following
+         lines, each of which starts in the leftmost column:
+            ---  @(#) <file>  -  <contents>
+            ---
+            ---  >RCSfile:<
+            ---  >Author:<
+            ---  >Revision:<
+            ---  >Date:<
+            ---  >Log:<
+         Note the empty line!  In the first line, <file> must be replaced
+         with the filename of the documentation file (point 1.a) and
+         <contents> must be replaced with the description of the contents of
+         the documentation file (point 1.b).  In the other lines, both angle
+         brackets > and < must be replaced with dollar signs.  The dollar
+         signs are not used in this file to prevent the RCS from replacing
+         the above lines with RCS information.
+      3. A header that reads "Detailed history", followed by a revision
+         record that is formatted like the revision record in section 1.2
+         of this Coding Standard.  The revision record must contain the
+         revision number, the date when the revision was started, the date
+         when the revision was completed, the author of the changes, and a
+         concise description of the changes with respect to the previous
+         revision.
+         Refer to section 29 for requirements on revision tracking.
+      4. A header that reads "Chapter 1  -  Purpose of the component
+         <unit><component>".  In this header, <unit> must be replaced with
+         the name of the unit to which the component belongs, surrounded by
+         angle brackets < and >; and <component> must be replaced with the
+         name of the component to which the documentation file applies,
+         surrounded by angle brackets < and >.
+         The header must be followed by a high-level description of the
+         purpose of the component.  This description must provide a defining
+         overview of the component that describes what the component does
+         and what purpose it serves.  If applicable, the description must
+         also explain how the component fits in with the unit of which it
+         is a part: it must explain the position of the component in the
+         hierarchy of components, and it must explain how the component is
+         connected to the rest of the unit.
+      5. A header that reads "Chapter 2  -  Using the component
+         <unit><component>".  In this header, <unit> must be replaced with
+         the name of the unit to which the component belongs, surrounded by
+         angle brackets < and >; and <component> must be replaced with the
+         name of the component to which the documentation file applies,
+         surrounded by angle brackets < and >.
+         The header must be followed by a description that explains how the
+         component must be used (by other components).  This description
+         must form a user's guide that explains on code level how the
+         component's services must be used.  It needs not explain all
+         details of those services, algorithms, or other details of the
+         component.
+      6. A header that read "Chapter 3  -  Detailed explanation of the
+         component <unit><component>".  In this header, <unit> must be
+         replaced with the name of the unit to which the component belongs,
+         surrounded by angle brackets < and >; and <component> must be
+         replaced with the name of the component to which the document-
+         ation file applies, surrounded by angle brackets < and >.
+         The header must be followed by a detailed explanation of all
+         exported items of the module.
+      7. A header that reads "End of file <file> .", where "<file>" must be
+         replaced with the actual filename of the documentation file.
+
+   The component documentation file must have the same name as the
+component.  This file must reside in the same directory as the header file
+of the component.
+
+
+10  -  CONTENTS OF THE UNIT FILES
+
+10.1  -  Contents Of The Unit Header Files
+
+   Each unit header file shall consist of the following parts, in the
+indicated order:
+
+       1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the header file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the header file.
+            c. Under the keyword "Document:":
+               The filename of the file that contains documentation on the
+               unit to which this header file belongs, or "-" if the unit is
+               not documented.
+       2. A header that reads "RCS information.", followed by the following
+          lines, each of which starts in the leftmost column:
+              // @(#) <file>  -  <contents>
+
+              // >RCSfile:<
+              // >Author:<
+              // >Revision:<
+              // >Date:<
+              // >Log:<
+          Note the empty line!  In the first line, <file> must be replaced
+          with the filename of the header file (point 1.a) and <contents>
+          must be replaced with the description of the contents of the
+          header file (point 1.b).  In the other lines, both angle brackets
+          > and < must be replaced with dollar signs.  The dollar signs are
+          not used in this file to prevent the RCS from replacing the above
+          lines with RCS information.
+       3. A header that reads "Detailed history.", followed by a revision
+          record that is formatted like the revision record in section 1.2
+          of this Coding Standard.  This revision record must contain the
+          revision number, the date when the revision was started, the date
+          when the revision was completed, the author of the changes, and a
+          concise description of the changes with respect to the previous
+          revision.
+          Refer to section 29 for requirements on revision tracking.
+       4. A header that reads "Prevent multiple inclusion.", followed by the
+          following two lines:
+             #ifndef <UNIT>
+             #define <UNIT>
+          In these two lines, <UNIT> must be replaced with the name of the
+          unit to which the header file belongs.
+       5. A header that reads "Imports.", followed by a list of header
+          files.  A unit header file shall include only those header files
+          that are needed by the unit header file itself, or by one of the
+          other header files that are included by the unit header file.  The
+          header files shall be listed in the following order:
+             a. The global settings file for the unit.  This global settings
+                file is detailed in section 10.3.
+             b. Header files for resources.
+             c. Header files for other units of the project, starting with
+                the most basic unit and ending with the most sophisticated
+                unit.  All these units must be at a lower hierarchical level
+                than the unit to which the current unit header file belongs.
+       6. If the unit exports types:
+          A header that reads "Exported types.", followed by the
+          declarations of the exported types.
+       7. If the unit exports constants:
+          A header that reads "Exported constants.", followed by the
+          definitions of the exported constants.
+       8. If the unit exports functions:
+          A header that reads "Exported functions.", followed by the
+          declarations (prototypes) of the exported functions.
+       9. If the unit exports data:
+          A header that reads "Exported data.", followed by the declarations
+          of the exported data.
+      10. If the unit exports classes that have inline member functions: The
+          definitions of the inline member functions.  The inline member
+          functions must be preceded by a header as described under point
+          11.a in section 8.1.
+      11. If the unit exports template classes: The definitions of the non-
+          inline member functions of the template classes.  These functions
+          must be preceded by a header as described under point 11.a in
+          section 8.1.
+      12. If the unit exports template functions: The definitions of the
+          template functions.  These functions must be preceded by a header
+          as described under point 11.a in section 8.1.
+      13. A header that reads "Prevent multiple inclusion.", followed by the
+          following line:
+             #endif
+      14. A header-like statement that reads (without the quotes)
+             "This module was written by <author>, <function>.  You may"
+             "freely use this code for your own purposes without paying"
+             "any fee.  However, if you use this code, either literally"
+             "or modified, you are obliged to mention the name of the"
+             "original author, <author>."
+          In this statement, "<author>" must be replaced with the name of
+          the author of the change, and "<function>" must be replaced with
+          the function of the author in the EASy Programming Group.
+      15. A header that reads "End of <name>.", where <name> is the filename
+          of the unit header file.
+
+   A unit header file shall export only those parts of the unit that need be
+exported.  Note that this includes any private parts of classes, because the
+C++ language requires such private parts to be exported.  It also includes
+anything that is exported by one of the components of the unit.
+
+Reason: - Requiring all unit header files to have the same set-up eases
+          maintenance of the code.
+        - Preventing multiple inclusion of a header file eliminates lots of
+          errors.
+        - The string "@(#)" is used by some much-used file-handling tools.
+          The UNIX tools "what" and "ident" are examples of such tools.
+        - Including the name of the unit header file both at the start and
+          at the end of the file eases recognition of print-outs.
+
+
+10.2  -  Contents Of The Unit Documentation Files
+
+   Details on the functionality provided by a unit shall be documented in a
+separate documentation file that is specific to that unit.  The document-
+ation shall consist of a thorough description of the external interface of
+the unit and the actions that are performed by every function in the unit.
+This documentation is intended for the novice programmer.
+   Each unit documentation file shall consist of the following parts, in the
+indicated order:
+
+      1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the documentation file.
+            b. Under the keyword "Contents:":
+               A short description of the contents of the unit (not of the
+               contents of the documentation file).
+            c. Under the keyword "Unit:":
+               The name of the unit to which the documentation file applies.
+               The name shall be followed by the revision number of the unit
+               to which the documentation file applies.
+      2. A header that reads "RCS information", followed by the following
+         lines, each of which starts in the leftmost column:
+            ---  @(#) <file>  -  <contents>
+            ---
+            ---  >RCSfile:<
+            ---  >Author:<
+            ---  >Revision:<
+            ---  >Date:<
+            ---  >Log:<
+         Note the empty line!  In the first line, <file> must be replaced
+         with the filename of the documentation file (point 1.a) and
+         <contents> must be replaced with the description of the contents of
+         the documentation file (point 1.b).  In the other lines, both angle
+         brackets > and < must be replaced with dollar signs.  The dollar
+         signs are not used in this file to prevent the RCS from replacing
+         the above lines with RCS information.
+      3. A header that reads "Detailed history", followed by a revision
+         record that is formatted like the revision record in section 1.2
+         of this Coding Standard.  The revision record must contain the
+         revision number, the date when the revision was started, the date
+         when the revision was completed, the author of the changes, and a
+         concise description of the changes with respect to the previous
+         revision.
+         Refer to section 29 for requirements on revision tracking.
+      4. A header that reads "Chapter 1  -  Purpose of the unit <unit>".  In
+         this header, <unit> must be replaced with the name of the unit to
+         which the documentation file applies, surrounded by angle brackets
+         < and >.
+         The header must be followed by a high-level description of the
+         purpose of the unit.  This description must provide a defining
+         overview of the unit that describes what the unit does and what
+         purpose it serves.  If applicable, the description must also
+         explain the position of the unit in the hierarchy of units.
+      5. A header that reads "Chapter 2  -  Using the unit <unit>".  In
+         this header, <unit> must be replaced with the name of the unit
+         to which the documentation file applies, surrounded by angle
+         brackets < and >.
+         The header must be followed by a description that explains how the
+         unit must be used (by other units).  This description must form a
+         user's guide that explains on code level how the unit's services
+         must be used.  It needs not explain all details of those services,
+         algorithms, or other details of the unit.
+      6. A header that reads "Chapter 3  -  Dependencies", followed by a
+         list of the units and components on which the subject unit depends
+         (these are the units and components that the subject unit
+         <#include>s).  For each of these units and components, the
+         following information must be supplied:
+            a. The name of the unit or component that is <#include>d.
+            b. The reason why this unit or component must be included.
+      7. A header that reads "Chapter 4  -  Design and implementation
+         considerations".
+         The header must be followed by a description of the design and
+         implementation considerations that are applicable to the unit.
+         This description must provide backgrounds and rationales that
+         explain why the unit has been set up in its current form.  The
+         contents of this section are limited to the design and implement-
+         ation considerations that apply to the unit as a whole; design and
+         implementation considerations that apply only to one specific
+         component of the unit are described in the documentation file of
+         that specific component (section 9.2).
+      8. A header that reads "End of file <file> .", where "<file>" must be
+         replaced with the actual filename of the documentation file.
+
+   The unit documentation file must have the same name as the unit.  This
+file must reside in the same directory as the header file of the unit.
+   Note that sections 1 and 2 of the unit documentation file contain a
+"programmer's reference manual".  Sections 3 and 4 provide a "detailed
+design description".
+
+
+10.3  -  Contents Of The Unit Global Settings Files
+
+   All settings that apply globally to all modules of all components of a
+unit shall be specified in a global settings file that is specific to that
+unit.  As indicated in section 6, the unit global settings file shall
+reside in the unit directory.
+   Each unit global settings file shall consist of the following parts, in
+the indicated order:
+
+      1. A header that contains
+            a. Under the keyword "File:":
+               The filename of the global settings file.
+            b. Under the keyword "Contents:":
+               The text "Global settings for unit <unit>.", where <unit>
+               must be replaced with the name of the unit.
+            c. Under the keyword "Document:":
+               The filename of the file that contains documentation on the
+               unit global settings file, or "-" if the unit global settings
+               file is not documented.
+      2. A header that reads "RCS information", followed by the following
+         lines, each of which starts in the leftmost column:
+            ---  @(#) <file>  -  <contents>
+            ---
+            ---  >RCSfile:<
+            ---  >Author:<
+            ---  >Revision:<
+            ---  >Date:<
+            ---  >Log:<
+         Note the empty line!  In the first line, <file> must be replaced
+         with the filename of the unit global settings file (point 1.a) and
+         <contents> must be replaced with the text "Global settings for unit
+         <unit>", where <unit> must be replaced with the name of the unit.
+         In the other lines, both angle brackets > and < must be replaced
+         with dollar signs.  The dollar signs are not used in this file
+         to prevent the RCS from replacing the above lines with RCS
+         information.
+      3. A header that reads "Detailed history", followed by a revision
+         record that is formatted like the revision record in section 1.2
+         of this Coding Standard.  The revision record must contain the
+         revision number, the date when the revision was started, the date
+         when the revision was completed, the author of the changes, and a
+         concise description of the changes with respect to the previous
+         revision.
+         Refer to section 29 for requirements on revision tracking.
+      4. A header that reads "Prevent multiple inclusion.", followed by the
+         following two lines:
+            #ifndef <UNIT>_SETTINGS
+            #define <UNIT>_SETTINGS
+         In these two lines, <UNIT> must be replaced with the name of the
+         unit.
+      5. A header that reads "Global settings.", followed by all global
+         settings that apply to all modules of all components of the unit.
+         Each global settings shall be commented.
+         The section "global settings" shall at least contain a definition
+         or an un-definition of the preprocessor variable <UNIT>_DEBUGGING
+         as indicated in section 27.  This definition shall be set up ad
+         follows:
+            // Compilation mode: debugging or release.
+
+            #ifdef FORCE_DEBUGGINGMODE
+               #ifdef FORCE_RELEASEMODE
+                  #error Both debugging mode and release mode are specified.
+               #else
+                  #define <UNIT>_DEBUGGING
+               #endif
+            #else
+               #ifdef FORCE_RELEASEMODE
+                  #undef <UNIT>_DEBUGGING
+               #else
+                  // Neither debugging mode nor release mode are enforced.
+                  // The unit <unit> must decide for itself in which mode to
+                  // compile.
+                  // To compile in debugging mode, the next statement must
+                  // read
+                  //    #define <UNIT>_DEBUGGING
+                  // To compile in release mode, the next statement must
+                  // read
+                  //    #undef <UNIT>_DEBUGGING
+                  ####### <UNIT>_DEBUGGING
+               #endif
+            #endif
+         Here, <UNIT> must be replaced with the name of the unit, in upper-
+         case.  If the unit must normally be compiled in debugging mode, the
+         text "#######" must be replaced with "#define"; if the unit must
+         normally be compiled in release mode, the text "#######" must be
+         replaced with "#undef".
+         The comment lines may be reformatted to optimally use the line
+         length that is indicated in section 14.1.
+      6. A header that reads "Prevent multiple inclusion.", followed by the
+         following line:
+            #endif
+      7. A header-like statement that reads (without the quotes)
+            "This module was written by <author>, <function>.  You may"
+            "freely use this code for your own purposes without paying"
+            "any fee.  However, if you use this code, either literally"
+            "or modified, you are obliged to mention the name of the"
+            "original author, <author>."
+         In this statement, "<author>" must be replaced with the name of
+         the author of the change, and "<function>" must be replaced with
+         the function of the author in the EASy Programming Group.
+      8. A header that reads "End of <name>.", where <name> is the filename
+         of the unit global settings file.
+
+
+11  -  CONTENTS OF THE GLOBAL FILES
+
+11.1  -  Contents Of The Global Include File
+
+   The global include file shall have the name "settings.h".  It shall
+consist of the following parts, in the indicated order:
+
+      1. A header that contains
+           a. Under the keyword "File:":
+              The filename of the global include file.
+           b. Under the keyword "Contents:":
+              A short description of the contents of the global include
+              file.
+           c. Under the keyword "Document:":
+              The filename of the file that contains documentation on the
+              global include file, or "-" if the global include file is not
+              documented.
+      2. A header that reads "RCS information.", followed by the following
+         lines, each of which starts in the leftmost column:
+             // @(#) <file>  -  <contents>
+
+             // >RCSfile:<
+             // >Author:<
+             // >Revision:<
+             // >Date:<
+             // >Log:<
+         Note the empty line!  In the first line, <file> must be replaced
+         with the filename of the global include file (point 1.a) and
+         <contents> must be replaced with the description of the contents
+         of the global include file (point 1.b).  In the other lines, both
+         angle brackets > and < must be replaced with dollar signs.  The
+         dollar signs are not used in this file to prevent the RCS from
+         replacing the above lines with RCS information.
+      3. A header that reads "Detailed history.", followed by a revision
+         record that is formatted like the revision record in section 1.2
+         of this Coding Standard.  This revision record must contain the
+         revision number, the date when the revision was started, the date
+         when the revision was completed, the author of the changes, and a
+         concise description of the changes with respect to the previous
+         revision.
+         Refer to section 29 for requirements on revision tracking.
+      4. A header that reads "Prevent multiple inclusion.", followed by the
+         following two lines:
+            #ifndef GLOBAL_SETTINGS
+            #define GLOBAL_SETTINGS
+      5. A header that reads "Enforcing a compilation mode.", followed by
+         the following lines:
+            // To enforce compilation in debugging mode, the next lines must
+            // read
+            //    #define FORCE_DEBUGGINGMODE
+            //    #undef  FORCE_RELEASEMODE
+            // To enforce compilation in release mode, the next lines must
+            // read
+            //    #undef  FORCE_DEBUGGINGMODE
+            //    #define FORCE_RELEASEMODE
+            // To allow each unit to determine its own compilation mode, the
+            // next lines must read
+            //    #undef FORCE_DEBUGGINGMODE
+            //    #undef FORCE_RELEASEMODE
+         This block must be followed by an empty line.  The comment lines
+         may be reformatted to fill up the available line length that is
+         indicated in section 14.1.
+         These lines must be followed by any of the three sets of lines
+         that it mentions, depending on the global compilation mode that
+         the programming team wishes to select.
+      6. A header that reads "Prevent multiple inclusion.", followed by the
+         following line:
+            #endif
+      7. A header-like statement that reads (without the quotes)
+            "This module was written by <author>, <function>.  You may"
+            "freely use this code for your own purposes without paying"
+            "any fee.  However, if you use this code, either literally"
+            "or modified, you are obliged to mention the name of the"
+            "original author, <author>."
+         In this statement, "<author>" must be replaced with the name of
+         the author of the change, and "<function>" must be replaced with
+         the function of the author in the EASy Programming Group.
+      8. A header that reads "End of <name>.", where <name> is the filename
+         of the global include file.
+
+
+
+12  -  NILs
+
+   A NIL is a Neutral Interface Layer.  A NIL is an interface between a
+specific part of code and the rest of the project.  It is meant to insulate
+the peculiarities of a specific part of code.
+   A NIL must be created for each part of the code for which source code
+is not available, or for which the source code cannot be compiled on the
+computer that compiles the rest of the code.  It performs all necessary
+conversions and checks that are needed to integrate the specific code with
+the rest of the project.  It makes the rest of the code almost independent
+from the specific code that is hidden by the NIL.
+   Note that a NIL shall also be created to interface to the C and C++
+libraries, and to the OS libraries.  A consequence of this approach is that
+no file shall include compiler-provided include files.  In other words, each
+file shall include header files using the syntax
+
+      #include "hdrfile.h"
+
+The alternative syntax
+
+      #include <hdrfile.h>
+
+shall not be used.
+
+
+13  -  NAMING CONVENTIONS
+
+   The following naming conventions shall be used:
+
+      Defined constants
+         All uppercase.  Words inside the name of a defined constant are
+         separated by underscores.  Defined constants may be either
+         <#define>d (discouraged), or declared as <const> variables
+         (recommended).
+         Example: #define  DEFINED_CONSTANT_NAME  123
+                  const int  CONST_CONSTANT_NAME = 456;
+
+      Types
+         All lowercase.  Words inside the name of a type are not separated
+         by underscores, except when the first part of the type's name
+         indicates a category of types.
+         Example: typenameforsomedata
+                  category_typenameforsomedata
+
+      Variable names
+         All lowercase.  Words inside the name of a variable may be
+         separated by underscores, but this is neither required nor
+         encouraged.
+         Example: variablename
+
+      Function names
+         Title case, that is, the first letter of each word inside the name
+         of the function is uppercase, the other letters are lowercase.  If
+         the function name contains an abbreviation, all letters of the
+         abbreviation are in uppercase.  Words inside the name of a function
+         are not separated by underscores.
+         Example: NameOfThisFunction
+                  GetLIString            // LI == Language Independent
+
+      Function pointers
+         Like function names.
+         Function pointers are a special class.  They are variables, but
+         they are used as if they were functions.  Therefore, they are
+         named like functions.
+
+      Filenames
+         All lowercase.
+         Files shall be named according to the ISO 8.3 convention, with one
+         exception: the directory separator shall be a forward slash ('/')
+         rather than a backward slash ('\').
+
+
+   Identifiers shall not start with one or more underscores.  Identifiers
+shall not use prefixes or postfixes, except for the case that is indicated
+in the next paragraph.
+   A module, component or unit can be forced to export names that are not
+intended to be used by other modules, components or units.  Sometimes this
+is clear from the definition of these declarations, for example if the
+declarations are part of the <private> section of a <class>.  On other
+occasions, the fact that other modules, components and units should not use
+a name is not immediately clear from the code.  If this is the case, such
+names shall start with the characters "priv_"; these characters are always
+spelled in lower case, regardless of the naming convention that applies to
+the identifier to which the string "priv_" is prefixed.  Other modules,
+units and components must not use names that start with the characters
+"priv_" that are imported from another module, component or unit.
+
+Reason: - Having a clear naming convention makes the code more easy to
+          read and, as a consequence, more easy to understand and, as
+          a consequence, more easy to maintain.
+        - Using all uppercase for the names of defined constants is the
+          de-facto standard in C and C++ programming.
+        - Using all lowercase for the names of types adheres to the
+          existing standard for predefined types like <int>, <char>, ....
+          Making project-specific types indistinguishable from predefined
+          types underlines the extendibility that is inherent to the C++
+          language.
+        - Using all lowercase for the names of variables seems the most
+          logical convention.
+        - Using title case for function names distinguishes function names
+          from other identifiers
+        - The common convention of starting the name of a "private"
+          identifier with a single underscore is error-prone.  Compilers
+          tend to use such identifiers as reserved words.  Therefore, a
+          different convention is needed.  The prefix "priv_" was chosen
+          for this goal.
+        - The ISO 8.3 naming convention for files is used because this is
+          the most restrictive of all naming conventions.  The forward slash
+          is used because this makes the project more easily portable to
+          other platforms.  DOS-based development platforms generally
+          support both the forward slash and the backward slash.
+
+
+14  -  LAY-OUT OF THE SOURCE CODE
+
+14.1  -  Line Length
+
+   All text files shall use a maximum of 76 characters per line.  When this
+document refers to "the last character position" or something similar, the
+76th character of the line is meant.
+
+Reason: - A line width of 76 characters is very portable.  Many printers,
+          computer displays and computer programs use 80 or 78 characters
+          as a standard width.
+        - The least sophisticated development system that is used by the
+          EASy Programming Group uses a display width of 76 characters (the
+          rightmost four characters are used by a vertical scroll bar).
+
+
+14.2  -  Header Blocks
+
+   The "header"s that are mentioned in sections 8, 9 and 10 are long,
+C-style comment blocks.  They must start with the characters "/*" in the
+leftmost column.  The rest of the line must be filled with the character
+"*", except for the last character on the line, which must be empty.  On
+each successive line, both the first three characters and the last three
+characters must be " * ".  The last line of the header must start with a
+" " in the leftmost column.  The last column of that line must contain the
+character "/".  All other characters must be "*".  The following example
+implements these requirements.
+
+      first character position            last character position
+      v                                                         v
+      /*********************************************************
+       * This is a header block.                               *
+       * It consists of two lines.                             *
+       *********************************************************/
+
+There is no limit to the number of lines in a header block.
+
+
+14.3  -  Declaring Types
+
+   Types must be defined for everything that is conceptually a type.  It is
+not allowed to use an existing type to represent information that is in fact
+of a different type, even if this information is easily represented using
+the existing type.  For example, it is not allowed to use <int>s to
+represent error codes; instead, a type must be created for error codes.  For
+example,
+
+      typedef  int  errorcode;     // error code
+      typedef  int  usercommand;   // command that is given by the user
+
+   Each type shall be commented.  If a type consists of several fields, each
+field shall be commented.  If possible, a type or a field of a type shall be
+commented on the same line that defines the type or the field.  If it is not
+possible to place the comment for a type definition on the same line as the
+type definition, the comment shall be placed on the line that precedes the
+type definition.  If it is not possible to place the comment for a field of
+a type on the same line as the definition of the field, the comment shall
+start on the same line as the definition of the field, and it shall continue
+on the following lines.  On the following lines, the comment characters "//"
+must be in the same column as the comment characters of the first line of
+the comment, and the text must be indented by three character positions.
+   In the declaration of a class type, all parts of the class (not all
+members of the class) must be labelled with "public:", "protected:" or
+"private:"; the code must not assume that the first part of a class type
+is made "private:" by default.  A class shall specify its parts in the
+following order: "public:", "protected:", "private:".
+   A <struct> shall have only data members.  None of these data members
+shall be <static>.  A <struct> shall not contain any of the labels
+"public:", "protected:" or "private:".  These requirements mean that a
+<struct> shall be identical to a <struct> in C: the C++ additions to the
+meaning of <struct> shall not be used.
+
+Reason: - Creating new types for specific information increases modularity,
+          maintainability and extendibility of the source code.
+
+
+14.4  -  Declaring Variables
+
+   Variables shall only be declared at the beginning of a code block.  This
+means that declaring variables "on the fly" is not allowed: variables must
+be declared as in ANSI C.
+   Each variable shall be commented.  If possible, a variable shall be
+commented on the same line that defines the variable.  If it is not possible
+to place the comment for a variable on the same line as the definition of
+the variable, the comment shall either be placed on the lines that precede
+the definition of the variable, or it shall start on the same line as the
+definition of the variable and continue on the following lines.  In the
+latter case, the comment characters "//" that appear on each of the
+following lines must be in the same column as the comment characters of the
+first line of the comment, and the text must be indented by three character
+positions.
+
+Reason: Declaring variables only at the beginning of code blocks enhances
+        the visual perception of the code by the reader.  It also gives a
+        good overview of the variables that are used in a given code block,
+        and it eases commenting the variables.
+
+
+14.5  -  Function Headers
+
+   According to the ANSI C++ definition, function headers specify the
+following information:
+
+      1. Possibly a linkage specification (<static>, <extern>, ...).
+      2. The return type.
+      3. The name of the function.
+      4. A parameter list.
+
+Each of these items shall be defined on its own line.  The function header
+of the function definition must be identical to the function header in the
+function declaration.  Specifically, it is not allowed to omit the names of
+the formal parameters as in the following example:
+
+      // Example of source code that is NOT allowed.
+
+      // Function declaration.
+      int      // tripled value
+      Triple   // triples a value
+      (int);   // I: value to triple      NOT ALLOWED TO LEAVE OUT <x>!
+
+      // Function definition.
+      static
+      int        // tripled value
+      Triple     // triples a value
+      (int  x)   // I: value to triple
+
+      {  // Triple
+
+         return 3*x;
+
+      }  // Triple
+
+Default argument values are an exception to this requirement: the C++
+language does not allow to redeclare default argument values in the function
+definition.  Another exception is the use of <static> for non-member
+functions as indicated in the above example.
+   If the return type is not <void>, the meaning of the returned value shall
+be explained by a comment on the same line as the return type.  Refer to the
+code snippet above for an example of such a comment.
+   The action that the function performs must be explained by a very short
+comment on the same line as the name of the function.  Refer to the code
+snippet above for an example of such a comment.
+   Each parameter of a function must be defined on its own line.  The
+meaning of each parameter must be explained by a comment on the same line
+as the parameter.  The comment must identify how the function uses the
+parameter.  This usage may be "I" for input data, "O" for output data,
+"IO" for data that is both input and output, and "-" for unused parameters.
+If a parameter is unused, its name must be omitted from the parameter list.
+   Member functions that are inline shall always explicitly be declared
+inline.  This means that implicit inline declarations (by putting the
+function's body in the class definition) are not allowed.  This only
+exception to this rule, applicable to dummy private member functions,
+is stated in section 19.
+
+Reason: This lay-out is the only lay-out that allows each part of the
+        function header to be duly commented.
+
+
+14.6  -  Code Blocks
+
+   A code block is all code within a pair of matching braces { and } ,
+including the braces that delimit the code block.
+   The outer braces of a function must be commented with the name of the
+function.
+   Each brace { and } must be on a separate line; except for comments, no
+other characters must appear on that line.  Matching braces { and } must be
+in the same column.
+   Local code blocks must be indented with respect to the containing code
+block.  The braces { and } must not be indented.  Anything between a block's
+delimiting braces must be indented by three character positions.
+   If a code block is very long, it is recommended to place a comment at the
+closing brace } that explains how the block was opened.  For example,
+
+      if (value > 0)
+      {
+         // A very long code block, with lots of embedded local code blocks
+         // that are deeply nested.
+         ...
+         ...
+      }  // if (value > 0)
+
+   If a code block is commented, the comment characters "//" shall start in
+the same row as the opening brace { of the code block, and the comment shall
+immediately precede the code block.
+
+Reason: This lay-out makes it easy to comment entire code blocks.  The
+        lay-out also makes it easy to check if each opening brace has a
+        corresponding closing brace and vice versa.  Finally, this lay-out
+        makes it easy to find the matching brace for any opening or closing
+        brace.
+
+
+14.7  -  Empty Statements
+
+   Empty statements, which consist of a semicolon only, are forbidden.
+Empty code blocks, which consist of a pair of braces { and } only, are
+forbidden too.
+   Whenever nothing must be done, a null statement or a null block must be
+written.  The null statement is
+
+      (void)0;
+
+The null block is
+
+      {
+         (void)0;
+      }
+
+It is allowed to use a different statement instead:
+
+      #define  null  ((void)0)
+
+or
+
+      inline
+      void
+      null             // performs no action
+      ();
+
+      inline
+      void
+      null             // performs no action
+      ()
+      {  // null
+         (void)0;      // do nothing
+      }  // null
+
+
+14.8  -  Exit Points
+
+   Functions shall have only one exit point.  This exit point shall be at
+the end of the function, immediately before the function's closing } .
+
+Reason: - Functions that have a single exit point can be maintained more
+          easily than functions that have multiple exit points.
+        - Checking a function, either by run-time testing it or by reviewing
+          it, is easier if the function has but a single exit point.
+        - Code for validation, logging, or profiling is easier to insert if
+          a function has a single exit point.
+
+
+15  -  RE-ENTRANCY
+
+   All code must be re-entrant.
+
+Reason: This eases maintenance and extendibility of the code.
+
+
+16  -  TYPECASTING
+
+   The code shall not contain any implicit typecast.
+   A numeric constant is to be regarded as a <signed int>, unless it is
+explicitly declared to be long and/or unsigned.  If a numeric constant is
+assigned to a variable of any other type, it must be explicitly typecasted
+to that other type.  If a numeric type is used in a comparison with a value
+that is not of the same type, it must be explicitly typecasted to that type.
+   <int>s may be used as initialisers for enumerated values.  For example,
+
+      enum color {RED=10, GREEN, BLUE=42};
+
+Enumerated values may be used without explicit conversion to <int> where an
+<int> is expected.  For example,
+
+      int   i = GREEN;     // NOT: int   i = (int)GREEN;
+      char  a[RED];        // NOT: char  a[(const int)RED];
+
+When an <enum> value is expected, any value that is not of the correct
+<enum> type must be typecast explicitly to the required <enum> type:
+
+      enum  bw = (BLACK, WHITE};
+      color  c     = (color)42;       // NOT: color  c     = 42;
+      color  white = (color)WHITE;    // NOT: color  white = WHITE;
+
+   The constant <NULL> is to be regarded as having an unspecified type.  If
+<NULL> is assigned to a variable, it must be explicitly typecasted to the
+type of that variable.  If <NULL> is used in a comparison with a value, it
+must be explicitly typecasted to the type of that value.
+   If a <void *> is assigned to a variable of any other type, or vice versa,
+or if a <void *> is compared to an expression of any other type, or vice
+versa, the data of type <void *> must be explicitly typecasted to the type
+of the variable or the expression.
+
+Reason: - This convention allows checking tools to fully check expressions
+          containing such indeterminate entities as numeric constants,
+          <NULL>, or <void *>.
+        - The requirements on typecasting to and from enumerated types
+          follow from the definition of the C++ language as indicated in
+          "The C++ programming language", second edition, by Bjarne
+          Stroustrup, Addison-Wesley publishing company, April 1995,
+          ISBN 0-201-53992-6.
+
+
+17  -  USING ENUMERATED VALUES
+
+   Enumerated values shall be used as if they were constants of type <int>.
+The identifiers of the values shall use the same naming convention as
+defined constants (section 13).  If a type name is assigned to an enumerated
+type, the type name shall use the same naming convention as other type names
+(section 13).
+   A value of an "enum" type may be implicitly converted to <int>, not to
+any other type.  Specifically, a value of one "enum" type may not be
+implicitly converted to a value of a different "enum" type.  A value of
+whichever type must not be implicitly converted to an "enum" type.
+
+
+18  -  CONSTRUCTORS AND DESTRUCTORS
+
+   Except in the case indicated below, constructors and destructors shall
+not be inline.
+   A constructor may be inline if it belongs to a base class.  Here, a base
+class is a class that is not derived from other classes, or a class that is
+derived only from a generic class that is meant to be a root class for an
+entire tree of classes.  A constructor may also be inline if it belongs to a
+class that is derived (either directly or indirectly) only from base classes
+that are declared in the same source file.  A default constructor or a copy
+constructor may be inline if they are dummy private constructors that are
+meant to prevent default construction or copying outside the class; refer to
+section 19 for specific requirements on dummy private constructors.
+   Every base class shall have a virtual destructor, even if this destructor
+is empty.
+   If an object must be in a well-defined state before it can be used, its
+class must at least provide a default constructor that brings the object in
+such a well-defined state.
+
+Reason: - Constructors and destructors of derived classes implicitly invoke
+          the constructors and destructors of their base classes.  Making
+          constructors and destructors of derived classes <inline> would
+          result in huge amounts of code being <inline>d, while the
+          improvement in execution speed would be negligible.  The only
+          situation where it can be absolutely certain that no huge amounts
+          of <inline>d code are generated occurs when a class is derived
+          only from base classes that are declared in the same source file.
+        - Making a destructor <virtual> assures that the actual object is
+          destroyed, not just the part of the object that is in the class
+          that declares the destructor.
+        - Having a default constructor that makes sure the object is in a
+          well-defined state ensures that it is impossible to create an ill-
+          defined instance of an object.
+
+
+19  -  PREVENTING COPYING, ASSIGNMENT OR DEFAULT CONSTRUCTION
+
+   Sometimes, a class needs to prevent initialisation of an instance of it-
+self by copying, or it needs to prevent assignment from one instance of it-
+self to another instance, or it needs to prevent instances of itself to be
+constructed using a default constructor.  This section identifies how to
+prevent these things.
+   Note that the copy constructor, the assignment operator and the default
+constructor that are presented in this section are made inline by providing
+an empty function block, not by explicitly declaring them inline.  This is
+the only case in which this method to inline a member function is allowed.
+Refer to sections 14.5 and 18 for requirements that state that this method
+of inlining is not normally allowed.
+   If a class needs to prevent initialisation of an instance of itself by
+copying, it shall include a copy constructor in its "private:" section.  If
+the class is named <xyz>, the copy constructor shall be defined as follows:
+
+      class xyz
+      {
+         // ...
+      private:
+         // ...
+         xyz              // dummy private copy constructor
+         (xyz const &)    //    prevents copying
+         {}
+         // ...
+      };  // xyz
+
+If the class contains constant data members, these must be initialised in
+the copy constructor.
+   The comment in this exemplification shall be included in the class
+definition as written here.
+   If a class needs to prevent assignment from one instance of itself to
+another instance, it shall include an assignment operator in its "private:"
+section.  If the class is named <xyz>, the assignment operator shall be
+defined as follows:
+
+      class xyz
+      {
+         // ...
+      private:
+         // ...
+         xyz const &          // dummy private assignment operator
+         operator =           //    prevents assignment
+         (xyz const &)
+         const
+         { return *this }
+         // ...
+      };  // xyz
+
+The comment in this exemplification shall be included in the class
+definition as written here.
+   If a class needs to prevent instances of itself to be created using a
+default constructor, it shall include a default constructor in its
+"private:" section.  If the class is named <xyz>, the default constructor
+shall be defined as follows:
+
+      class xyz
+      {
+         // ...
+      private:
+         // ...
+         xyz             // dummy private default constructor
+         ()              //    prevents default construction
+         {}
+         // ...
+      };  // xyz
+
+If the class contains constant data members, these must be initialised in
+the default constructor.
+   The comment in this exemplification shall be included in the class
+definition as written here.
+
+Reason: Inlining the dummy private member functions by providing an empty
+        function block gives the programmer another direct hint that these
+        members are dummy.  The alternative of explicitly declaring these
+        members to be inline and to provide an empty function further down
+        the header file seems overdone.  The other alternative of not
+        declaring these members to be inline but simply not to define them
+        anywhere is allowed, but has the disadvantage that some automated
+        checking tools generate warnings if a member is declared but never
+        defined.
+
+
+20  -  <const> DECLARATIONS
+
+20.1  -  <const> Functions
+
+   Functions must be declared <const> whenever possible.  <const> refers to
+physical <const>ness, not to logical <const>ness.  (For example, imagine a
+class that secretly maintains a buffer or a cache.  Members of such a class
+may appear <const> to their caller; this is logical <const>ness.  However,
+even if they appear <const>, in reality they do secretly modify a cache or
+a buffer.  This means that they are not physically <const>.)
+
+Reason: Declaring member functions <const> whenever possible is part of the
+        functions' documentation.  Furthermore, it allows the compiler to
+        perform additional checks on the source code, and to further
+        optimise the resulting executable code.
+
+
+20.2  -  <const> Data
+
+   If data is referenced through a pointer or a reference, this data must be
+declared <const> whenever possible.
+   It is allowed to "cast in" <const>ness, that is, to cast data from a non-
+<const> type to the equivalent <const> type.  It is not allowed to "cast
+away" <const>ness, that is, to cast data from a <const> type to the
+equivalent non-<const> type.
+
+Reason: - Declaring data <const> whenever possible is part of the document-
+          ation of the use of that data.  Furthermore, it allows the
+          compiler to perform additional checks on accesses to the data,
+          and to further optimise the resulting executable code.
+        - "Casting in" <const>ness is a safe operation; therefore, it is
+          allowed.  "Casting away" <const>ness removes a safety barrier from
+          a data type; therefore, it is an unsafe operation which is for-
+          bidden.
+
+
+20.3  -  <const> Function arguments
+
+   Function arguments must be treated like data.  Refer to section 20.2 for
+requirements on <const>ness of data; these requirements also apply to
+function arguments.
+
+
+21  -  HANDLING NON-NOMINAL CONDITIONS
+
+   When handling a number of conditions, for example in <if> or <switch>
+clauses, all possible and impossible conditions must be handled.  For
+example, if the action to take depends on the value of an integer number,
+and if this number "cannot be outside the range 0..9", the code must still
+account for the case that the number _is_ outside that range.
+   For <switch> statements, this means that each such <switch> statement
+must have a <default> case that handles "any other" value.  If it is
+impossible to receive such an "any other" value, the <default> case must
+generate an error.  If it is possible to receive an "any other" value but
+nothing must be done in response, the <default> case must contain a null
+statement (refer to section 14.7) to explicitly indicate that nothing must
+be done.
+   For <if> statements, this means that the statement must contain an <else>
+branch whenever cases that are not handled by the <if> branch are invalid.
+The <else> branch must then generate an error.  If cases that are not
+handled by the <if> branch are valid but nothing needs be done in response
+to such values, an <else> branch is not necessary.  In that case, an <else>
+branch that contains nothing but a null statement (refer to section 14.7) is
+optional.
+
+
+22  -  REFERRING TO IDENTIFIERS IN COMMENTS AND DOCUMENTATION
+
+   When a comment or a text in the documentation refers to a single
+identifier of the source code, the identifier must be enclosed in angle
+brackets < and >.
+   When a comment or a text in the documentation refers to an expression in
+the source code that is not a single identifier, the expression must be
+surrounded by whitespace.
+   Examples:
+
+      // This comment is about the variable <comment> which is of the type
+      // <cast>.  Imagine how unreadable this comment would be if the angle
+      // brackets around the identifiers <comment> and <cast> were not
+      // present.
+
+      // This comment is about the expressions comment->value and *cast .
+      // Because it is easily readable without angle brackets, it is not
+      // necessary to explicitly separate them from the surrounding text.
+
+
+
+23  -  VARIABLES
+
+23.1  -  The Scope Of Variables
+
+   It is encouraged (not required) to minimise the scope of variables when
+possible.  If necessary, additional code blocks may be introduced to
+minimise the scope of a variable.  For example,
+
+      if (value == 0)
+      {
+         vartype1  i;   // comment that describes <i>
+         vartype2  j;   // comment that describes <j>
+
+         // Code that uses <i> and doesn't use <j>.
+         // Code that uses <j> and doesn't use <i>.
+      }
+
+should be replaced with
+
+      if (value == 0)
+      {
+         {
+            vartype1  i;   // comment that describes <i>
+
+            // Code that uses <i>.
+         }
+
+         {
+            vartype2  j;   // comment that describes <j>
+
+            // Code that uses <j>.
+         }
+      }
+
+Reason: - It makes it clear to the reader to see the scope of a variable.
+        - It allows a not-so-clever compiler to make better use of registers
+          for holding variables.  In the above example, a single register
+          may be used to hold <i> in the first local code block and <j> in
+          the second local code block.
+
+
+23.2  -  Global Variables
+
+   Global variables shall not be used, except when the global variable is of
+a class type and is used for the sole purpose of initialising and/or closing
+down the module in which it is declared.
+   If a global variable is used for initialising and/or closing down a
+module, neither the class definition nor the global variable itself shall
+be exported.
+
+
+24  -  BOOLEAN VALUES
+
+   Boolean values may be used in the code.  A Boolean expression is assumed
+to generate either the integer value 0 (for "false") or the integer value 1
+(for "true").  In other words, the expression 5>3 has the integer value 1 .
+   Using this fact, Boolean variables may be compared to each other.  For
+example, if <one> and <two> are Boolean variables,
+
+      if (one  &&  two  ||  !one  &&  !two)
+
+may be replaced with the simpler but equivalent expression
+
+      if (one == two)
+
+It is also allowed to perform direct assignment to a Boolean variable
+instead of using an if-else or a ?: construction:
+
+      one = i > j ? 1 : 0;
+      if (value > 0  ||  result < 0)
+         two = 1;
+      else
+         two = 0;
+
+may be replaced with the more readable alternative
+
+      one = i > j;
+      two = value > 0  ||  result < 0;
+
+   The expression in an <if> statement must be a Boolean expression.  Though
+the C++ language allows to use constructions like
+
+      if (a)
+      if (b = a)
+
+such constructions shall not be used.  Instead, explicit comparison to
+zero must be performed in order to make the expression a valid Boolean
+expression:
+
+      if (a != 0)
+      if ((b = a) != 0)
+
+A Boolean variable is already of Boolean type; therefore, no explicit
+comparison is needed in an <if> statement.  This means that the following
+is allowed:
+
+   if (one)
+
+   A distinct type shall be defined for Boolean data.  Refer to section 14.3
+for requirements on declaring types.
+
+
+
+25  -  ACCESSING GLOBAL DATA AND FUNCTIONS
+
+   To expressly indicate that a global (non-member) variable is being
+accessed, or that a global (non-member) function is being called, global
+identifiers must be preceded by "::".  This must be done only if the
+intention is to use the global version even if a member version exists
+or might exist in a future revision of the source module.  For example,
+to use the global function <SomeFunction>, use SomeFunction(/*...*/)
+instead of ::SomeFunction(/*...*/) ; this allows the class to overload
+<SomeFunction> in a future revision without having to modify the entire
+code.
+
+
+26  -  INTERFACE TO CODE WRITTEN BY THIRD PARTIES
+
+   Whenever possible, other parts of the project to which a module must
+interface shall be delivered in the form of source code, and the source code
+shall be compiled on the computer that also compiles the module.
+   If it is not possible to compile the other parts of the project to which
+the module must interface, it shall be shown for each type that is trans-
+ferred from the other part to the module or vice versa, that all values of
+that type are transferred correctly.
+   If a Boolean value is transferred from any other part of the project to
+the module, the module shall immediately convert the Boolean value using the
+following algorithm:
+
+      0                shall be converted to  0
+      (anything else)  shall be converted to  1
+
+   If it is not possible to compile the other parts of the project to which
+a module must interface, a NIL shall be written as specified in section 12.
+
+Reason: - These requirements make sure the interface between the module and
+          the rest of the project is consistent and free from bugs.
+
+
+27  -  DEBUGGING
+
+   In order to allow easy debugging of the code, special debugging
+statements must be inserted into the actual code.  In order to also provide
+an easy method to enable or disable the debugging statements, a globally
+defined preprocessor variable must be provided.  If this preprocessor
+variable is defined, debugging statements must be inserted; if the
+preprocessor variable is not defined, the debugging statements must not be
+inserted.
+   In order to be able to turn debugging on and off for each unit
+separately, each unit must have its own preprocessor variable for this
+purpose.  The preprocessor variable is turned on or off in the unit global
+settings file.  As required in section 10.3, each unit has its own settings
+file, and each module that belongs to a unit includes the settings file of
+that unit.  This is required in point 5.b of section 8.1 and points 5.a of
+sections 9.1 and 10.1.
+   Because each unit provides its own settings file, each unit's
+preprocessor variable might have the same name, and it would still be
+possible to turn debugging on or off on a per-unit basis.  This situation
+would, however, not be very clear.  Therefore, the name of the dedicated
+preprocessor variable must be specific to the unit that uses it.  This name
+must be
+
+      UNIT_DEBUGGING
+
+Here, <UNIT> must be replaced with the name of the unit, where all
+characters are converted to uppercase.
+
+   Example for the unit <fileIO>:
+
+      // Global definition of the preprocessor variable.
+      // This is in the unit settings file settings.h .
+      #define FILEIO_DEBUGGING
+
+      // Code snippet.
+      // This is in the source file of any module in any component in the
+      //    unit <fileIO>.
+      NormalCode();
+      #ifdef FILEIO_DEBUGGING
+         DebuggingCode();
+      #endif
+
+This example does insert the debugging code into the executable.  Had the
+symbol <FILEIO_DEBUGGING> not been defined in the settings file:
+
+      #undef FILEIO_DEBUGGING
+
+then the debugging code would not have been inserted into the executable.
+   The debugging version of the project must not be significantly different
+from the release version.  Specifically,
+
+      1. It is not allowed to perform actions in release mode that are not
+         performed in debugging mode.
+      2. Any action that is performed in debugging mode only must not set
+         or modify data, except if that data is present in debugging mode
+         only.
+      3. All data that is set in debugging mode according to the previous
+         point must be used either for simple monitoring purposes, or it
+         must be used to store an identifier that will be used in case a
+         problem is detected to tell the user _where_ the problem occurred.
+
+Reason: - There must be an easy way to enable or disable specific debugging
+          code.
+        - By default, debugging code must not be inserted into the project.
+          If insertion of debugging code would be the default, debugging
+          code could be inserted into the project as a result of a
+          programmer forgetting to define a preprocessor variable that turns
+          off insertion of debugging code.
+        - When disabling the debugging code that was previously active, all
+          verification that has been done (on the debugging version of the
+          project) must still be valid.
+
+
+28  -  IDENTIFYING CODE THAT NEEDS ADDITIONAL WORK
+
+28.1  -  Identifying Unfinished Code
+
+   During the development of the project, part of the code will be
+unfinished.  Unfinished code is code that MUST be finished in order for the
+module to function correctly or to be complete.
+   If no code has been implemented yet that handles a task that must be
+part of the project, an action must be added to the action list.  The action
+must describe what must be done and, if applicable, how it must be done.
+   If some code has already been implemented but needs modification, or if
+some code is a temporary "quick hack", this code must be identified by a
+comment that contains the characters "!!!".  If it is not clear from the
+code what must be done to finalise it, the comment must also explain what
+must be done to finalise the code.
+   The characters "!!!" must not be used anywhere else in human-generated
+files, except for this section 28.1 of the generic Coding Standard and
+possible texts in the tailored version of the Coding Standard (refer to
+section 3).
+
+Reason: Scanning the human-generated files for occurrences of the characters
+        "!!!" easily identifies the places where additional work is
+        required.
+
+
+28.2  -  Identifying Points Of Improvement
+
+   At any time, it is possible that a basic functionality has been
+implemented at points where additional functionality would improve the
+functioning of the project or add features to it.  For example, some code
+might depend on a parameter which specifies the color of the text on the
+screen.  In a first version of a module, the color might be set to black
+using a constant.  In a future version of that module, a feature might be
+included that allows the user to select the text color.
+   Such points of improvement must be identified in the documentation file
+of the module, component of unit.  If applicable, the points of improvement
+must also be documented through a comment in the source file(s).  In all
+places where a point of improvement is documented, the text "**POI**"
+(without the quotes) must be used to ease finding all points of improvement.
+
+Reason: Documenting points of improvement eases identification of all
+        possible improvements.
+
+
+29  -  CHANGE CONTROL
+
+29.1  -  Definition Of A Change
+
+   In the context of change control, a change is defined as ANY change to a
+human-generated file, whether relevant or not.  This means that every action
+that changes the binary representation of such a human-generated file is
+considered a change.
+   For source code, this means that the following actions are considered
+changes, even if they are not relevant to the output of the compiler:
+
+      - Changing, adding or removing a comment.
+      - Adding or removing whitespace between characters on a line.
+      - Adding or removing whitespace between lines in a file (inserting or
+        removing empty lines).
+
+
+29.2  -  Levels Of Change Control
+
+   Change control is done on six levels:
+
+      1. All human-generated files (section 29.5).
+      2. Functions in a module (section 29.6).
+      3. Modules (section 29.7).
+      4. Components (section 29.8).
+      5. Units (section 29.9).
+      6. The entire project (section 29.10).
+
+The aim of change control is to keep track of the changes that are made to
+the project.
+   Change control is done on all files that are generated by programmers.
+This includes documentation files.  No change control is done on files that
+are generated by the development system like object files, map files and
+executable files.
+
+
+29.3  -  Format Of Revision Numbers
+
+   Each file that is subject to change control shall have a revision number.
+The revision number uniquely identifies the revision of the file.  Each file
+contains its current revision number.
+   A revision number shall have the format major.minor.working .  The three
+parts of the revision number have the following meanings:
+
+      major:   The major revision number.  This is an integral number that
+               is one or higher.  It shall not start with a zero.
+      minor:   The minor revision number.  This is an integral number that
+               is not lower than one and not higher than nine.  It shall
+               consist of a single digit.
+      working: The current working revision.  This is an integral number
+               that is not lower than zero and not higher than 999.  It
+               shall consist of three digits.
+
+The major and the minor revision number are visible to the outside world.
+Together, they identify a formal revision of a file.  The working revision
+is for internal use by the EASy Programming Group only.  It identifies an
+informal revision of a file that is still subject to modifications.
+   A new file will be assigned the revision number 1.1.000 .
+
+
+29.4  -  Formal Handling Of Changes
+
+   All formal revisions major.minor of all files, modules, components and
+units shall be stored in a revision control system.  A single revision
+control system shall be used for all files of the project.
+
+
+29.5  -  Generating New Revisions Of Files
+
+   Files start at their first characters, also if the first character is a
+whitespace character, a newline character, or the opening character of a
+comment.  Files end at their last characters, also if the last character is
+a whitespace character, a newline character, the closing character of a
+comment, or if the last character is part of a comment.
+   Assume we start with a file that has been formalised and that has been
+assigned revision number major.minor.000 , or with a new file that has been
+assigned a revision number of 1.1.000 as indicated in section 29.3.
+   As soon as a change is made to the file, its working revision number
+shall be incremented by one.  The change shall be added to the revision
+record of the file.  If another change is made as part of the same update
+work, it may be added to the revision record of the file without increment-
+ing the working revision number.  If another change is made that is part
+of a different updating effort, the working revision number must be
+incremented by one to accommodate the new change.
+   If the author(s) of the changes feel it's time to generate a new formal
+release of the file, the following shall be done:
+
+      - If the new release is felt to be major, or if the minor revision
+        number is equal to nine, the major revision number shall be
+        incremented by one, and the minor revision number shall be reset
+        to one.
+      - If the new revision is felt to be minor, and if the minor revision
+        number is less than nine, the minor revision number shall be
+        incremented by one.
+      - The working revision number shall be reset to 000 .
+      - The new version of the file shall be added to the revision control
+        system.
+
+The decision whether it is time to generate a new release of a file shall be
+made by the current author(s) of the file on a subjective basis.  The same
+is true for the decision if the major or the minor revision number must be
+incremented.
+   Note that this procedure implies that no formal procedure will be used
+when the working revision number is incremented.  This complies with the
+fact that the working revision number is for internal use by the EASy
+Programming Group only as explained in section 29.3.
+   Also note that each formal revision number major.minor corresponds to the
+internal revision number major.minor.000 , and that this revision is
+identical to the previous internal revision.  For example, imagine that a
+file has reached revision number 1.4.037 .  If the authors of that file wish
+to formalise the file, giving it a new minor revision number, the new
+revision number of the file will be 1.5.000 (internally to the EASy
+Programming Group), or 1.5 (externally).  Revision 1.5.000 (or 1.5 ) will be
+identical to revision 1.4.037 .  The first time the file is changed again,
+its (internal) revision number will be 1.5.001 .
+   The changes that are made at each revision of a file shall be listed in
+the file's revision record.  As explained in sections 8.1, 8.2, 9.1, 9.2,
+10.1 and 10.2, there are two such revision records per file: the RCS-
+compatible revision record, and the "internal" revision record.
+
+      - The RCS-compatible revision record shall list the changes that
+        were made at each release of the source file.  Only the changes at
+        the major.minor revisions shall be listed.  The changes will be
+        described in a very concise way.  This revision record shall provide
+        a quick-look overview of the revision history of the file.
+      - The "internal" revision record shall list the changes that were made
+        at each revision of the source file.  All changes shall be listed,
+        also the changes at the major.minor.working revisions.  The changes
+        shall be described in a detailed way.  This revision record shall
+        provide a complete, fully detailed description of the revision
+        history of the file.
+
+   Normally, several files will be given new issue numbers at the same time.
+
+
+29.6  -  Generating New Revisions Of Functions
+
+   A function starts at the opening "/*" of its header block (refer to point
+11.a in section 8.1 for a definition of the header block).  A function ends
+at the newline character that follows the last character of the comment at
+the end of the function (refer to section 14.6 for requirements on the outer
+braces { and } of a function and the accompanying comments).
+   Functions shall not have revision numbers.  Functions shall not have
+revision records.
+   Whenever a function is changed, the file that contains the function must
+be considered changed.   Therefore, revisions to functions shall be listed
+in the revision record of the file that contains them.
+
+
+29.7  -  Generating New Revisions Of Modules
+
+   A module has a revision number major.minor .  As opposed to "normal"
+revision numbering, there is no working revision number.
+   Each time one of the module's files (including the module's documentation
+file) is assigned a new major or minor revision number (section 29.5), the
+module shall be assigned a new major or minor revision number.  The decision
+whether to increment the major or the minor revision number of the module
+is made in the same way as for files (section 29.5).
+   Each new revision of a module shall be registered with the RCS according
+to section 29.4.
+   Modules do not have a revision record.  Instead, revision tracking is
+done using configuration control (section 30).
+
+
+29.8  -  Generating New Revisions Of Components
+
+   A component has a revision number major.minor .  As opposed to "normal"
+revision numbering, there is no working revision number.
+   Each time one of the component's modules, or the component's document-
+ation file is assigned a new major or minor revision number (sections 29.5
+and 29.7), the component shall be assigned a new major or minor revision
+number.  The decision whether to increment the major or the minor revision
+number of the component is made in the same way as for files (section 29.5).
+   Each new revision of a component shall be registered with the RCS
+according to section 29.4.
+   Components do not have a revision record.  Instead, revision tracking is
+done using configuration control (section 30).
+
+
+29.9  -  Generating New Revisions Of Units
+
+   A unit has a revision number major.minor .  As opposed to "normal"
+revision numbering, there is no working revision number.
+   Each time one of the unit's components, or the unit's documentation file
+is assigned a new major or minor revision number (sections 29.5 and 29.8),
+the unit shall be assigned a new major or minor revision number.  The
+decision whether to increment the major or the minor revision number of
+the unit is made in the same way as for files (section 29.5).
+   Each new revision of a unit shall be registered with the RCS according to
+section 29.4.
+   Units do not have a revision record.  Instead, revision tracking is done
+using configuration control (section 30).
+
+
+29.10  -  Generating New Revisions Of The Project
+
+   The entire project has a revision number major.minor .  As opposed to
+"normal" revision numbering, there is no working revision number.
+   Each time one of the project's units, or the project's documentation file
+is assigned a new major or minor revision number (sections 29.5 and 29.9),
+the project shall be assigned a new major or minor revision number.  The
+decision whether to increment the major or the minor revision number of
+the project is made in the same way as for files (section 29.5).
+   Each new revision of the project shall be registered with the RCS
+according to section 29.4.
+   The project does not have a revision record.  Instead, revision tracking
+is done using configuration control (section 30).
+
+
+30  -  CONFIGURATION CONTROL
+
+30.1  -  Introduction
+
+   As explained in section 5, the project consists of units, which consist
+of components, which consist of modules, which consist of files, which may
+contain functions.  The project, its units, the components and the modules
+also contain documentation files.
+   To easily find out which revisions of which smaller parts make up the
+larger parts, this information must be maintained.  This shall be done in a
+configuration-control file.  All such information shall be maintained in a
+single configuration-control file.
+
+
+30.2  -  Configuration Control For Files
+
+   For each revision major.minor of a source file, the configuration-control
+file shall list all functions that constitute the source file.
+   For each revision major.minor of a header file, the configuration-control
+file shall list all functions that constitute the header file.
+   Because documentation files of modules do not consist of smaller parts,
+no configuration control shall be done for documentation files.
+
+
+30.3  -  Configuration Control For Functions
+
+   Because functions do not consist of smaller parts, no configuration
+control shall be done for functions.
+
+
+30.4  -  Configuration Control For Modules
+
+   A module consists of its source file (if present), its header file and
+its documentation file.  Each time the major or the minor revision number of
+any of these files is incremented, the configuration-control information for
+that file shall be added to the configuration-control information for the
+module that contains that file.  This may be done by an automatic tool.
+   For each revision major.minor of a module, the configuration-control file
+shall list all files that constitute the module, together with the revision
+numbers major.minor of those files.
+
+
+30.5  -  Configuration Control For Components
+
+   A component consists of the modules that comprise that component, and of
+the component's documentation file.  Each time the major or the minor
+revision number of any of those modules or the documentation file is
+incremented, the configuration-control information for that module or
+documentation file shall be added to the configuration-control information
+for the component that contains that module or that documentation file.
+This may be done by an automatic tool.
+   For each revision major.minor of a component, the configuration-control
+file shall list all modules that constitute the component, together with the
+revision numbers major.minor of those modules, and the documentation file
+for the component, together with the revision number major.minor of that
+documentation file.
+
+
+30.6  -  Configuration Control For Units
+
+   A unit consists of the components that comprise that unit, and of the
+unit's documentation file.  Each time the major or the minor revision number
+of any of those components or the documentation file is incremented, the
+configuration-control information for that component or documentation file
+shall be added to the configuration-control information for the unit that
+contains that component or that documentation file.  This may be done by an
+automatic tool.
+   For each revision major.minor of a unit, the configuration-control file
+shall list all components that constitute the unit, together with the
+revision numbers major.minor of those components, and the documentation file
+for the unit, together with the revision number major.minor of that
+documentation file.
+
+
+30.7  -  Configuration Control For The Project
+
+   The project consists of the units that comprise the project, and of the
+project's documentation file.  Each time the major or the minor revision
+number of any of those units or the documentation file is incremented, the
+configuration-control information for that unit or documentation file shall
+be added to the configuration-control information for the project.  This may
+be done by an automatic tool.
+   For each revision major.minor of the project, the configuration-control
+file shall list all units that constitute the project, together with the
+revision numbers major.minor of those units, and the documentation file for
+the project, together with the revision number major.minor of that
+documentation file.
+
+
+30.8  -  Revision Control And Configuration Control
+
+   Refer to section 6 for requirements on the location of the configuration-
+control files.
+   Because the configuration-control file may be generated by automatic
+tools, this file is not considered human-generated.  Therefore, no revision
+number must be assigned to the configuration-control file, and no revision
+record must be maintained for that file.
+   Note that the configuration-control file contains redundant information:
+the information of the configuration-control file can also be extracted from
+the RCS by extracting each registered revision of each part of the project,
+and scanning each such revision for the versions of the parts that make up
+the extracted part.  Yet, the configuration-control file is useful, because
+it makes the configuration information more easily accessible.
+
+
+31  -  DOCUMENTATION
+
+   Refer to section 6 for requirements on the locations of the documentation
+files.
+   All documentation, whether in source files or in documentation files,
+shall be in plain English.  Texts of comments and documentation shall be
+grammatically, semantically and syntactically correct.  Dates in texts of
+comments and documentation shall have the format YYYYMMDD (the inter-
+nationally agreed format for dates according to the ISO standard).
+   The project shall be documented at the following levels:
+
+      1. A user's guide of the project shall be written.  It shall be
+         stored in the documentation directory inside the project directory.
+      2. The set-up of the project shall be documented in a dedicated file.
+         This file shall be stored in the documentation directory inside the
+         project directory.  It shall describe how the project is set up in
+         terms of the units of which the project consists.
+      3. The set-up of each unit shall be documented in a dedicated file as
+         indicated in section 10.2.
+      4. The set-up of each component shall be documented in a dedicated
+         file as indicated in section 9.2.
+      5. The set-up of each module shall be documented in a dedicated file
+         as indicated in section 8.3.
+      6. A concise description of each unit, component and module shall be
+         provided by means of comments in the header file of that unit,
+         component or module.  This information is meant for the developer
+         who is well introduced into the functionality of the unit,
+         component or module.
+      7. A concise description of the interface of each function shall be
+         provided in the header of that function.  This information is meant
+         for the developer who is reasonably well introduced into the
+         functionality of the function.
+      8. A concise description of the operations that are performed in each
+         function shall be provided by means of comments in the body of that
+         function.  This information is meant for the developer who is seeks
+         to understand the algorithm of the function.
+
+
+APPENDIX A  -  RCS-COMPATIBLE REVISION RECORD
+
+$RCSfile$
+$Author: erick $
+$Revision: 84 $
+$Date: 1997-12-30 14:42:55 +0100 (Tue, 30 Dec 1997) $
+$Log$
+Revision 1.1  1997/12/30 13:40:46  erick
+First version of the MS-Windows shell (currently only osrtl).
+
+Revision 1.1  1997/03/03 18:17:04  erick
+First release of the coding standard for the Windows shell.
+

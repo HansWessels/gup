@@ -1,0 +1,9 @@
+utils.o
+scan.o
+Makefile
+main.o
+gup
+decomp.o
+compress.o
+.deps
+.libs

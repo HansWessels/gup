@@ -1,0 +1,58 @@
+%define name gup
+%define version 0.0.7
+%define release 2
+%define prefix /usr
+
+%define builddir $RPM_BUILD_DIR/%{name}-%{version}
+Summary: GUP archiver.
+Name: %{name}
+Version: %{version}
+Release: %{release}
+Group: Utilities/Archivers
+Copyright: GPL
+Vendor: Wout Klaren
+Packager: Wout Klaren
+Source: %{name}-%{version}.tar.gz
+BuildRoot: /tmp/build-%{name}-%{version}
+
+
+%description
+ARJ and LZH compatible archiver.
+
+%package devel
+Summary: GUP archiver static library.
+Group: Development/Libraries
+Requires: gup
+
+%description devel
+GUP static library.
+
+%prep
+%setup
+
+%build
+CXXFLAGS="$RPM_OPT_FLAGS" CFLAGS="$RPM_OPT_FLAGS" LDFLAGS="-s" ./configure \
+	--prefix=%{prefix} --enable-static
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make prefix=$RPM_BUILD_ROOT/%{prefix} install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+rm -rf %{builddir}
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+%files
+%defattr(-,root,root)
+%attr(755,root,root) %{prefix}/bin/gup
+%attr(755,root,root) %{prefix}/lib/libgup.so.0.0.0
+
+%files devel
+%attr(644,root,root) %{prefix}/lib/libgup.la
+%attr(644,root,root) %{prefix}/lib/libgup.a
+%{prefix}/lib/libgup.so

@@ -1,0 +1,23 @@
+The following names must be used for the platforms for which
+the GUP project contains platform-specific files:
+
+   amiga       Amiga machines.
+   atari       Atari machines.
+   i386        Intel 80386 processor.
+   i486        Intel 80486 processor.
+   i586        Intel Pentium processor.
+   i686        Intel Merced processor.
+   ix86        Any Intel 80x86 processor.
+   ia32        Any 32-bits Intel 80x86 processor.
+   m68000.pc   Motorola 680x0 processor,
+               Pure Assembler syntax,
+               Atari.
+   m68000.mot  Motorola 680x0 processor,
+               GNU Assembler with Motorola syntax,
+               Atari and Linux/m68k.
+   m68000.mit  Motorola 680x0 processor,
+               GNU Assembler with MIT syntax,
+               Atari.
+   ms_win      Microsoft Windows operating system.
+   unix        UNIX operating system.
+

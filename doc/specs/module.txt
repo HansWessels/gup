@@ -1,0 +1,16 @@
+The following names must be used for the modules of the GUP
+project:
+
+   General modules (in . ):
+      arcman    Archive manager.
+      cli       Command-line interface.
+      compress  Compressor and decompressor.
+      guplib    General library functions, part of an interface to
+                other programs.
+      lib       Small general supporting functions.
+
+   Modules for Atari (in ./atari ):
+      cgl       C++ interface for GEM.
+      shell     GUI for Atari.
+      support   Support library for Atari.
+

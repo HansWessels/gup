@@ -1,0 +1,39 @@
+--- /usr/local/share/aclocal/libtool.m4	Sat Apr 18 15:58:20 1998
++++ tmp/libtool.m4	Sun Aug  9 11:36:06 1998
+@@ -74,7 +74,7 @@
+ 
+ # Actually configure libtool.  ac_aux_dir is where install-sh is found.
+ CC="$CC" CFLAGS="$CFLAGS" CPPFLAGS="$CPPFLAGS" \
+-LD="$LD" NM="$NM" RANLIB="$RANLIB" LN_S="$LN_S" \
++LD="$LD" NM="$NM" RANLIB="$RANLIB" AR="$AR" LN_S="$LN_S" \
+ ${CONFIG_SHELL-/bin/sh} $ac_aux_dir/ltconfig \
+ $libtool_flags --no-verify $ac_aux_dir/ltmain.sh $host \
+ || AC_MSG_ERROR([libtool configure failed])
+@@ -150,7 +150,6 @@
+ enable_static=AM_ENABLE_STATIC_DEFAULT)dnl
+ ])
+ 
+-
+ # AM_PROG_LD - find the path to the GNU or non-GNU linker
+ AC_DEFUN(AM_PROG_LD,
+ [AC_ARG_WITH(gnu-ld,
+@@ -164,7 +163,9 @@
+   ac_prog=`($CC -print-prog-name=ld) 2>&5`
+   case "$ac_prog" in
+   # Accept absolute paths.
++changequote(<<, >>)dnl
+   /* | [A-Za-z]:\\*)
++changequote([, ])dnl
+     test -z "$LD" && LD="$ac_prog"
+     ;;
+   "")
+@@ -228,7 +229,9 @@
+ [AC_MSG_CHECKING([for BSD-compatible nm])
+ AC_CACHE_VAL(ac_cv_path_NM,
+ [case "$NM" in
++changequote(<<, >>)dnl
+ /* | [A-Za-z]:\\*)
++changequote([, ])dnl
+   ac_cv_path_NM="$NM" # Let the user override the test with a path.
+   ;;
+ *)

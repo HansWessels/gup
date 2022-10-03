@@ -1,0 +1,53 @@
+;********************************************************************
+;*                                                                  *
+;* GNU ARJ. Copyright(c) 1996, The ARJ development team.            *
+;*                                                                  *
+;********************************************************************
+;*
+;* Pure C project file.
+;*
+;* $Author: hwessels $
+;* $Date: 2000-07-16 19:13:22 +0200 (Sun, 16 Jul 2000) $
+;* $Revision: 143 $
+;* $Log$
+;* Revision 1.5  2000/07/16 17:11:21  hwessels
+;* Updated to GUP 0.0.4
+;*
+;* Revision 1.4  1998/05/26 19:47:24  hwessels
+;* Sources van Hans, 26-05-98.
+;*
+;* Revision 1.3  1998/03/21 14:26:32  hwessels
+;* Sources van Hans, 21-03-1998.
+;*
+;* Revision 1.2  1998/01/03 22:47:59  hwessels
+;* Sources van Hans, 03-01-98.
+;*
+;* Revision 1.1  1996/11/20 20:52:22  wklaren
+;* First version.
+;*
+;********************************************************************
+
+compress.lib
+.C[ -K -P -Y -I..\include ]
+.L[ -J ]
+.S[ -S -Y ]
+=
+decode.c   (..\include\compress.h, decode.h, ..\include\gup.h)
+crc.c      (..\include\crc.h, ..\include\gup.h, ..\include\compress.h, st_opti\opti.h, ..\include\gup.h)
+deflate.c  (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, ..\include\gup_err.h, st_opti\opti.h, evaluatr.h, encode.h, ..\include\gup.h, swapbit.h)
+encode.c   (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, ..\include\gup_err.h, st_opti\opti.h, evaluatr.h, encode.h, ..\include\gup.h)
+evaluatr.c (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, ..\include\gup_err.h, st_opti\opti.h, evaluatr.h, encode.h, ..\include\gup.h)
+sld.c      (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, st_opti\opti.h, encode.h, ..\include\gup.h)
+sld_indx.c (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, st_opti\opti.h, encode.h, ..\include\gup.h)
+sld_med.c  (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, st_opti\opti.h, encode.h, ..\include\gup.h)
+sld_smll.c (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, st_opti\opti.h, encode.h, ..\include\gup.h)
+
+st_opti\st_opti.c  (..\include\arjbeta.h, ..\include\compress.h, ..\include\gup.h, st_opti\opti.h, encode.h)
+st_opti\chaoscrc.s    ; fast chaos crc routs, 3kB buffer
+ ;  st_opti\crc16bit.s    ; ultra fast 16 bit crc routs
+st_opti\encodest.s     (st_opti\command.mac)
+st_opti\sld.s          (st_opti\command.mac)
+st_opti\sldf.s         (st_opti\command.mac)
+ ;st_opti\sld_med.s      (st_opti\command.mac)
+ ;st_opti\sld_smll.s     (st_opti\command.mac)
+  

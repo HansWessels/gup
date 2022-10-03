@@ -1,0 +1,563 @@
+Titel:  Ontwerp header structuur
+Auteur: W. Klaren
+Datum:  3-11-1996
+Versie: 1.0
+
+
+1. REQUIREMENTS
+
+De header structuur en bijbehorende functies moeten voldoen aan de 
+volgende eisen:
+
+- De structuur moet zo opgezet zijn dat deze voor zowel ARJ als LHARC 
+  archieven gebruikt moet kunnen worden. Als het even kan moet de 
+  structuur ook voldoen voor andere archieven (TAR, ZIP).
+
+- Een met de read_header functie gelezen header moet door de 
+  write_header structuur geheel kunnen worden gereconstrueerd. Dit is 
+  van belang bij het updaten van een archief dat onder een ander 
+  operating system gemaakt is. Ook extended headers die het programma 
+  niet kent dienen geheel gereconstrueerd te worden. Overigens is 
+  deze eis niet hard. Je kunt tijdens het updaten ook een fseek doen 
+  terug naar het begin van de header en vervolgens header plus 
+  gepackte file kopieren naar het bestemmingsarchief. In dit geval 
+  wordt wel een deel van het archief twee keer gelezen.
+
+- Voor de routines die een archief updaten, uitpakken etc. mag er 
+  geen verschil zijn tussen een ARJ en LHARC archief. Alleen voor 
+  heel specifieke zaken, zoals multiple volume en encryptie moet het 
+  in deze routines nodig zijn te testen welke type archief bewerkt 
+  wordt.
+
+
+2. BENODIGDE DOCUMENTEN
+
+[1]	Titel:	Definitie archiefobject
+	Auteur:	W. Klaren
+	Versie:	3-11-1996
+
+
+3. DEFINITIE STRUCTUREN
+
+Gezien de structuur van ARJ en LHARC archieven is het handig twee 
+structuren te definieren: een main header en een file header. Beide 
+worden hieronder verder uitgewerkt.
+
+
+3.1 MAINHEADER
+
+De main header structuur is als volgt gedeclareerd:
+
+typedef struct
+{
+	/*
+	 * Gemeenschappelijke variabelen.
+	 */
+
+	char *comment;					/* Archief commentaar. Dit is 
+									   een NULL pointer als er geen 
+									   archief commentaar is. */
+
+	/*
+	 * ARJ specifieke variabelen. Het is mogelijk dat een ARJ 
+	 * specifieke variabele verplaatst wordt naar het algemene
+	 * gedeelte op het moment dat er ondersteuning voor een ander
+	 * archieftype wordt ingebouwd. Voorlopig is alleen 'comment'
+	 * gemeenschappelijk.
+	 */
+
+	byte arj_nbr;					/* Archiver version used to pack. 
+									   */
+	byte arj_x_nbr;					/* Minimum version of archiver to
+									   depack. */
+	byte host_os;					/* Operating system. */
+	byte flags;						/* Vlaggen. De indeling is 
+									   volgens ARJ. Zijn meer vlaggen 
+									   nodig voor een ander type 
+									   archiver, dan wordt het type 
+									   veranderd in int of long. De 
+									   indeling van de onderste 8-
+									   bits blijft in dit geval 
+									   volgens ARJ. */
+
+	word arj_sec_nbr;				/* Security version. */
+	unsigned long arj_secenv_fpos;	/* Wat is dit ??? */
+	unsigned long arj_secenv_len;	/* Wat is dit ??? */
+
+	unsigned long ctime;			/* Creation time of archive. */
+	unsigned long mtime;			/* Modification time of archive. 
+									   */
+	unsigned long arc_size;			/* Lengte van het archief. */
+
+	char *filename;					/* Filenaam van archief. */
+	word fspecpos_in_fname;			/* Positie van fspec in filenaam. 
+									   */
+} MAIN_HEADER;
+
+Voorlopig ga ik er vanuit dat een mainheader in ARJ nooit extended 
+headers heeft. Dit is verder geen probleem, bij de fileheader wordt 
+beschreven hoe dit opgelost kan worden.
+
+
+3.2 FILEHEADER
+
+3.2.1 FILE_HEADER structuur
+
+De file header structuur is als volgt gedeclareerd:
+
+typedef struct
+{
+	/*
+	 * Gemeenschappelijke variabelen.
+	 */
+
+	byte host_os;					/* Operating systeem waarop de 
+									   file gepackt is. Codering zie 
+									   3.2.2. */
+	byte flags;						/* Vlaggen. De indeling is 
+									   volgens ARJ. Zijn meer vlaggen 
+									   nodig voor een ander type 
+									   archiver, dan wordt het type 
+									   veranderd in int of long. De 
+									   indeling van de onderste 8-
+									   bits blijft in dit geval 
+									   volgens ARJ. Codering zie 
+									   3.2.3. */
+	byte file_type;					/* File type. Coedering zie 
+									   3.2.4. */
+	byte method;					/* Packmode. Codering zie 3.2.5. 
+									   */
+	word orig_file_mode;			/* File attributen, zoals 
+									   gelezen uit het archief. 
+									   Alleen van belang voor 
+									   write_file_header(). */
+	word file_mode;					/* File attributen, geconverteerd 
+									   naar OS waarop GNU ARJ draait 
+									   of indien dit niet mogelijk is 
+									   een of andere default. */
+	unsigned long orig_time_stamp;	/* Modification time, zoals 
+									   gelezen uit het archief. 
+									   Alleen van belang voor 
+									   write_file_header(). 
+									   Opmerking over MS-DOS: tijd 
+									   en datum zijn beide in deze 
+									   variabele gecodeerd. */
+	unsigned long time_stamp;		/* Modification time, 
+									   geconverteerd naar OS waarop 
+									   GNU ARJ draait of indien dit 
+									   niet mogelijk is een of andere 
+									   default. */
+
+	unsigned long compsize;			/* Gecomprimeerde grootte. */
+	unsigned long origsize;			/* Oorspronkelijke grootte. */
+	unsigned long file_crc;			/* CRC over de file. Gebruikt het 
+									   archieftype niet alle 32 bits 
+									   voor de CRC, dan zijn de bits 
+									   die over zijn 0. */
+
+	char *filename;					/* Filenaam, gealloceerd met 
+									   malloc(). Het formaat is 
+									   volgens het OS waar GNU ARJ op 
+									   draait. Dit kan problemen 
+									   geven, zie onder. */
+	word entry_pos;					/* Filespec positie in filenaam. 
+									   */
+	char *comment;					/* Commentaar, gealloceerd met 
+									   malloc(). */
+
+	void *extended_headers;			/* Met malloc() gealloceerd 
+									   gebied, dat alle extended 
+									   headers van de file bevat. 
+									   NULL als er geen extended 
+									   headers zijn. Zie 3.2.6 voor 
+									   de indeling van dit gebied. */
+
+	/*
+	 * De volgende informatie wordt gelezen uit de extendend headers 
+	 * van ARJ of LHARC. Deze informatie is alleen geldig als 
+	 * 'host_os' OS_UNIX is. Deze variabelen worden ook gebruikt als 
+	 * het archief een TAR archief is.
+	 */
+
+	uid_t unix_uid;					/* UNIX user id. */
+	gid_t unix_gid;					/* UNIX group id. */
+	char unix_user[USER_MAX];		/* UNIX user name. */
+	char unix_group[GROUP_MAX];		/* UNIX group name. */
+	time_t unix_atime;				/* Modification time (UNIX 
+									   format). */
+	time_t unix_ctime;				/* Modification time (UNIX 
+									   format). */
+
+	/*
+	 * OS afhankelijke variabelen. Deze informatie bevindt zich bij 
+	 * alle ondersteunde archieftypes in de extended headers. 
+	 */
+
+#if (OS == OS_UNIX)
+	...
+#endif
+#if (OS == OS_MAC)
+	...
+#endif
+
+	/*
+	 * ARJ specifieke variabelen.
+	 */
+
+	byte arj_nbr;					/* Archiver version used to pack. 
+									   */
+	byte arj_x_nbr;					/* Minimum version of archiver to
+									   depack. */
+
+	word host_data;					/* Wat is dit??? */
+	unsigned long extfile_pos;		/* Wat is dit??? */
+} FILE_HEADER;
+
+Een aantal zaken, zoals de filenaam, fileattributen en filedatum, 
+zijn OS afhankelijk of kunnen OS afhankelijk zijn. Binnen GNU ARJ is 
+het echter handig als deze gegevens in het formaat zijn van het OS 
+waarop GNU ARJ draait.
+
+Bij het kopieren van een file van archief A naar archief B is het van 
+belang dat de oorspronkelijke informatie zo goed mogelijk bewaard 
+blijft, ook als de file op een ander OS ingepakt is. De volgende 
+oplossingen worden gebruikt:
+
+file attributen:	Onthoudt de oorspronkelijke fileattributen en 	
+					naar het huidige OS geconverteerde 
+					fileattributen. Is conversie niet mogelijk, 
+					gebruik dan een defaultwaarde voor de attributen.
+
+datum:				Onthoudt de oorspronkelijke datum en een naar het 
+					huidige OS geconverteerde datum. Is conversie 
+					niet mogelijk, dan een default nemen (huidige 
+					datum? Wat moet er gebeuren bij update?).
+
+filenaam:			Voorlopig ga ik er van uit dat deze in het 
+					archief of in MS-DOS of UNIX formaat is. Het 
+					formaat wordt bepaalt aan de hand van de 
+					variabele 'host_os' en de PATHSYM_FLAG in 
+					'flags'. Ik denk dat we hiermee in de problemen 
+					komen bij archieftypes specifiek voor de Mac of 
+					als de naam in Unicode is opgeslagen in plaats 
+					van ASCII (Windows 95 ARJ?). In deze gevallen zit 
+					er niets anders op dan ook de oorspronkelijke 
+					string te onthouden (met lengte en formaattype?).
+
+Let op dat bij het wijzigen van 'time_stamp' en 'file_mode' ook 
+'orig_time_stamp' en 'orig_file_mode' geupdate worden, omdat de 
+writeheader functie alleen de laatste twee variabelen wegschrijft. 
+Bij het wijzigen van de informatie in een fileheader dient ook 
+'host_os' op het huidige OS type gezet te worden.
+
+
+3.2.2 Host OS types
+
+De volgende waardes voor 'host_os' zijn gedefinieerd:
+
+#define OS_MSDOS		0		/* ARJ, LHARC */
+#define OS_PRIMOS		1		/* ARJ */
+#define OS_UNIX			2		/* ARJ, LHARC */
+#define OS_AMIGA		3		/* ARJ, LHARC */
+#define OS_MAC			4		/* ARJ, LHARC */
+#define OS_OS_2			5		/* ARJ, LHARC */
+#define OS_APPLE_GS		6		/* ARJ */
+#define OS_ATARI   		7		/* ARJ, LHARC */
+#define OS_NEXT			8		/* ARJ */
+#define OS_VAX_VMS		9		/* ARJ */
+#define OS_OS9			10		/* LHARC */
+#define OS_OS_68K		11		/* LHARC */
+#define OS_OS_386		12		/* LHARC */
+#define OS_HUMAN		13		/* LHARC */
+#define OS_CP_M			14		/* LHARC */
+#define OS_FLEX			15		/* LHARC */
+#define OS_RUNSER		16		/* LHARC */
+#define OS_TOWNOS		17		/* LHARC */
+#define OS_XOSK			18		/* LHARC */
+
+De readheader en writeheader functies zijn verantwoordelijk voor het 
+omzetten van en naar archief specifieke waardes. Ik heb nog geen 
+oplossing voor wat we moeten doen als we een LZH archief omzetten 
+naar een ARJ archief en we komen een OS type tegen dat ARJ niet 
+ondersteunt (bot omzetten naar MS-DOS of zo iets?).
+
+
+3.2.3 Vlaggen
+
+De volgende vlaggen zijn gedefinieerd:
+
+#define GARBLE_FLAG 		0x01	/* ARJ */
+#define VOLUME_FLAG 		0x04	/* ARJ */
+#define EXTFILE_FLAG		0x08	/* ARJ */
+#define PATHSYM_FLAG		0x10	/* ARJ */
+#define BACKUP_FLAG 		0x20	/* ARJ */
+
+Voor LZH archieven is 'flags' altijd 0.
+
+
+3.2.4 Filetypes
+
+De volgende filetypes zijn gedefinieerd:
+
+#define BINARY_TYPE 	0		/* ARJ, LHARC */
+#define TEXT_TYPE 		1		/* ARJ */
+#define COMMENT_TYPE	2		/* ARJ */
+#define DIR_TYPE		3		/* ARJ */
+#define LABEL_TYPE		4		/* ARJ */
+
+Probleem voor de archive manager: deze moet al deze types 
+ondersteunen, maar bovendien bij repack ook weten of het 
+bestemmingsarchief het type ondersteunt.
+
+
+3.2.5 Packmodes
+
+De volgende packmodes zijn gedefinieerd:
+
+#define STORE			0		/* General store. */
+#define ARJ_MODE_1		1		/* ARJ mode 1. */
+#define ARJ_MODE_2		2		/* ARJ mode 2. */
+#define ARJ_MODE_3		3		/* ARJ mode 3. */
+#define ARJ_MODE_4		4		/* ARJ mode 4. */
+#define GNU_ARJ_MODE_7	7		/* GNU ARJ mode 7. */
+#define LHA_LHD_		0x100   /* LHarc directory method. */
+#define LHA_LH1_		0x101	/* 4k sliding dictionary(max 60 
+								   bytes) + dynamic Huffman + fixed 
+								   encoding of position */
+#define LHA_LH2_		0x102	/* 8k sliding dictionary(max 256 
+								   bytes) + dynamic Huffman */
+#define LHA_LH3_		0x103	/* 8k sliding dictionary(max 256 
+								   bytes) + static Huffman */
+#define LHA_LH4_		0x104	/* 4k sliding dictionary(max 256 
+								   bytes) + static Huffman + improved 
+								   encoding of position and trees */
+#define LHA_LH5_		0x105	/* 8k sliding dictionary(max 256 
+								   bytes) + static Huffman + improved 
+								   encoding of position and trees */
+#define LHA_LZS_		0x106	/* 2k sliding dictionary(max 17 
+bytes) */
+#define LHA_LZ4_		0x107	/* no compression (Kan hier niet 
+								   gewoon STORE voor gebruikt worden 
+								   Hans?) */
+#define LHA_LZ5_		0x108	/* 4k sliding dictionary(max 17 
+								   bytes) */
+#define LHA_AFX_		0x109	/* same as -lz5- */
+
+Voor STORE geldt dat de readheader en writeheader functies zorgen 
+voor de conversie van en naar de archiefspecifieke code voor STORE. 
+Tijdens het packen is het de verantwoordelijkheid van het 
+userinterface om een packmode op te geven die hoort bij het gekozen 
+archieftype.
+
+
+3.2.6 Extended headers
+
+De extended headers worden als volgt opgeslagen in het geheugen:
+
+	2 bytes	- lengte (x bytes)
+	x bytes - extended header data 1
+	2 bytes - lengte (y bytes)
+	y bytes - extended header data 2
+	enz.
+
+Een extended header met lengte 0 geeft het einde aan van de lijst met 
+extended headers.
+
+
+4. FUNCTIES
+
+4.1 MAINHEADER
+
+4.1.1 read_main_header
+
+Prototype:		arj_result read_main_header(ARCHIVE *archive, 
+											MAIN_HEADER *header,
+											ArjOptions *options)
+
+Beschrijving:	Lees de mainheader van een archief.
+
+Parameters:		archive	- Pointer naar archiefstructuur, zie [1]. 
+						  Deze bevat onderandere de filehandle van 
+						  het archief, de filenaam van het archief en 
+						  pointers naar de CRC functies.
+				header	- Pointer naar een MAIN_HEADER structuur, 
+						  waarin de gelezen header wordt geplaatst.
+				options	- Pointer naar de commandstruct afkomstig van 
+						  de commandline parser of de shell. Bevat 
+						  opties wat er moet gebeuren bij defecte 
+						  archieven etc.
+
+Resultaat:		zie arj_err.h.
+
+
+4.1.2 write_main_header
+
+Prototype:		arj_result write_main_header(ARCHIVE *archive,
+											 MAIN_HEADER *header)
+
+Beschrijving:	Schrijf de mainheader van een archief.
+
+Parameters:		archive	- Pointer naar archiefstructuur.
+				header	- Pointer naar de MAIN_HEADER structuur, die 
+						  in het archief geschreven moet worden.
+
+Resultaat:		zie arj_err.h.
+
+
+4.1.3 free_main_header
+
+Prototype:		void free_main_header(MAIN_HEADER *header)
+
+Beschrijving:	Geef voor de mainheader gealloceerd geheugen vrij, 
+				zoals 'filename' en 'comment'.
+
+Parameters:		header	- Pointer naar MAIN_HEADER structuur.
+
+Resultaat:		-
+
+
+4.1.4 init_main_header
+
+Prototype:		arj_result init_main_header(ARCHIVE *archive, 
+											MAIN_HEADER *header,
+											ArjOptions *options)
+
+Beschrijving:	Initieer een MAIN_HEADER structuur aan de hand van de 
+				gegevens in 'archive' en ingebouwde gegevens 
+				(bijvoorbeeld de waardes voor 'arj_nbr' en arj_x_nbr).
+
+Parameters:		archive	- Pointer naar archiefstructuur.
+				header	- Pointer naar de MAIN_HEADER structuur, die 
+						  geinitieerd moet worden.
+				options	- Pointer naar de commandstruct afkomstig van 
+						  de commandline parser of de shell. Bevat 
+						  optie die aangeeft wat het huidige OS type 
+						  is (de Atari shell wordt waarschijnlijk 
+						  omschakelbaar tussen UNIX en MS-DOS).
+
+Resultaat:		zie arj_err.h.
+
+
+4.1.5 main_header_len
+
+Prototype:		size_t main_header_len(MAIN_HEADER *header)
+
+Beschrijving:	Bepaal wat de lengte van de gegeven header op disk 
+				zou zijn.
+
+Parameters:		header	- Pointer naar de mainheader.
+
+Resultaat:		de lengte die de header op disk zou hebben.
+
+
+4.1.6 write_end_of_volume
+
+Prototype:		arj_result write_end_of_volume(ARCHIVE *archive)
+
+Beschrijving:	Schrijf de end of volume marker en update indien 
+				nodig (ARJ) de mainheader van het volume. Deze 
+				functie hoort eigenlijk bij de beschrijving van het 
+				archiefobject, maar ik noem deze hier, omdat deze in 
+				ieder geval bij ARJ de mainheader wijzigt.
+
+Parameters:		archive	- pointer naar archief.
+
+Resultaat:		zie arj_err.h.
+
+
+4.2 FILEHEADER
+
+4.2.1 read_file_header
+
+Prototype:		arj_result read_file_header(ARCHIVE *archive, 
+											FILE_HEADER *header,
+											ArjOptions *options)
+
+Beschrijving:	Lees een fileheader uit het archief. Is het archief 
+				een multiple volume archief en is het einde van een 
+				volume bereikt, dan gaat de functie automatisch 
+				verder in het volgende archief. 'archive' wordt 
+				geupdate als dit gebeurt (nieuwe filehandle voor het 
+				tweede volume, eventuele nieuwe informatie uit de 
+				mainheader van het tweede volume etc.).
+
+Parameters:		archive	- Pointer naar archiefstructuur, zie [1]. 
+						  Deze bevat onderandere de filehandle van 
+						  het archief, de filenaam van het archief en 
+						  pointers naar de CRC functies.
+				header	- Pointer naar een FILE_HEADER structuur, 
+						  waarin de gelezen header wordt geplaatst.
+				options	- Pointer naar de commandstruct afkomstig van 
+						  de commandline parser of de shell. Bevat 
+						  opties wat er moet gebeuren bij defecte 
+						  archieven etc.
+
+Resultaat:		zie arj_err.h.
+
+
+4.2.2 write_file_header
+
+Prototype:		arj_result write_file_header(ARCHIVE *archive,
+											 FILE_HEADER *header)
+
+Beschrijving:	Schrijf een fileheader in een archief.
+
+Parameters:		archive	- Pointer naar archiefstructuur.
+				header	- Pointer naar de FILE_HEADER structuur, die 
+						  in het archief geschreven moet worden.
+
+Resultaat:		zie arj_err.h.
+
+
+4.2.3 free_file_header
+
+Prototype:		void free_file_header(FILE_HEADER *header)
+
+Beschrijving:	Geef voor de fileheader gealloceerd geheugen vrij, 
+				zoals 'filename', 'comment' en 'extended_headers'.
+
+Parameters:		header	- Pointer naar FILE_HEADER structuur.
+
+Resultaat:		-
+
+
+4.2.4 init_file_header
+
+Prototype:		arj_result init_file_header(const char *filename, 
+											const char *comment, 
+											FILE_HEADER *header,
+											ArjOptions *options)
+
+Beschrijving:	Initieer een FILE_HEADER structuur aan de hand van 
+				opgegeven parameters en en ingebouwde gegevens 
+				(bijvoorbeeld de waardes voor 'arj_nbr' en arj_x_nbr).
+
+Parameters:		filename	- Naam van de file. Wordt met strdup() 
+							  gekopieerd.
+				comment		- Commentaar. Wordt met strdup() 
+							  gekopieerd. Is deze variabele leeg of 
+							  een NULL pointer, dan wordt een NULL 
+							  pointer opgeslagen in de fileheader.
+				header		- Pointer naar de FILE_HEADER structuur, 
+							  die geinitieerd moet worden.
+				options		- Pointer naar de commandstruct afkomstig 
+							  van de commandline parser of de shell. 
+							  Bevat optie die aangeeft wat het 
+							  huidige OS type is (de Atari shell 
+							  wordt waarschijnlijk omschakelbaar 
+							  tussen UNIX en MS-DOS).
+
+Resultaat:		zie arj_err.h.
+
+
+4.2.5 file_header_len
+
+Prototype:		size_t file_header_len(FILE_HEADER *header)
+
+Beschrijving:	Bepaal wat de lengte van de gegeven header op disk 
+				zou zijn.
+
+Parameters:		header	- Pointer naar de fileheader.
+
+Resultaat:		de lengte die de header op disk zou hebben.
+
