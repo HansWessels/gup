@@ -200,7 +200,7 @@ class archive
 	virtual gup_result arcctl(int function, ... ) = 0;
 };
 
-typedef enum { AT_UNKNOWN, AT_ARJ, AT_LHA, AT_GZIP } archive_type;
+typedef enum { AT_UNKNOWN, AT_ARJ, AT_LHA, AT_GZIP, AT_BINDUMP, AT_ASMDUMP, AT_CDUMP } archive_type;
 
 archive *new_archive(archive_type type);
 archive_type get_arc_type(const char *filename);

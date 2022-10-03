@@ -78,9 +78,9 @@ gup_result builddir(const char *name)
  * or string "UnknownOS" if unkown os
  */
 
-char *host_os_names[] = HOST_OS_NAMES;
+const char *host_os_names[] = HOST_OS_NAMES;
 
-char *host_os_name(int os)
+const char *host_os_name(int os)
 {
 
 	if (os >= MAX_OS)

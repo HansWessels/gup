@@ -7,7 +7,7 @@
 
 #define FLUSH() 	fflush(stdout)
 
-extern char *host_os_name(int os);
+extern const char *host_os_name(int os);
 
 /*
 // Pretty Name Print

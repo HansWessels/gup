@@ -148,7 +148,11 @@ void usage(char *n)
 		   "   f: Freshen existing files      * v: enable multiple Volumes\n"
 		   "   g: Garble with password          w: assign Work directory\n"
 		   "   i: no progress Indicator         x: eXclude selected files\n"
-		   " * m: with Method 0, 1, 2, 3, 4, 7  y: assume Yes on all queries\n",
+		   "   jm: maximum compression (default)\n"
+		   " * lh: with LZH Method 0,4,5,6      y: assume Yes on all queries\n"
+		   " * lz: with LZS Method s,5\n"
+		   "   gz: GZIP mode\n"
+		   " * m: with Method 0, 1, 2, 3, 4, 7\n",
 		   n, n);
 	exit(0);
 }
@@ -461,9 +465,9 @@ int parse(int argc, char *argv[])
 	return i;
 }
 
-void help(char *n)
+void help(const char *n)
 {
-	printf("This is the extensive help of %s\ncore dumped ;)", n);
+	printf("This is the extensive help of %s\ncore dumped ;)\n", n);
 	exit(0);
 }
 
@@ -600,9 +604,15 @@ int main(int argc, char *argv[])
 				opts.mode = LHA_LH6_;
 			}
 			break;
-		 case AT_GZIP:
+		case AT_GZIP:
 			if (default_mode)
 				opts.mode = GZIP;
+			break;
+		case AT_CDUMP:
+		case AT_BINDUMP:
+		case AT_ASMDUMP:
+			if (default_mode)
+				opts.mode = GNU_ARJ_MODE_7;     // GNU_ARJ_MODE_8? or something...
 			break;
 		}
 
