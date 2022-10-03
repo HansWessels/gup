@@ -96,8 +96,6 @@ LTLIBOBJS="`echo ${LIBOBJS} | sed 's/\.o/.lo/g'`"
 AC_SUBST(LTLIBOBJS)
 
 AC_CONFIG_FILES([Makefile lib/Makefile compress/Makefile])
-AC_OUTPUT
 AC_CONFIG_FILES([include/Makefile include/sysdep/Makefile arcman/Makefile guplib/Makefile unix/Makefile])
-AC_OUTPUT
 AC_CONFIG_FILES([gup.spec])
 AC_OUTPUT
