@@ -107,10 +107,10 @@ void copy_filename(char *dest, const char *src)
 
 gup_result copy_file(const char *src, const char *dest)
 {
-	register int src_file, dest_file;
-	register gup_result result = GUP_OK;
+	int src_file, dest_file;
+	gup_result result = GUP_OK;
 	unsigned long tmp_buf_len;
-	register unsigned char *tmp_buf;
+	unsigned char *tmp_buf;
 
 	/*
 	 * Allocate temporary buffer.
@@ -138,7 +138,7 @@ gup_result copy_file(const char *src, const char *dest)
 			{
 				if ((blk_size = read(src_file, tmp_buf, tmp_buf_len)) >= 0)
 				{
-					if ((l = write(dest_file, tmp_buf, blk_size)) != blk_size)
+					if ((l = write(dest_file, tmp_buf, (size_t)blk_size)) != blk_size)
 						result = (l == -1) ? gup_conv_err(errno) : GUP_WRITE_ERROR;
 				}
 				else
@@ -704,11 +704,11 @@ gup_result gup_symlink(const char *oldname, const char *newname)
 
 gup_result gup_readlink(const char *filename, char **linkname)
 {
-	int size = 100;
+	unsigned long size = 100;
 
 	while(1)
 	{
-		int len;
+		long len;
 
 		*linkname = new char[size];
 		if ((len = readlink(filename, *linkname, size)) == -1)
@@ -719,7 +719,7 @@ gup_result gup_readlink(const char *filename, char **linkname)
 			return gup_conv_err(errno);
 		}
 
-		if (len < size)
+		if (len < (long)size)
 		{
 			(*linkname)[len] = 0;
 			return GUP_OK;
