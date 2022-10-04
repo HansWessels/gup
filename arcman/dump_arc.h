@@ -118,6 +118,31 @@ class dump_archive : public archive
 	virtual gup_result encode(fileheader *header, int infile);
 
 	/*
+	 * GUP I/O virtualization functions.
+	 */
+
+	virtual buf_fhandle_t *gup_io_open(const char *name, unsigned char *buf_start, unsigned long buf_size, int omode, gup_result *result);
+	virtual gup_result gup_io_close(buf_fhandle_t *file);
+	// Seek to a position in the file.
+	virtual gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode, long *new_pos);
+	// Return the current position in the file.
+	virtual gup_result gup_io_tell(buf_fhandle_t *file, long *fpos);
+	// Write data to a file.
+	virtual gup_result gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long count, unsigned long *real_count);
+	// Read data from a file.
+	virtual gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count, unsigned long *real_count);
+	// Make sure there at least 'count' bytes free in the file buffer. If necessary the file buffer is flushed.
+	virtual gup_result gup_io_write_announce(buf_fhandle_t *file, unsigned long count);
+	// Fill the file buffer.
+	virtual gup_result gup_io_fill(buf_fhandle_t *file);
+	// Get a pointer to the current position in the file buffer and return the number of bytes that can be written into the buffer or can be read from the buffer.
+	virtual uint8 *gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left);
+	// Set the pointer in the file buffer to a new position.
+	virtual void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos);
+	// Set the current position in the file to the given value. Any bytes after this position that are in the buffer are discarded.
+	virtual void gup_io_set_position(buf_fhandle_t *file, long position);
+	 
+	/*
 	 * Archive control function.
 	 */
 
