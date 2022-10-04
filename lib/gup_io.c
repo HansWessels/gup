@@ -140,6 +140,7 @@ static gup_result gup_io_flush(buf_fhandle_t *file)
 
 	do
 	{
+		TRACE_ME_EX("flushing buffer: %lu bytes", count);
 		real_count = write(com->handle, file->start, (size_t) count);
 
 		if (real_count == -1)
@@ -197,6 +198,7 @@ buf_fhandle_t *gup_io_open(const char *name, unsigned char *buf_start,
 						   unsigned long buf_size, int omode,
 						   gup_result *result)
 {
+	TRACE_ME();
 	file_struct *com;
 	long res;
 
@@ -286,6 +288,7 @@ buf_fhandle_t *gup_io_open(const char *name, unsigned char *buf_start,
 
 gup_result gup_io_close(buf_fhandle_t *file)
 {
+	TRACE_ME();
 	file_struct *com = (void *) file;
 	gup_result result = GUP_OK;
 
@@ -346,6 +349,7 @@ gup_result gup_io_close(buf_fhandle_t *file)
 gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 					   long *new_pos)
 {
+	TRACE_ME();
 	file_struct *com = (void *) file;
 
 	if (com->flags & FSF_WRITE)
@@ -477,6 +481,7 @@ gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 
 gup_result gup_io_tell(buf_fhandle_t *file, long *fpos)
 {
+	TRACE_ME();
 	file_struct *com = (void *) file;
 
 	*fpos = com->pos + (file->current - file->start);
@@ -503,6 +508,7 @@ gup_result gup_io_tell(buf_fhandle_t *file, long *fpos)
 gup_result gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long count,
 						unsigned long *real_count)
 {
+	TRACE_ME_EX("count: %lu bytes", count);
 	unsigned long bytes_left, cnt;
 	char *buf = (char *) buffer;
 	file_struct *com = (void *) file;
@@ -563,6 +569,7 @@ gup_result gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long c
 gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 					   unsigned long *real_count)
 {
+	TRACE_ME_EX("count: %lu bytes", count);
 	unsigned long bytes_left, cnt;
 	char *buf = (char *) buffer;
 	file_struct *com = (void *) file;
@@ -641,6 +648,7 @@ gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 
 gup_result gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
 {
+	TRACE_ME_EX("count: %lu bytes", count);
 	if (count >= (unsigned long) (file->end - file->current))
 	{
 		gup_result result;
@@ -690,6 +698,7 @@ gup_result gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
 
 gup_result gup_io_fill(buf_fhandle_t *file)
 {
+	TRACE_ME();
 	file_struct *com = (void *) file;
 	long count, real_count;
 
@@ -753,6 +762,7 @@ gup_result gup_io_fill(buf_fhandle_t *file)
 
 uint8 *gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
 {
+	TRACE_ME();
 	*bytes_left = file->end - file->current;
 
 	return file->current;
@@ -771,6 +781,7 @@ uint8 *gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
 
 void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
 {
+	TRACE_ME();
 	if ((new_pos >= file->start) && (new_pos < file->end))
 		file->current = new_pos;
 }
@@ -796,6 +807,7 @@ void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
 
 void gup_io_set_position(buf_fhandle_t *file, long position)
 {
+	TRACE_ME();
 	file_struct *com = (void *) file;
 
 	if (com->flags & FSF_WRITE)
