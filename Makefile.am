@@ -60,12 +60,15 @@ test: gup
 	./test_check_archive_size.sh  test.arj
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
+	od -t x1 test.cdump
 
 clean:
-	rm *.bak
-	rm *.i
+	-rm -r *.bak
+	-rm -r *.i
+	-rm -r *~
+	-rm -r *.o *.a *.lo *.la *.obj
 
-superclean:
+superclean: clean
 	make distclean
 
 .PHONY: gup test dist-hook distall clean distclean superclean
