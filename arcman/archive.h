@@ -126,12 +126,12 @@ class archive
 
 	virtual gup_result create_archive(const char *name, OPTIONS *options,
 									  unsigned long first_volume_size, int use_temp,
-									  GUPMSG *msgfunc) = 0;
+									  GUPMSG *msgfunc);
 	virtual gup_result create_next_volume(unsigned long volume_size) = 0;
 	virtual gup_result open_archive(const char *name, OPTIONS *options,
-									GUPMSG *msgfunc) = 0;
+									GUPMSG *msgfunc);
 	virtual gup_result open_next_volume(void) = 0;
-	virtual gup_result close_archive(int ok) = 0;
+	virtual gup_result close_archive(int ok);
 	virtual gup_result close_curr_volume(void) = 0;
 
 	/*

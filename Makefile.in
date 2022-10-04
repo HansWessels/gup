@@ -729,8 +729,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-recursive
-
 clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
@@ -872,7 +870,14 @@ test: gup
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
 
-.PHONY: gup test dist-hook distall
+clean:
+	rm *.bak
+	rm *.i
+
+superclean:
+	make distclean
+
+.PHONY: gup test dist-hook distall clean distclean superclean
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

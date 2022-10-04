@@ -967,6 +967,7 @@ gup_result archive::encode(fileheader *header, int infile)
 
 archive *new_archive(archive_type type)
 {
+	printf("archive_type: %d\n", type);
 	switch(type)
 	{
 	case AT_ARJ:

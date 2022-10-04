@@ -29,6 +29,16 @@
 #if ENABLE_DUMP_OUTPUT_MODES
 
 /*
+ * ARJ flags.
+ */
+
+#define GARBLE_FLAG 		0x01
+#define VOLUME_FLAG 		0x04		/* Indicates this volume is not the last. */
+#define EXTFILE_FLAG		0x08		/* File is split over two volumes. */
+#define PATHSYM_FLAG		0x10		/* '/' is used as seperator instead of '\' */
+#define BACKUP_FLAG 		0x20
+
+/*
  * Main header class.
  */
 
@@ -126,7 +136,7 @@ class dump_fileheader : public fileheader
 	uint8 flags;						/* Flags. */
 	uint16 host_data;
 
-	friend class arj_archive;
+	friend class dump_archive;
 };
 
 #endif // ENABLE_DUMP_OUTPUT_MODES

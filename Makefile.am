@@ -61,6 +61,11 @@ test: gup
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
 
-.PHONY: gup test dist-hook distall
+clean:
+	rm *.bak
+	rm *.i
 
+superclean:
+	make distclean
 
+.PHONY: gup test dist-hook distall clean distclean superclean

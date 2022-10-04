@@ -251,6 +251,7 @@ gup_result dump_archive::create_archive(const char *name, OPTIONS *options,
 	 * Open the archive.
 	 */
 
+   // https://stackoverflow.com/questions/55856187/cannot-initialize-object-parameter-of-type-parent-with-an-expression-of-type
 	if ((result = archive::create_archive(name, options, first_volume_size, use_temp, msgfunc)) != GUP_OK)
 		free_crc_table();
 

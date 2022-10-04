@@ -160,6 +160,6 @@ typedef long long int64;
 
 
 
-#define ENABLE_DUMP_OUTPUT_MODES  0
+#define ENABLE_DUMP_OUTPUT_MODES  1
 
 #endif

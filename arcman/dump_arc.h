@@ -44,7 +44,7 @@ class dump_archive : public archive
 
 	long header_pos;					/* Position in file of the last
 										   written header. */
-	arj_mainheader *cur_main_hdr;		/* Copy of the main header of the
+	dump_mainheader *cur_main_hdr;		/* Copy of the main header of the
 										   current archive. */
 	/*
 	 * Variables used during reading.
