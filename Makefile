@@ -869,12 +869,12 @@ test: gup
 	./test_check_archive_size.sh  test.arj
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
-	od -t x1 test.cdump
+	od -A d -t x1 test.cdump
 
 testdump: gup
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
-	od -t x1 test.cdump
+	od -A d -t x1 test.cdump
 
 clean:
 	-rm **/*.bak
