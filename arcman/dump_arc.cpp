@@ -358,9 +358,12 @@ gup_result dump_archive::write_file_trailer(const fileheader *header)
 
 	if ((result = ::gup_io_reload(file, binbuf, binsize, &binsize_read)) != GUP_OK)
 		return result;
-
-	if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
-		return result;
+		
+	if (binsize_read != binsize)
+	{
+		fprintf(stderr, "couldn't read/reload all packed bytes: %lu != %lu\n", binsize_read, binsize);
+		return GUP_INTERNAL;
+	}
 
 printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
 
@@ -369,6 +372,7 @@ printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, bin
 	// a temporary buffer and then rewind the output file to the start
 	// of the packed data zone and rewrite the output, now using the desired
 	// output encoding/format:
+#if 0 // only for testing
 	char buf[4096];
 	memset(buf, 'x', 4096);
 	if ((result = gup_io_write_announce(file, 4096)) == GUP_OK)
@@ -377,6 +381,16 @@ printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, bin
 		
 		memcpy(p, buf, 4096);
 		p += 4096;
+		gup_io_set_current(file, p);
+	}
+#endif
+
+	if ((result = gup_io_write_announce(file, binsize_read)) == GUP_OK)
+	{
+		uint8 *p = gup_io_get_current(file, &bytes_left);
+		
+		memcpy(p, binbuf, binsize_read);
+		p += binsize_read;
 		gup_io_set_current(file, p);
 	}
 

@@ -764,7 +764,10 @@ gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dst
 
 	if ((result = gup_io_flush(file)) != GUP_OK)
 		return result;
-		
+
+	//unsigned long file_pos = tell(com->handle);		
+	unsigned long file_pos = lseek(com->handle, 0, SEEK_CUR);
+	
 	count = 0;
 	do
 	{
@@ -783,6 +786,8 @@ gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dst
 		count += real_count;
 		dstbufsize -= real_count;
 	} while ((dstbufsize > 0) && (real_count != 0));
+
+	lseek(com->handle, file_pos, SEEK_SET);
 
 	if (actual_bytes_read)
 		*actual_bytes_read = count;
