@@ -45,6 +45,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
@@ -69,77 +70,6 @@
 #include "support.h"
 
 
-/*
- * int get_arj_suffix_cnt(const char *filename, char **suffix_ptr)
- *
- * Determine the index of the next volume from the filename of
- * the archive. If the suffix of the filename is '.arj' the index
- * of the next volume is 1. If the suffix is '.axx' the index of the
- * the next volume is xx + 1. For other suffixes multiple volume
- * archives are not supported. In this case the result is 0.
- *
- * Parameters:
- *
- * filename		- filename of archive.
- * suffix_ptr	- if multiple volume is supported, this pointer
- *				  points to the last two characters of the filename
- *				  (where the volume counter is).
- *
- * Result: 0 if multiple volumes are not supported, otherwise the
- *		   index of the next volume.
- */
-
-static int get_arj_suffix_cnt(const char *filename, char **suffix_ptr)
-{
-	register int arj_suff;
-	register char *name_ptr;
-
-	/*
-	 * Note in the following code that on some operating systems
-	 * (UNIX, Atari ST with MiNT, Apple) that the filename can
-	 * more than one '.' and both uppercase and lowercase characters.
-	 * Both '.arj' and '.ARJ' are considered to be valid suffixes
-	 * of ARJ archives. When the filename of the archive contains
-	 * more than one '.', the part after the last '.' is considered
-	 * to be the suffix.
-	 */
-
-	name_ptr = get_name(filename);
-
-	if ((*suffix_ptr = strrchr(name_ptr, '.')) == NULL)
-		arj_suff = 0;					/* No suffix, multiple volume not supported. */
-	else
-	{
-		(*suffix_ptr) += 2;				/* Skip 'a' or 'A'. */
-
-		if (match_pattern(name_ptr, "*.[aA][rR][jJ]"))
-		{
-			/*
-			 * Suffix is '.arj'. Next volume index is 1.
-			 */
-
-			arj_suff = 1;
-		}
-		else
-		{
-			if (match_pattern(name_ptr, "*.[aA][0-9][0-9]"))
-			{
-				/*
-				 * The archive suffix is '.axx', where xx is a two
-				 * digit number. Set the next volume counter to xx + 1.
-				 */
-
-				arj_suff = atoi(*suffix_ptr) + 1;
-			}
-			else
-				arj_suff = 0;			/* Multiple volume not supported for this suffix. */
-		}
-	}
-
-	return arj_suff;
-}
-
-
 /*****************************************************************************
  *																			 *
  * Constructor and destructor.										 		 *
@@ -156,6 +86,100 @@ dump_archive::~dump_archive(void)
 	TRACE_ME();
 }
 
+
+/*****************************************************************************
+ *																			 *
+ * Functions for writing an archive.										 *
+ * 																			 *
+ *****************************************************************************/
+
+/*
+ * gup_result dump_archive::write_end_of_volume(int mv)
+ *
+ * Write end of archive.
+ *
+ * Parameters:
+ *
+ * mv		- 1 if the volume is part of a multiple volume archive and
+ *				the volume is not the last volume of the archive.
+ */
+
+gup_result dump_archive::write_end_of_volume(int mv)
+{
+	TRACE_ME();
+	return arj_archive::write_end_of_volume(mv);
+}
+
+/*
+ * gup_result dump_archive::write_main_header(const mainheader *header)
+ *
+ * Write a main header to the archive.
+ */
+
+gup_result dump_archive::write_main_header(const mainheader *header)
+{
+	TRACE_ME();
+
+	gup_result result;
+	char *filename;
+	const char *src;
+	uint16 fspecpos = 0;
+	unsigned long total_hdr_size, bytes_left;
+
+	if (!opened || !rw)
+		return GUP_INTERNAL;
+
+	src = cur_volume->name();
+	const char *comment = header->get_comment();
+
+	filename = arj_conv_from_os_name(src, fspecpos, PATHSYM_FLAG);
+
+		//header->host_os;		/* Host os. */
+		//arj_conv_from_os_time(header->ctime);	/* Creation time. */
+	uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+		//header->arc_size;	/* Archive size. */
+		fspecpos;		/* File spec position in file name. */
+
+	size_t hdr_len_est = strlen(comment) + strlen(src) + 512;
+	char *hdr_buf = new char[hdr_len_est];
+	snprintf(hdr_buf, hdr_len_est, "/*\n\
+	DUMP name: %s\n\
+	DUMP filename: %s\n\
+	comment: %s\n\
+	creation time: %u\n\
+*/", src, filename, comment, (unsigned int)t);
+
+	size_t hdr_len = strlen(hdr_buf);	
+	if ((result = gup_io_write_announce(file, hdr_len)) == GUP_OK)
+	{
+		uint8 *p;
+		p = gup_io_get_current(file, &bytes_left);
+		
+		memcpy(p, hdr_buf, hdr_len);
+		p += hdr_len;
+		gup_io_set_current(file, p);
+	}
+
+	delete[] filename;
+	delete[] hdr_buf;
+
+	return GUP_OK;
+//	return arj_archive::write_main_header(header);
+}
+
+gup_result dump_archive::write_file_header(const fileheader *header)
+{
+	TRACE_ME();
+	return GUP_OK;
+//	return arj_archive::write_file_header(header);
+}
+
+gup_result dump_archive::write_file_trailer(const fileheader *header)
+{
+	TRACE_ME();
+	return GUP_OK;
+//	return arj_archive::write_file_trailer(header);
+}
 
 
 /*****************************************************************************

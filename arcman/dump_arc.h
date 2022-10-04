@@ -43,6 +43,11 @@ class dump_archive : public arj_archive
 	dump_archive(void);
 	virtual ~dump_archive(void);
 
+	virtual gup_result write_end_of_volume(int mv);
+	virtual gup_result write_main_header(const mainheader *header);
+	virtual gup_result write_file_header(const fileheader *header);
+	virtual gup_result write_file_trailer(const fileheader *header);
+
 	/*
 	 * GUP I/O virtualization functions.
 	 */
