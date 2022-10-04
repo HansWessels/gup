@@ -162,4 +162,8 @@ typedef long long int64;
 
 #define ENABLE_DUMP_OUTPUT_MODES  1
 
+#define TRACE_ME()				\
+	fprintf(stderr, "%s(%d): %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__)
+	
+
 #endif

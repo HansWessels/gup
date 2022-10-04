@@ -878,6 +878,7 @@ gup_result archive::decode(fileheader *header, int outfile)
 
 gup_result archive::encode(fileheader *header, int infile)
 {
+	TRACE_ME();
 	gup_result result;
 	long start;
 	READ_CRC_STRUCT rcs;
@@ -949,6 +950,88 @@ gup_result archive::encode(fileheader *header, int infile)
 	return result;
 }
 
+/*****************************************************************************
+ *																			 *
+ * GUP I/O virtualization functions.														 *
+ * 																			 *
+ *****************************************************************************/
+
+// We're virtualizing the core gup I/O functions here, the idea being: 
+// when we want to output arbitrary encodings of the packed data (the *DUMP modes)
+// we can achieve such most easily when we keep everything else intact and
+// "just find a way to hook into the raw I/O and reroute and encode it the way
+// we want right now": that's what the {bin,asm,c}dump_archive classes are 
+// going to accomplish for us, but they need a bit of a leg up before they *can*:
+// that's us, the *base class*, hooking into raw archive file I/O by providing
+// these conveniently same-name-as-the-C-functions-that-do-the-actual-work
+// virtual(=overridable) methods!
+
+buf_fhandle_t *archive::gup_io_open(const char *name, unsigned char *buf_start, unsigned long buf_size, int omode, gup_result *result)
+{
+	TRACE_ME();
+	return ::gup_io_open(name, buf_start, buf_size, omode, result);
+}
+
+gup_result archive::gup_io_close(buf_fhandle_t *file)
+{
+	TRACE_ME();
+	return ::gup_io_close(file);
+}
+// Seek to a position in the file.
+gup_result archive::gup_io_seek(buf_fhandle_t *file, long offset, int seekmode, long *new_pos)
+{
+	TRACE_ME();
+	return ::gup_io_seek(file, offset, seekmode, new_pos);
+}
+// Return the current position in the file.
+gup_result archive::gup_io_tell(buf_fhandle_t *file, long *fpos)
+{
+	TRACE_ME();
+	return ::gup_io_tell(file, fpos);
+}
+// Write data to a file.
+gup_result archive::gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long count, unsigned long *real_count)
+{
+	TRACE_ME();
+	return ::gup_io_write(file, buffer, count, real_count);
+}
+// Read data from a file.
+gup_result archive::gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count, unsigned long *real_count)
+{
+	TRACE_ME();
+	return ::gup_io_read(file, buffer, count, real_count);
+}
+// Make sure there at least 'count' bytes free in the file buffer. If necessary the file buffer is flushed.
+gup_result archive::gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
+{
+	TRACE_ME();
+	return ::gup_io_write_announce(file, count);
+}
+// Fill the file buffer.
+gup_result archive::gup_io_fill(buf_fhandle_t *file)
+{
+	TRACE_ME();
+	return ::gup_io_fill(file);
+}
+// Get a pointer to the current position in the file buffer and return the number of bytes that can be written into the buffer or can be read from the buffer.
+uint8 *archive::gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
+{
+	TRACE_ME();
+	return ::gup_io_get_current(file, bytes_left);
+}
+// Set the pointer in the file buffer to a new position.
+void archive::gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
+{
+	TRACE_ME();
+	return ::gup_io_set_current(file, new_pos);
+}
+// Set the current position in the file to the given value. Any bytes after this position that are in the buffer are discarded.
+void archive::gup_io_set_position(buf_fhandle_t *file, long position)
+{
+	TRACE_ME();
+	return ::gup_io_set_position(file, position);
+}
+	
 /*****************************************************************************
  *																			 *
  * Utility functions.														 *

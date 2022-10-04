@@ -32,6 +32,8 @@
 #if ENABLE_DUMP_OUTPUT_MODES
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 #if (OS == OS_WIN32)
@@ -52,6 +54,7 @@
 
 dump_mainheader::dump_mainheader(const char *comment) : mainheader(comment)
 {
+	TRACE_ME();
 	hdr_type = MHDR_ARJ;
 
 #if (OS == OS_MSDOS) || (OS == OS_UNIX) || (OS == OS_WIN32)
@@ -77,6 +80,7 @@ dump_mainheader::dump_mainheader(const char *comment) : mainheader(comment)
 
 dump_mainheader::dump_mainheader(const dump_mainheader& from) : mainheader(from)
 {
+	TRACE_ME();
 	if (from.filename == NULL)
 		filename = NULL;
 	else
@@ -104,6 +108,7 @@ dump_mainheader::dump_mainheader(const dump_mainheader& from) : mainheader(from)
 
 dump_mainheader::~dump_mainheader(void)
 {
+	TRACE_ME();
 	if (filename != NULL)
 		delete[] filename;
 }
@@ -117,6 +122,7 @@ dump_mainheader::~dump_mainheader(void)
 
 void dump_mainheader::set_filename(const char *filename)
 {
+	TRACE_ME();
 	uint16 fspecpos;
 
 	fspecpos = (uint16)(get_name(filename) - filename);
@@ -131,6 +137,7 @@ void dump_mainheader::set_filename(const char *filename)
 
 void dump_mainheader::set_filename(const char *new_filename, uint16 fspecpos)
 {
+	TRACE_ME();
 	if (filename != NULL)
 	{
 		delete[] filename;
@@ -159,6 +166,7 @@ void dump_mainheader::set_filename(const char *new_filename, uint16 fspecpos)
 
 void dump_fileheader::update_file_attributes(void)
 {
+	TRACE_ME();
 	orig_file_mode = mode_os_to_dos(stat.file_mode);
 	orig_time_stamp = arj_conv_from_os_time(stat.mtime);
 }
@@ -175,6 +183,7 @@ void dump_fileheader::update_file_attributes(void)
 
 void dump_fileheader::init(const char *filename)
 {
+	TRACE_ME();
 	set_filename(filename);
 
 	hdr_type = FHDR_ARJ;
@@ -197,17 +206,20 @@ void dump_fileheader::init(const char *filename)
 
 dump_fileheader::dump_fileheader(const char *filename, const char *comment) : fileheader(NULL, comment)
 {
+	TRACE_ME();
 	init(filename);
 }
 
 dump_fileheader::dump_fileheader(const char *filename, const char *comment,
 							   const osstat *stat) : fileheader(NULL, comment, stat)
 {
+	TRACE_ME();
 	init(filename);
 }
 
 dump_fileheader::~dump_fileheader(void)
 {
+	TRACE_ME();
 }
 
 /*
@@ -219,6 +231,7 @@ dump_fileheader::~dump_fileheader(void)
 
 void dump_fileheader::set_filename(const char *filename)
 {
+	TRACE_ME();
 	uint16 fspecpos;
 
 	fspecpos = (uint16) ((filename == NULL) ? 0 : (get_name(filename) - filename));
@@ -233,6 +246,7 @@ void dump_fileheader::set_filename(const char *filename)
 
 void dump_fileheader::set_filename(const char *new_filename, uint16 fspecpos)
 {
+	TRACE_ME();
 	fileheader::set_filename(new_filename);
 	fspecpos_in_fname = fspecpos;
 }
@@ -245,6 +259,7 @@ void dump_fileheader::set_filename(const char *new_filename, uint16 fspecpos)
 
 int dump_fileheader::get_header_len(void) const
 {
+	TRACE_ME();
 	int len;
 	uint16 fspec_pos;
 	char *arj_name;
@@ -288,6 +303,7 @@ int dump_fileheader::get_header_len(void) const
 
 int dump_fileheader::has_crc(void) const
 {
+	TRACE_ME();
 	return 1;
 }
 
@@ -300,6 +316,7 @@ int dump_fileheader::has_crc(void) const
 
 void dump_fileheader::update_ext_hdrs(void)
 {
+	TRACE_ME();
 	const extended_header *curhdr, *nexthdr;
 	uint32 curtype, nexttype;
 	const uint8 *data;
@@ -339,6 +356,7 @@ void dump_fileheader::update_ext_hdrs(void)
 
 void dump_fileheader::set_file_stat(const osstat *stat)
 {
+	TRACE_ME();
 #if (OS == OS_MSDOS) || (OS == OS_UNIX) || (OS == OS_WIN32)
 	host_os = OS;
 #else
@@ -365,6 +383,7 @@ void dump_fileheader::set_file_stat(const osstat *stat)
 
 void dump_fileheader::mv_set_segment_cnt(int count)
 {
+	TRACE_ME();
 	/*
 	 * Set the EXTFILE_FLAG if the count is larger than zero
 	 * (if the segment is not the first segment.
@@ -400,6 +419,7 @@ void dump_fileheader::mv_set_segment_cnt(int count)
 
 int dump_fileheader::mv_is_continuation(void)
 {
+	TRACE_ME();
 	return (flags & EXTFILE_FLAG) ? 1 : 0;
 }
 
