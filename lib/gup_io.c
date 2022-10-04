@@ -117,7 +117,7 @@ typedef struct
  * Result: Error code, GUP_OK if no error.
  */
 
-static gup_result gup_io_flush(buf_fhandle_t *file)
+gup_result gup_io_flush(buf_fhandle_t *file)
 {
 	file_struct *com = (void *) file;
 	long count, real_count;

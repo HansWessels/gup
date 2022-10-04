@@ -39,6 +39,9 @@
 
 class dump_archive : public arj_archive
 {
+	protected:
+		dump_mainheader *cur_main_hdr;
+		
   public:
 	dump_archive(void);
 	virtual ~dump_archive(void);
@@ -47,6 +50,11 @@ class dump_archive : public arj_archive
 	virtual gup_result write_main_header(const mainheader *header);
 	virtual gup_result write_file_header(const fileheader *header);
 	virtual gup_result write_file_trailer(const fileheader *header);
+
+	// extra:
+	
+	virtual gup_result gup_io_flush_header(buf_fhandle_t *file);
+	virtual gup_result gup_io_flush_packed_data(buf_fhandle_t *file);
 
 	/*
 	 * GUP I/O virtualization functions.

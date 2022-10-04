@@ -40,7 +40,9 @@ class dump_mainheader : public arj_mainheader
   public:
 	dump_mainheader(const char *comment);	/* Constructor. */
 	dump_mainheader(const dump_mainheader&);	/* Copy constructor. */
-	~dump_mainheader(void);				/* Destructor. */
+	~dump_mainheader();				/* Destructor. */
+	
+	size_t arc_output_size;
 };
 
 /*
@@ -52,7 +54,7 @@ class dump_fileheader : public arj_fileheader
   public:
 	dump_fileheader(const char *filename, const char *comment);
 	dump_fileheader(const char *filename, const char *comment, const osstat *stat);
-	~dump_fileheader(void);
+	~dump_fileheader();
 };
 
 #endif // ENABLE_DUMP_OUTPUT_MODES

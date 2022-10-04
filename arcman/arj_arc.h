@@ -58,7 +58,7 @@ class arj_archive : public archive
 	 * Private functions.
 	 */
 
-	gup_result write_end_of_volume(int mv);
+	virtual gup_result write_end_of_volume(int mv);
 	gup_result find_header(int first, uint16 &arj_header_id,
 						   uint16 &arj_header_size);
   public:

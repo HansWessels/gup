@@ -45,6 +45,9 @@ gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 					   long *new_pos);
 gup_result gup_io_tell(buf_fhandle_t *file, long *fpos);
 
+gup_result gup_io_flush(buf_fhandle_t *file);
+
+
 /*
  * Low level functions.
  */

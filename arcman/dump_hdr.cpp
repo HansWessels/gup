@@ -52,17 +52,17 @@
  *																			 *
  *****************************************************************************/
 
-dump_mainheader::dump_mainheader(const char *comment) : arj_mainheader(comment)
+dump_mainheader::dump_mainheader(const char *comment) : arj_mainheader(comment), arc_output_size(0)
 {
 	TRACE_ME();
 }
 
-dump_mainheader::dump_mainheader(const dump_mainheader& from) : arj_mainheader(from)
+dump_mainheader::dump_mainheader(const dump_mainheader& from) : arj_mainheader(from), arc_output_size(0)
 {
 	TRACE_ME();
 }
 
-dump_mainheader::~dump_mainheader(void)
+dump_mainheader::~dump_mainheader()
 {
 	TRACE_ME();
 }
@@ -79,7 +79,7 @@ dump_fileheader::dump_fileheader(const char *filename, const char *comment, cons
 	TRACE_ME();
 }
 
-dump_fileheader::~dump_fileheader(void)
+dump_fileheader::~dump_fileheader()
 {
 	TRACE_ME();
 }
