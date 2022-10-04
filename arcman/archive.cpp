@@ -203,11 +203,13 @@ volume *volume_list::next(void)
 
 static gup_result buf_write_crc(long count, void *buffer, void *propagator)
 {
+	TRACE_ME();
 	WRITE_CRC_STRUCT *com = (WRITE_CRC_STRUCT *) propagator;
 	long result;
 
 	com->crc = com->arc->calc_crc((uint8 *) buffer, count, com->crc);
 
+	TRACE_ME_EX("writing buffer: %lu bytes", count);
 	if ((result = write(com->handle, buffer, count)) != count)
 	{
 		if (result == -1)
@@ -221,9 +223,11 @@ static gup_result buf_write_crc(long count, void *buffer, void *propagator)
 
 static gup_result buf_write_nocrc(long count, void *buffer, void *propagator)
 {
+	TRACE_ME();
 	WRITE_CRC_STRUCT *com = (WRITE_CRC_STRUCT *) propagator;
 	long result;
 
+	TRACE_ME_EX("writing buffer: %lu bytes", count);
 	if ((result = write(com->handle, buffer, count)) != count)
 	{
 		if (result == -1)
@@ -237,6 +241,7 @@ static gup_result buf_write_nocrc(long count, void *buffer, void *propagator)
 
 static gup_result buf_write_crc_test(long count, void *buffer, void *propagator)
 {
+	TRACE_ME();
 	WRITE_CRC_STRUCT *com = (WRITE_CRC_STRUCT *) propagator;
 
 	com->crc = com->arc->calc_crc((uint8 *) buffer, count, com->crc);
@@ -246,6 +251,7 @@ static gup_result buf_write_crc_test(long count, void *buffer, void *propagator)
 
 static gup_result buf_write_nocrc_test(long count, void *buffer, void *propagator)
 {
+	TRACE_ME();
 	(void) count;
 	(void) buffer;
 	(void) propagator;
@@ -255,6 +261,7 @@ static gup_result buf_write_nocrc_test(long count, void *buffer, void *propagato
 
 static long buf_read_crc(long count, void *buf, void *propagator)
 {
+	TRACE_ME();
 	READ_CRC_STRUCT *com = (READ_CRC_STRUCT *) propagator;
 
 	long res = read(com->handle, buf, count);
@@ -267,16 +274,18 @@ static long buf_read_crc(long count, void *buf, void *propagator)
 
 static gup_result gup_buf_write_announce(long count, buf_fhandle_t *bw_buf, void *propagator)
 {
-	(void) propagator;
+	TRACE_ME();
+	archive *a = (archive *)propagator;
 
-	return gup_io_write_announce(bw_buf, count);
+	return a->gup_io_write_announce(bw_buf, count);
 }
 
 static gup_result gup_buf_fill(buf_fhandle_t *br_buf, void *propagator)
 {
-	(void) propagator;
+	TRACE_ME();
+	archive *a = (archive *)propagator;
 
-	return gup_io_fill(br_buf);
+	return a->gup_io_fill(br_buf);
 }
 
 static void *gmalloc(unsigned long size, void *propagator)
@@ -775,6 +784,7 @@ int archive::mv_break(void)
 
 gup_result archive::seek(long offset, int whence)
 {
+	TRACE_ME();
 	if (handle_valid)
 	{
 		long dummy;
@@ -787,6 +797,7 @@ gup_result archive::seek(long offset, int whence)
 
 gup_result archive::tell(long &offset)
 {
+	TRACE_ME();
 	if (handle_valid)
 		return gup_io_tell(file, &offset);
 	else
@@ -795,6 +806,7 @@ gup_result archive::tell(long &offset)
 
 gup_result archive::read(void *buf, unsigned long len, unsigned long &real_len)
 {
+	TRACE_ME();
 	if (handle_valid)
 	{
 		gup_result result;
@@ -809,6 +821,7 @@ gup_result archive::read(void *buf, unsigned long len, unsigned long &real_len)
 
 gup_result archive::write(void *buf, unsigned long len, unsigned long &real_len)
 {
+	TRACE_ME();
 	if (handle_valid)
 	{
 		gup_result result;
@@ -823,6 +836,7 @@ gup_result archive::write(void *buf, unsigned long len, unsigned long &real_len)
 
 gup_result archive::getb(unsigned char &ch)
 {
+	TRACE_ME();
 	unsigned long dummy;
 
 	return read(&ch, 1, dummy);
@@ -842,7 +856,7 @@ gup_result archive::decode(fileheader *header, int outfile)
 
 	wcs.crc = init_crc();
 	wcs.handle = outfile;
-	wcs.arc = (archive *) this;
+	wcs.arc = this;
 
 	st.unpack_str.wc_propagator = &wcs;
 	st.unpack_str.mode = (uint16) header->method;
@@ -885,7 +899,7 @@ gup_result archive::encode(fileheader *header, int infile)
 
 	rcs.crc = init_crc();
 	rcs.handle = infile;
-	rcs.arc = (archive *) this;
+	rcs.arc = this;
 
 	st.pack_str.brc_propagator = &rcs;
 

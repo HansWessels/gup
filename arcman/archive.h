@@ -27,6 +27,13 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
+#ifndef __ARCMAN_ARCHIVE_H__
+#define __ARCMAN_ARCHIVE_H__
+
+#include "gup_err.h"
+#include "compress.h"
+#include "options.h"
+
 typedef struct
 {
 	void (*print_progress)(unsigned long delta_size, void* pp_propagator);
@@ -229,3 +236,5 @@ typedef enum { AT_UNKNOWN, AT_ARJ, AT_LHA, AT_GZIP, AT_BINDUMP, AT_ASMDUMP, AT_C
 
 archive *new_archive(archive_type type);
 archive_type get_arc_type(const char *filename);
+
+#endif

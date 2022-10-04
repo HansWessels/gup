@@ -164,6 +164,13 @@ typedef long long int64;
 
 #define TRACE_ME()				\
 	fprintf(stderr, "%s(%d): %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__)
-	
+
+#define TRACE_ME_EX(...)																									\
+	do {																															\
+		char msgbuf[2048];																									\
+		snprintf(msgbuf, sizeof(msgbuf), __VA_ARGS__);																\
+		msgbuf[sizeof(msgbuf) - 1] = 0;																					\
+		fprintf(stderr, "%s(%d): %s ----> %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, msgbuf);	\
+	} while(0)
 
 #endif

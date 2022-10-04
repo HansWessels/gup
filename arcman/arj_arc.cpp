@@ -107,6 +107,7 @@ static int crc_use_cnt = 0;
 
 static int get_arj_suffix_cnt(const char *filename, char **suffix_ptr)
 {
+	TRACE_ME();
 	register int arj_suff;
 	register char *name_ptr;
 
@@ -166,6 +167,7 @@ static int get_arj_suffix_cnt(const char *filename, char **suffix_ptr)
 
 static gup_result get_crc_table(void)
 {
+	TRACE_ME();
 	if (crc_use_cnt == 0)
 	{
 		uint32 poly = CRC32_POLY;
@@ -186,6 +188,7 @@ static gup_result get_crc_table(void)
 
 static void free_crc_table(void)
 {
+	TRACE_ME();
 	crc_use_cnt--;
 	if (crc_use_cnt == 0)
 		free_crc32_table(crc_table);	/* Free CRC table. */
@@ -199,12 +202,14 @@ static void free_crc_table(void)
 
 arj_archive::arj_archive(void)
 {
+	TRACE_ME();
 	cur_main_hdr = NULL;
 	last_volume = 1;					/* Default archive is not multiple volume. */
 }
 
 arj_archive::~arj_archive(void)
 {
+	TRACE_ME();
 	/*
 	 * If the archive is still open, close it. If the archive was
 	 * opened for writing, do not consider the archive to be valid.
@@ -235,6 +240,7 @@ gup_result arj_archive::create_archive(const char *name, OPTIONS *options,
 									   unsigned long first_volume_size, int use_temp,
 									   GUPMSG *msgfunc)
 {
+	TRACE_ME();
 	gup_result result;
 
 	/*
@@ -270,6 +276,7 @@ gup_result arj_archive::create_archive(const char *name, OPTIONS *options,
 
 gup_result arj_archive::create_next_volume(unsigned long volume_size)
 {
+	TRACE_ME();
 	gup_result result;
 	char *new_volume, *suffix_ptr, *tmp_name;
 
@@ -338,6 +345,7 @@ gup_result arj_archive::create_next_volume(unsigned long volume_size)
 
 gup_result arj_archive::write_end_of_volume(int mv)
 {
+	TRACE_ME();
 	uint8 *ptr;
 	long arc_len;
 	gup_result result;
@@ -417,6 +425,7 @@ gup_result arj_archive::write_end_of_volume(int mv)
 
 gup_result arj_archive::write_main_header(const mainheader *header)
 {
+	TRACE_ME();
 	const arj_mainheader *main_hdr;
 	int new_allocated = FALSE;
 	gup_result result;
@@ -544,6 +553,7 @@ gup_result arj_archive::write_main_header(const mainheader *header)
 
 gup_result arj_archive::write_file_header(const fileheader *header)
 {
+	TRACE_ME();
 	const arj_fileheader *file_hdr;
 	int new_allocated = FALSE;
 	gup_result result;
@@ -673,6 +683,7 @@ gup_result arj_archive::write_file_header(const fileheader *header)
 
 gup_result arj_archive::write_file_trailer(const fileheader *header)
 {
+	TRACE_ME();
 	long current_pos;
 	gup_result result;
 
@@ -720,6 +731,7 @@ gup_result arj_archive::write_file_trailer(const fileheader *header)
 gup_result arj_archive::open_archive(const char *name, OPTIONS *options,
 									 GUPMSG *msgfunc)
 {
+	TRACE_ME();
 	gup_result result;
 
 	/*
@@ -753,6 +765,7 @@ gup_result arj_archive::open_archive(const char *name, OPTIONS *options,
 
 gup_result arj_archive::open_next_volume(void)
 {
+	TRACE_ME();
 	gup_result result;
 	char *new_volume, *suffix_ptr;
 	mainheader *mainheader;
@@ -807,6 +820,7 @@ gup_result arj_archive::open_next_volume(void)
 gup_result arj_archive::find_header(int first, uint16 &arj_header_id,
 									uint16 &arj_header_size)
 {
+	TRACE_ME();
 	uint8 *buf_ptr;
 	unsigned long bytes_left;
 	long arcpos, startpos;
@@ -1009,6 +1023,7 @@ gup_result arj_archive::find_header(int first, uint16 &arj_header_id,
 
 mainheader *arj_archive::read_main_header(gup_result &result)
 {
+	TRACE_ME();
 	uint16 arj_header_id;
 	uint16 arj_header_size;
 
@@ -1138,6 +1153,7 @@ mainheader *arj_archive::read_main_header(gup_result &result)
 
 fileheader *arj_archive::read_file_header(gup_result &result)
 {
+	TRACE_ME();
 	uint16 arj_header_id;
 	uint16 arj_header_size;
 
@@ -1255,6 +1271,7 @@ fileheader *arj_archive::read_file_header(gup_result &result)
 
 gup_result arj_archive::read_file_trailer(fileheader *header)
 {
+	TRACE_ME();
 	(void) header;
 
 	return GUP_OK;
@@ -1281,6 +1298,7 @@ gup_result arj_archive::read_file_trailer(fileheader *header)
 
 gup_result arj_archive::close_archive(int ok)
 {
+	TRACE_ME();
 	gup_result result = GUP_OK, tmp_result;
 
 	if (opened)
@@ -1319,6 +1337,7 @@ gup_result arj_archive::close_archive(int ok)
 
 gup_result arj_archive::close_curr_volume(void)
 {
+	TRACE_ME();
 	gup_result result;
 
 	if (opened)
@@ -1356,6 +1375,7 @@ gup_result arj_archive::close_curr_volume(void)
 
 mainheader *arj_archive::init_main_header(const char *comment)
 {
+	TRACE_ME();
 	arj_mainheader *main_hdr;
 
 	if (!opened)
@@ -1371,6 +1391,7 @@ fileheader *arj_archive::init_file_header(const char *filename,
 										  const char *comment,
 										  const osstat *stat)
 {
+	TRACE_ME();
 	arj_fileheader *file_hdr;
 
 	if (!opened)
@@ -1397,11 +1418,13 @@ fileheader *arj_archive::init_file_header(const char *filename,
 
 uint32 arj_archive::init_crc(void)
 {
+	TRACE_ME();
 	return arj_init_crc();
 }
 
 uint32 arj_archive::calc_crc(uint8 *buf, long len, uint32 crc_in)
 {
+	TRACE_ME();
 	return crc32(buf, len, crc_in, crc_table);
 }
 
@@ -1422,6 +1445,7 @@ uint32 arj_archive::calc_crc(uint8 *buf, long len, uint32 crc_in)
 
 uint32 arj_archive::post_process_crc(uint32 crc)
 {
+	TRACE_ME();
 	return ~crc;
 }
 
@@ -1433,11 +1457,13 @@ uint32 arj_archive::post_process_crc(uint32 crc)
 
 unsigned long arj_archive::get_mv_bytes_left(void)
 {
+	TRACE_ME();
 	return st.pack_str.mv_bytes_left;
 }
 
 int arj_archive::mv_break(void)
 {
+	TRACE_ME();
 	return st.pack_str.mv_next;
 }
 
@@ -1461,6 +1487,7 @@ int arj_archive::mv_break(void)
 
 gup_result arj_archive::skip_compressed_data(fileheader *header)
 {
+	TRACE_ME();
 	return seek(header->compsize, SEEK_CUR);
 }
 
@@ -1472,6 +1499,7 @@ gup_result arj_archive::skip_compressed_data(fileheader *header)
 
 gup_result arj_archive::encode(fileheader *header, int infile)
 {
+	TRACE_ME();
 	gup_result result;
 
 	if ((result = archive::encode(header, infile)) == GUP_OK)
@@ -1496,6 +1524,7 @@ gup_result arj_archive::encode(fileheader *header, int infile)
 
 gup_result arj_archive::arcctl(int function, ... )
 {
+	TRACE_ME();
 	gup_result result = GUP_INVAL;
 	va_list parm;
 	int *iptr;

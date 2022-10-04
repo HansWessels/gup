@@ -713,6 +713,7 @@ gup_result store(packstruct *com)
 
 gup_result encode(packstruct *com)
 {
+	TRACE_ME();
   gup_result res;
   com->bytes_packed=0;
   if((com->mode==STORE) || (com->mode==LHA_LH0_))

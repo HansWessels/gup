@@ -30,9 +30,14 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
+#ifndef __ARJ_ARC_H__
+#define __ARJ_ARC_H__
+
+#include "archive.h"
+
 class arj_archive : public archive
 {
-  private:
+  protected:
 	int arj_suff;						/* Counter used for numbering
 										   multiple volume archives. */
 	/*
@@ -122,3 +127,5 @@ class arj_archive : public archive
 
 	virtual gup_result arcctl(int function, ... );
 };
+
+#endif

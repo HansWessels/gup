@@ -23,6 +23,9 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
+#ifndef __ARJ_HDR_H__
+#define __ARJ_HDR_H__
+
 /*
  * ARJ flags.
  */
@@ -39,7 +42,7 @@
 
 class arj_mainheader : public mainheader
 {
-  private:
+  protected:
 	char *filename;						/* Filename of the archive. */
 	uint16 fspecpos_in_fname;			/* Position of the fspec in the name. */
 
@@ -84,7 +87,7 @@ class arj_mainheader : public mainheader
 
 class arj_fileheader : public fileheader
 {
-  private:
+  protected:
 	void init(const char *name);
 	void update_file_attributes(void);
 	void update_ext_hdrs(void);
@@ -133,3 +136,5 @@ class arj_fileheader : public fileheader
 
 	friend class arj_archive;
 };
+
+#endif

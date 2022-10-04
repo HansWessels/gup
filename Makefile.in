@@ -871,11 +871,16 @@ test: gup
 	$(GUP_EXE) a test.cdump *.spec
 	od -t x1 test.cdump
 
+testdump: gup
+	echo "=== testing DUMP MODES ==="
+	$(GUP_EXE) a test.cdump *.spec
+	od -t x1 test.cdump
+
 clean:
-	-rm -r *.bak
-	-rm -r *.i
-	-rm -r *~
-	-rm -r *.o *.a *.lo *.la *.obj
+	-rm **/*.bak
+	-rm **/*.i
+	-rm **/*~
+	-rm **/*.o **/*.a **/*.lo **/*.la **/*.obj
 
 superclean: clean
 	make distclean

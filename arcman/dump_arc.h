@@ -34,88 +34,14 @@
 
 #if ENABLE_DUMP_OUTPUT_MODES
 
-class dump_archive : public archive
+#include "arj_hdr.h"
+#include "arj_arc.h"
+
+class dump_archive : public arj_archive
 {
-  private:
-
-	/*
-	 * Variables used during writing.
-	 */
-
-	long header_pos;					/* Position in file of the last
-										   written header. */
-	dump_mainheader *cur_main_hdr;		/* Copy of the main header of the
-										   current archive. */
-	/*
-	 * Variables used during reading.
-	 */
-
-	/*
-	 * Private functions.
-	 */
-
-	gup_result write_end_of_volume(int mv);
-	gup_result find_header(int first, uint16 &arj_header_id,
-						   uint16 &arj_header_size);
   public:
 	dump_archive(void);
 	virtual ~dump_archive(void);
-
-	/*
-	 * Functions for opening and closing the archive.
-	 */
-
-	virtual gup_result create_archive(const char *name, OPTIONS *options,
-									  unsigned long first_volume_size,
-									  int use_temp, GUPMSG *msgfunc);
-	virtual gup_result create_next_volume(unsigned long volume_size);
-	virtual gup_result open_archive(const char *name, OPTIONS *options,
-									GUPMSG *msgfunc);
-	virtual gup_result open_next_volume(void);
-	virtual gup_result close_archive(int ok);
-	virtual gup_result close_curr_volume(void);
-
-	/*
-	 * Functions for reading and writing the main header.
-	 */
-
-	virtual gup_result write_main_header(const mainheader *header);
-	virtual mainheader *read_main_header(gup_result &result);
-	virtual mainheader *init_main_header(const char *comment);
-
-	/*
-	 * Functions for reading and writing file headers.
-	 */
-
-	virtual gup_result write_file_header(const fileheader *header);
-	virtual gup_result write_file_trailer(const fileheader *header);
-	virtual fileheader *read_file_header(gup_result &result);
-	virtual gup_result read_file_trailer(fileheader *header);
-	virtual fileheader *init_file_header(const char *filename,
-										 const char *comment,
-										 const osstat *stat);
-
-	/*
-	 * CRC functions.
-	 */
-
-	virtual uint32 init_crc(void);
-	virtual uint32 calc_crc(uint8 *buf, long len, uint32 crc_in);
-	virtual uint32 post_process_crc(uint32 crc);
-
-	/*
-	 * Multiple volume support.
-	 */
-
-	virtual unsigned long get_mv_bytes_left(void);
-	virtual int mv_break(void);
-
-	/*
-	 * Compression and decompression functions.
-	 */
-
-	virtual gup_result skip_compressed_data(fileheader *header);
-	virtual gup_result encode(fileheader *header, int infile);
 
 	/*
 	 * GUP I/O virtualization functions.
@@ -141,12 +67,6 @@ class dump_archive : public archive
 	virtual void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos);
 	// Set the current position in the file to the given value. Any bytes after this position that are in the buffer are discarded.
 	virtual void gup_io_set_position(buf_fhandle_t *file, long position);
-	 
-	/*
-	 * Archive control function.
-	 */
-
-	virtual gup_result arcctl(int function, ... );
 };
 
 
@@ -154,7 +74,6 @@ class dump_archive : public archive
 
 class bindump_archive : public dump_archive
 {
-  private:
   public:
 	bindump_archive(void);
 	virtual ~bindump_archive(void);
@@ -167,7 +86,6 @@ class bindump_archive : public dump_archive
 
 class cdump_archive : public dump_archive
 {
-  private:
   public:
 	cdump_archive(void);
 	virtual ~cdump_archive(void);
@@ -180,7 +98,6 @@ class cdump_archive : public dump_archive
 
 class asmdump_archive : public dump_archive
 {
-  private:
   public:
 	asmdump_archive(void);
 	virtual ~asmdump_archive(void);
