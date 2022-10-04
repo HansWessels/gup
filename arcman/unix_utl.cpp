@@ -34,18 +34,9 @@
 #include "sysdep/arcman.h"
 #include "header.h"
 #include "os.h"
+#include "gup_io_porting.h"
 
 #define PATH_CHAR '/'
-
-#ifdef O_BINARY
-#define OPEN_RD_FLAGS	(O_RDONLY | O_BINARY)
-#define OPEN_WR_FLAGS	(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY)
-#else
-#define OPEN_RD_FLAGS	O_RDONLY
-#define OPEN_WR_FLAGS	(O_WRONLY | O_CREAT | O_TRUNC)
-#endif
-
-#define FMODE	(S_IWUSR | S_IWGRP | S_IWOTH | S_IRUSR | S_IRGRP | S_IROTH)
 
 /*
  * char *get_name(const char *path)

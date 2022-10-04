@@ -255,6 +255,9 @@ gup_result dump_archive::write_file_header(const fileheader *header)
 	if (!opened || !rw)
 		return GUP_INTERNAL;
 
+	if (cur_main_hdr == NULL)
+		return GUP_INTERNAL;
+
 	if ((result = tell(header_pos)) != GUP_OK)	/* Store current position for
 										   use by 'write_file_tailer'. */
 		return result;
@@ -315,6 +318,9 @@ gup_result dump_archive::write_file_header(const fileheader *header)
 	// that any subsequent write/flush is actual packed data!
 	if ((result = gup_io_flush_header(file)) != GUP_OK)
 		return result;
+
+	if ((result = tell(cur_main_hdr->current_file_pack_start_offset)) != GUP_OK)
+		return result;
 	
 	return result;
 
@@ -327,12 +333,53 @@ gup_result dump_archive::write_file_trailer(const fileheader *header)
 	TRACE_ME();
 	long current_pos;
 	gup_result result;
+	unsigned long bytes_left;
+	unsigned long binsize_read;
+
+	if (cur_main_hdr == NULL)
+		return GUP_INTERNAL;
 
 	// now make sure we've written our stuff to disk, so we can be assured
 	// that any subsequent write/flush is actual header rewriting!
 	// All flushed data to disk right now is packed data!
 	if ((result = gup_io_flush_packed_data(file)) != GUP_OK)
 		return result;
+
+	if ((result = tell(current_pos)) != GUP_OK)
+		return result;
+
+	unsigned long binsize = current_pos - cur_main_hdr->current_file_pack_start_offset;
+	
+	// go to start of binary packed chunk in file:
+	if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
+		return result;
+
+	uint8_t *binbuf = new uint8_t[binsize];
+
+	if ((result = ::gup_io_reload(file, binbuf, binsize, &binsize_read)) != GUP_OK)
+		return result;
+
+	if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
+		return result;
+
+printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
+
+	// now we have the binary packed data in file/buffer.
+	// What must be done next is fetch that binary data, copy it into
+	// a temporary buffer and then rewind the output file to the start
+	// of the packed data zone and rewrite the output, now using the desired
+	// output encoding/format:
+	char buf[4096];
+	memset(buf, 'x', 4096);
+	if ((result = gup_io_write_announce(file, 4096)) == GUP_OK)
+	{
+		uint8 *p = gup_io_get_current(file, &bytes_left);
+		
+		memcpy(p, buf, 4096);
+		p += 4096;
+		gup_io_set_current(file, p);
+	}
+
 
 	if ((result = tell(current_pos)) != GUP_OK)
 		return result;

@@ -66,23 +66,10 @@
 #include "compr_io.h"
 #include "gup_err.h"
 #include "gup_io.h"
+#include "gup_io_porting.h"
 
 #define FSF_WRITE		0x01			/* File is opened for writing flag. */
 #define FSF_MMAPPED		0x02			/* File is memory mapped. */
-
-#ifdef O_BINARY
-#define OPEN_RD_FLAGS	(O_RDONLY | O_BINARY)
-#define OPEN_WR_FLAGS	(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY)
-#else
-#define OPEN_RD_FLAGS	O_RDONLY
-#define OPEN_WR_FLAGS	(O_WRONLY | O_CREAT | O_TRUNC)
-#endif
-
-#ifdef S_IWGRP
-#define FMODE	(S_IWUSR | S_IWGRP | S_IWOTH | S_IRUSR | S_IRGRP | S_IROTH)
-#else
-#define FMODE	(S_IREAD | S_IWRITE)
-#endif
 
 typedef struct
 {
@@ -744,6 +731,62 @@ gup_result gup_io_fill(buf_fhandle_t *file)
 	else
 		com->eof = FALSE;
 
+	return GUP_OK;
+}
+
+/*
+ * gup_result gup_io_reload(buf_fhandle_t *file)
+ *
+ * Fill the file buffer from the current file position till the end.
+ *
+ * This function is used together with a write-mode buffer in dump_archive & friends.
+ * A special case where we must refetch the packed data, load it into memory for
+ * further processing.
+ *
+ * Parameters:
+ *
+ * file	- file descriptor.
+ *
+ * Result: Error code, GUP_OK if no error.
+ */
+
+gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dstbufsize, unsigned long *actual_bytes_read)
+{
+	TRACE_ME();
+	file_struct *com = (void *) file;
+	unsigned long count;
+	long real_count;
+	gup_result result;
+
+	// we're **supposed** to be in write mode!
+	if (!(com->flags & FSF_WRITE))
+		return GUP_INTERNAL;
+
+	if ((result = gup_io_flush(file)) != GUP_OK)
+		return result;
+		
+	count = 0;
+	do
+	{
+		real_count = read(com->handle, dstbuf, dstbufsize);
+
+		if (real_count == -1)
+		{
+#ifdef EINTR
+			if (errno == EINTR)			/* Interrupted by signal, try again. */
+				continue;
+#endif
+			return gup_conv_err(errno);	/* Error. Return error code. */
+		}
+
+		dstbuf += real_count;	/* Pointer to end of buffer. */
+		count += real_count;
+		dstbufsize -= real_count;
+	} while ((dstbufsize > 0) && (real_count != 0));
+
+	if (actual_bytes_read)
+		*actual_bytes_read = count;
+	
 	return GUP_OK;
 }
 

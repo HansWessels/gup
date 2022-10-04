@@ -20,6 +20,8 @@
 #ifndef __GUP_IO_H__
 #define __GUP_IO_H__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -46,6 +48,7 @@ gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 gup_result gup_io_tell(buf_fhandle_t *file, long *fpos);
 
 gup_result gup_io_flush(buf_fhandle_t *file);
+gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dstbufsize, unsigned long *real_count);
 
 
 /*

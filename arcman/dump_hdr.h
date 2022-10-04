@@ -41,8 +41,13 @@ class dump_mainheader : public arj_mainheader
 	dump_mainheader(const char *comment);	/* Constructor. */
 	dump_mainheader(const dump_mainheader&);	/* Copy constructor. */
 	~dump_mainheader();				/* Destructor. */
-	
+
+protected:
 	size_t arc_output_size;
+
+	long current_file_pack_start_offset;
+
+friend class dump_archive;	
 };
 
 /*

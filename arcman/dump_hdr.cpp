@@ -52,12 +52,12 @@
  *																			 *
  *****************************************************************************/
 
-dump_mainheader::dump_mainheader(const char *comment) : arj_mainheader(comment), arc_output_size(0)
+dump_mainheader::dump_mainheader(const char *comment) : arj_mainheader(comment), arc_output_size(0), current_file_pack_start_offset(0)
 {
 	TRACE_ME();
 }
 
-dump_mainheader::dump_mainheader(const dump_mainheader& from) : arj_mainheader(from), arc_output_size(0)
+dump_mainheader::dump_mainheader(const dump_mainheader& from) : arj_mainheader(from), arc_output_size(0), current_file_pack_start_offset(0)
 {
 	TRACE_ME();
 }
