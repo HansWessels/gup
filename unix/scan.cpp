@@ -195,7 +195,7 @@ void split_arg(char *arg, char **dir, char **wild)
 gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 {
 	DSTACK new_dir;
-	char *dir, *wild;
+	const char *dir, *wild;
 	gup_result ret;
 	osstat stat;
 
