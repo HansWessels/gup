@@ -130,6 +130,7 @@ static gup_result gup_io_flush(buf_fhandle_t *file)
 		count = com->last_ptr - file->start;
 	else
 		count = file->current - file->start;
+	TRACE_ME_EX("flush count: %ld", count);
 
 	if (count == 0)
 		return GUP_OK;
@@ -198,7 +199,7 @@ buf_fhandle_t *gup_io_open(const char *name, unsigned char *buf_start,
 						   unsigned long buf_size, int omode,
 						   gup_result *result)
 {
-	TRACE_ME();
+	TRACE_ME_EX("name: %s, bufsize: %lu", name, buf_size);
 	file_struct *com;
 	long res;
 
@@ -349,7 +350,7 @@ gup_result gup_io_close(buf_fhandle_t *file)
 gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 					   long *new_pos)
 {
-	TRACE_ME();
+	TRACE_ME_EX("seek offset: %ld, mode: %d", offset, seekmode);
 	file_struct *com = (void *) file;
 
 	if (com->flags & FSF_WRITE)
@@ -481,11 +482,11 @@ gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 
 gup_result gup_io_tell(buf_fhandle_t *file, long *fpos)
 {
-	TRACE_ME();
 	file_struct *com = (void *) file;
 
 	*fpos = com->pos + (file->current - file->start);
 
+	TRACE_ME_EX("offset: %ld", *fpos);
 	return GUP_OK;
 }
 
@@ -546,6 +547,7 @@ gup_result gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long c
 	}
 
 	*real_count = count - cnt;
+	TRACE_ME_EX("real count written: %lu", *real_count);
 
 	return GUP_OK;
 }
@@ -609,6 +611,7 @@ gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 	}
 
 	*real_count = count - cnt;
+	TRACE_ME_EX("real count read: %lu", *real_count);
 
 	return GUP_OK;
 }
@@ -648,7 +651,7 @@ gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 
 gup_result gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
 {
-	TRACE_ME_EX("count: %lu bytes", count);
+	TRACE_ME_EX("announce count: %lu bytes (buffer allocated size: %lu)", count, (unsigned long)(file->end - file->start));
 	if (count >= (unsigned long) (file->end - file->current))
 	{
 		gup_result result;
@@ -807,7 +810,7 @@ void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
 
 void gup_io_set_position(buf_fhandle_t *file, long position)
 {
-	TRACE_ME();
+	TRACE_ME_EX("position: %ld", position);
 	file_struct *com = (void *) file;
 
 	if (com->flags & FSF_WRITE)
