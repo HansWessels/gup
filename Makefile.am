@@ -58,20 +58,20 @@ test: gup
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
 	./test_check_archive_size.sh  test.arj
-	echo "=== testing DUMP MODES ==="
-	$(GUP_EXE) a test.cdump *.spec
-	od -A d -t x1 test.cdump
+	make testdump
 
 testdump: gup
+	-rm test.cdump
 	echo "=== testing DUMP MODES ==="
 	$(GUP_EXE) a test.cdump *.spec
-	od -A d -t x1 test.cdump
+	od -A d -t x1 test.cdump | tee test.cdump.hexdump
 
 clean:
 	-rm **/*.bak
 	-rm **/*.i
 	-rm **/*~
 	-rm **/*.o **/*.a **/*.lo **/*.la **/*.obj
+	-rm $(GUP_EXE)
 
 superclean: clean
 	make distclean
