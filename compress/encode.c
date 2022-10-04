@@ -258,8 +258,6 @@
  */
 #undef PP_AFTER
 
-#define NO_ENCODE_SMALL
-
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -274,8 +272,6 @@
 
 /* eerst ff wat definities */
 
-gup_result init_encode_small(packstruct *com);
-gup_result init_encode_medium(packstruct *com);
 void init_bitbuffer(packstruct *com);
 gup_result store(packstruct *com);
 gup_result announce(unsigned long bits, packstruct *com);     /* kondigt aantal bits in huffblok aan */
@@ -432,11 +428,7 @@ gup_result init_encode(packstruct *com)
   }
   if (com->mode > 0)
   {
-    int echt_krap=0; /* wordt een als we echt krap in geheugen zitten (geen jm..) */
     int jm=com->jm;
-    #if 0
-            return init_encode_medium(com);
-    #endif
     for (;;)
     {
       unsigned long memneed = 0;
@@ -453,14 +445,7 @@ gup_result init_encode(packstruct *com)
       memneed += FASTLOGBUF;           /* grootte fastlog buffer */
 
       ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
-      if(echt_krap && (!jm))
-      {
-        memneed+= 4UL*HUFFSIZE;
-      }
-      else
-      {
-        memneed += 4UL*BIG_HUFFSIZE;
-      }
+      memneed += 4UL*BIG_HUFFSIZE;
       ALIGN(0, memneed, sizeof(uint8));
       memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
       ALIGN(0, memneed, sizeof(uint16));
@@ -504,29 +489,7 @@ gup_result init_encode(packstruct *com)
       com->bufbase = com->gmalloc(memneed, com->gm_propagator);
       if (com->bufbase == NULL)
       {
-        if (jm)
-        {
-          com->init_message(GUP_NO_JM, com->im_propagator); /*"Warning: insufficient memory for -jm mode!"*/
-          jm = 0;
-        }
-        else
-        {
-          if(echt_krap!=0)
-          {
-            gup_result res;
-            com->init_message(GUP_NO_FASTMODE, com->im_propagator); /*"Warning: Insufficient memory for fast mode!"*/
-            res=init_encode_medium(com);
-            if(res==GUP_OK)
-            {
-              (*i_fastlog)(com);
-            }
-            return res;
-          }
-          else
-          {
-            echt_krap=1;
-          }
-        }
+        return GUP_NOMEM;
       }
       else
       {
@@ -576,14 +539,7 @@ gup_result init_encode(packstruct *com)
         com->buffer_start=(void*)cp;
 
         /* de copy buffer loopt tot hier, com->buffer_start is het eind adres */
-        if(echt_krap && (!jm))
-        {
-          com->buffer_size=4UL*HUFFSIZE;
-        }
-        else
-        {
-          com->buffer_size=4UL*BIG_HUFFSIZE;
-        }
+        com->buffer_size=4UL*BIG_HUFFSIZE;
         cp += com->buffer_size;
         ALIGN(base, cp, sizeof(node_struct));
 #ifndef INDEX_STRUCT
@@ -667,407 +623,6 @@ gup_result init_encode(packstruct *com)
 
 #endif
 
-
-#ifndef NOT_USE_STD_init_encode_medium
-gup_result init_encode_medium(packstruct *com)
-{
-  int echt_krap=0; /* wordt een als we echt krap in geheugen zitten (geen jm..) */
-  int jm=com->jm;
-  com->small_code=1; /* medium_code! */
-  if(com->maxptr> (65535UL-2048UL))
-  {
-    com->maxptr=65535UL-2048UL;
-  }
-  for (;;)
-  {
-    unsigned long memneed = 0;
-    long buf;
-    int zeef = 0;
-
-    memneed += (DIC_SIZE_MEDIUM + MAX_MATCH*4 + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
-    ALIGN(0, memneed, sizeof(small_node_struct));
-    memneed += sizeof (small_node_struct) * TREE_SIZE; /* sld tree        */
-    ALIGN(0, memneed, sizeof(small_node_type));
-    memneed += sizeof (small_node_type) * HASH_SIZE;  /* normal root */
-    ALIGN(0, memneed, sizeof(uint8));
-
-    memneed += FASTLOGBUF;           /* grootte fastlog buffer */
-
-    ALIGN(0, memneed, sizeof(unsigned long));
-    if(echt_krap && (!jm))
-    {
-      memneed+= 4UL*HUFFSIZE;
-    }
-    else
-    {
-      memneed += 4UL*BIG_HUFFSIZE;
-    }
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (MAX_NPT + MAX_NPT); /* pointer lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (NCPT + NCPT); /* pointer lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
-    if (jm)
-    {
-      buf = HUFFBUFSIZE;
-    }
-    else
-    {
-      buf = HUFFSIZE;
-    }
-    ALIGN(0, memneed, sizeof(c_codetype));
-    memneed += buf * sizeof (c_codetype);
-    ALIGN(0, memneed, sizeof(pointer_type));
-    memneed += buf * sizeof (pointer_type);
-    if (com->speed<2)
-    {
-      ALIGN(0, memneed, sizeof(small_node_type));
-      memneed += sizeof (small_node_type) * HASH2_SIZE; /* rle root */
-      ALIGN(0, memneed, sizeof(hist_struct));
-      memneed += sizeof (history) * HISTSIZE;     /* match history buffer */
-      if(com->speed==0)
-      { /* zeef 34 */
-        ALIGN(0, memneed, sizeof(uint8));
-        zeef=1;
-        memneed+=buf*5;
-      }
-    }
-    com->bufbase = com->gmalloc(memneed, com->gm_propagator);
-    if (com->bufbase == NULL)
-    {
-      if (jm)
-      {
-        com->init_message(GUP_NO_JM, com->im_propagator);
-        jm = 0;
-      }
-      else
-      {
-        if(echt_krap)
-        {
-          com->init_message(GUP_NO_MEDMODE, com->im_propagator); /*"Warning: Insufficient memory for medium mode!"*/
-          #ifdef NO_ENCODE_SMALL /* geen encode small */
-          return GUP_NOMEM;
-          #else
-          return init_encode_small(com);
-          #endif
-        }
-        else
-        {
-          echt_krap=1;
-        }
-      }
-    }
-    else
-    {
-      uint8 *cp = com->bufbase;
-      uint8 *base = cp;
-
-      /* de copy buffer, die kan worden opgevraagd met de functie get_buf(); start hier met com->dictionary */
-
-      com->dictionary = (void *)(cp + DICTIONARY_OFFSET);  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
-      cp += (DIC_SIZE_MEDIUM + MAX_MATCH*4 + DICTIONARY_OFFSET) * sizeof (uint8); /* sliding dictionary + 4 voor terugkijken */
-      ALIGN(base, cp, sizeof(small_node_struct));
-      com->tree.small = (void *)cp;
-      cp += sizeof (small_node_struct) * TREE_SIZE;  /* sld tree          */
-      ALIGN(base, cp, sizeof(small_node_type));
-      com->root.small = (void *)cp;
-      cp += sizeof (small_node_type) * HASH_SIZE; /* normal root */
-      if(com->speed<2)
-      {
-        ALIGN(base, cp, sizeof(hist_struct));
-        com->hist=(void *)cp;          /* match history buffer */
-        cp += sizeof (history) * HISTSIZE;
-        ALIGN(base, cp, sizeof(small_node_type));
-        com->root2.small = (void *)cp;
-        cp += sizeof (small_node_type) * HASH2_SIZE;  /* rle root */
-      }
-      com->buffer_start=(void*)cp;
-
-      /* de copy buffer loopt tot hier, com->buffer_start is het eind adres */
-
-      ALIGN(base, cp, sizeof(unsigned long));
-      if(echt_krap && (!jm))
-      {
-        com->buffer_size=4UL*HUFFSIZE;
-      }
-      else
-      {
-        com->buffer_size=4UL*BIG_HUFFSIZE;
-      }
-      cp += com->buffer_size;
-      ALIGN(base, cp, sizeof(uint8));
-      com->charlen = (void *)cp;
-      cp += sizeof (uint8) * (NC + NC);  /* karakter lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->char2huffman = (void *)cp;
-      cp += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
-      ALIGN(base, cp, sizeof(uint8));
-      com->ptrlen = (void *)cp;
-      cp += sizeof (uint8) * (MAX_NPT + MAX_NPT);  /* pointer lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->ptr2huffman = (void *)cp;
-      cp += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
-      ALIGN(base, cp, sizeof(uint8));
-      com->ptrlen1 = (void *)cp;
-      cp += sizeof (uint8) * (NCPT + NCPT);  /* pointer lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->ptr2huffman1 = (void *)cp;
-      cp += sizeof (uint16) * (NCPT);/* huffman codes van de pointers */
-      ALIGN(base, cp, sizeof(c_codetype));
-      com->chars = (void *)(cp);
-      cp += buf * sizeof (c_codetype);
-      com->hufbufsize = (uint16)(buf - 4UL);/* voor doorschot en pointerswap */
-      ALIGN(base, cp, sizeof(pointer_type));
-      com->pointers = (void *)(cp);
-      cp += buf * sizeof (pointer_type);
-      if (zeef)
-      {
-        ALIGN(base, cp, sizeof(uint8));
-        com->matchstring = cp;
-        cp += buf * 4UL;
-        com->backmatch = cp;
-        cp += buf;
-      }
-      else
-      {
-        com->matchstring = NULL;
-      }
-      com->link.small = NULL;
-
-      com->fast_log = cp;
-      cp += FASTLOGBUF;
-      com->tree_size=TREE_SIZE;
-      ARJ_Assert((com->bufbase+memneed)==cp); /* al het geheugen gebruiken, nix meer en nix minder */
-      NEVER_USE(cp); /* shut up some compilers */
-      return GUP_OK; /* succes */
-    }
-  }
-}
-
-#endif
-
-
-#ifndef NO_ENCODE_SMALL
-#ifndef NOT_USE_STD_init_encode_small
-gup_result init_encode_small(packstruct *com)
-{
-  int echt_krap=0; /* wordt een als we echt krap in geheugen zitten (geen jm..) */
-  int jm=com->jm;
-  #if 0
-    long tree_size=512UL;
-  #else
-    long tree_size=TREE_SIZE;
-  #endif
-  com->small_code=2; /* small_code! */
-  for (;;)
-  {
-    unsigned long memneed = 0;
-    long buf = 0;
-    int zeef = 0;
-
-    memneed += (tree_size + MAX_MATCH*4 + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
-    ALIGN(0, memneed, sizeof(small_node_struct));
-    memneed += sizeof (small_node_struct) * tree_size; /* sld tree        */
-    ALIGN(0, memneed, sizeof(small_node_type));
-    memneed += sizeof (small_node_type) * SMALL_HASH_SIZE;  /* normal root */
-
-    ALIGN(0, memneed, sizeof(unsigned long));
-
-    memneed += FASTLOGBUF;           /* grootte fastlog buffer */
-
-    if(echt_krap && (!jm))
-    {
-      memneed+= 4UL*HUFFSIZE;
-    }
-    else
-    {
-      memneed += 4UL*BIG_HUFFSIZE;
-    }
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (MAX_NPT + MAX_NPT); /* pointer lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
-    ALIGN(0, memneed, sizeof(uint8));
-    memneed += sizeof (uint8) * (NCPT + NCPT); /* pointer lengte */
-    ALIGN(0, memneed, sizeof(uint16));
-    memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
-    if (jm)
-    {
-      buf = HUFFBUFSIZE;
-    }
-    else
-    {
-      buf = HUFFSIZE;
-    }
-    ALIGN(0, memneed, sizeof(c_codetype));
-    memneed += buf * sizeof (c_codetype);
-    ALIGN(0, memneed, sizeof(pointer_type));
-    memneed += buf * sizeof (pointer_type);
-    if (com->speed<2)
-    {
-      ALIGN(0, memneed, sizeof(small_node_type));
-      memneed += sizeof (small_node_type) * SMALL_HASH2_SIZE; /* rle root */
-      ALIGN(0, memneed, sizeof(hist_struct));
-      memneed += sizeof (history) * HISTSIZE;     /* match history buffer */
-      if(com->speed==0)
-      { /* zeef 34 */
-        ALIGN(0, memneed, sizeof(uint8));
-        zeef=1;
-        memneed+=buf*5;
-      }
-    }
-    com->bufbase = com->xmalloc(memneed, com->xm_propagator);
-    if (com->bufbase == NULL)
-    {
-      if (jm)
-      {
-        com->init_message(GUP_NO_JM);
-        jm = 0;
-      }
-      else
-      {
-        if(echt_krap)
-        {
-          if ((tree_size>>1)<=com->maxptr)
-          {
-            if(com->speed==0)
-            {
-              com->speed=1;
-              com->init_message(GUP_NO_ZEEF34); /*"Warning: insufficient memory for sieve mode!"*/
-            }
-            else
-            { /* en als laatste de dictionary */
-              if(tree_size>4096)
-              {
-                tree_size>>=1;
-                com->init_message(GUP_SMALL_DICTIONARY);
-              }
-              else
-              {
-                if(com->speed<2)
-                {
-                  com->init_message(GUP_SMALL_DICTIONARY);
-                  com->speed=2; /* laatste kans */
-                }
-                else
-                {
-                  return GUP_NOMEM;
-                }
-              }
-            }
-          }
-          else
-          {
-            tree_size>>=1;
-          }
-        }
-        else
-        {
-          echt_krap=1;
-        }
-      }
-    }
-    else
-    {
-      uint8 *cp = com->bufbase;
-      uint8 *base = cp;
-
-      /* de copy buffer, die kan worden opgevraagd met de functie get_buf(); start hier met com->dictionary */
-
-      com->dictionary = (void *)(cp + DICTIONARY_OFFSET);  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
-      cp += (tree_size + MAX_MATCH*4 + DICTIONARY_OFFSET) * sizeof (uint8); /* sliding dictionary + 4 voor terugkijken */
-      ALIGN(base, cp, sizeof(small_node_struct));
-      com->tree.small = (void *)cp;
-      cp += sizeof (small_node_struct) * tree_size;  /* sld tree          */
-      ALIGN(base, cp, sizeof(small_node_type));
-      com->root.small = (void *)cp;
-      cp += sizeof (small_node_type) * SMALL_HASH_SIZE; /* normal root */
-      if(com->speed<2)
-      {
-        ALIGN(base, cp, sizeof(hist_struct));
-        com->hist=(void *)cp;          /* match history buffer */
-        cp += sizeof (history) * HISTSIZE;
-        ALIGN(base, cp, sizeof(small_node_type));
-        com->root2.small = (void *)cp;
-        cp += sizeof (small_node_type) * SMALL_HASH2_SIZE;  /* rle root */
-      }
-
-      ALIGN(base, cp, sizeof(unsigned long));
-      com->buffer_start=(void*)cp;
-      if(echt_krap && (!jm))
-      {
-        com->buffer_size=4UL*HUFFSIZE;
-      }
-      else
-      {
-        com->buffer_size=4UL*BIG_HUFFSIZE;
-      }
-      cp += com->buffer_size;
-      ALIGN(base, cp, sizeof(uint8));
-      com->charlen = (void *)cp;
-      cp += sizeof (uint8) * (NC + NC);  /* karakter lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->char2huffman = (void *)cp;
-      cp += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
-      ALIGN(base, cp, sizeof(uint8));
-      com->ptrlen = (void *)cp;
-      cp += sizeof (uint8) * (MAX_NPT + MAX_NPT);  /* pointer lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->ptr2huffman = (void *)cp;
-      cp += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
-      ALIGN(base, cp, sizeof(uint8));
-      com->ptrlen1 = (void *)cp;
-      cp += sizeof (uint8) * (NCPT + NCPT);  /* pointer lengte */
-      ALIGN(base, cp, sizeof(uint16));
-      com->ptr2huffman1 = (void *)cp;
-      cp += sizeof (uint16) * (NCPT);/* huffman codes van de pointers */
-      ALIGN(base, cp, sizeof(c_codetype));
-      com->chars = (void *)(cp);
-      cp += buf * sizeof (c_codetype);
-      com->hufbufsize = (uint16)(buf - 4UL);/* voor doorschot en pointerswap */
-      ALIGN(base, cp, sizeof(pointer_type));
-      com->pointers = (void *)(cp);
-      cp += buf * sizeof (pointer_type);
-      if (zeef)
-      {
-        ALIGN(base, cp, sizeof(uint8));
-        com->matchstring = cp;
-        cp += buf * 4UL;
-        com->backmatch = cp;
-        cp += buf;
-      }
-      else
-      {
-        com->matchstring = NULL;
-      }
-
-      ALIGN(base, cp, sizeof(uint8));
-      com->fast_log = cp;
-      cp += FASTLOGBUF;
-      com->tree_size=tree_size;
-      com->andval=(uint16)(tree_size-1);
-      if ((tree_size-2048)<=com->maxptr)
-      {
-        com->maxptr=tree_size-1-2048;
-      }
-      ARJ_Assert((com->bufbase+memneed)==cp); /* al het geheugen gebruiken, nix meer en nix minder */
-      return GUP_OK; /* succes */
-    }
-  }
-}
-#endif
-#endif
 
 #ifndef NOT_USE_STD_store
 
@@ -1174,21 +729,8 @@ gup_result encode(packstruct *com)
       res=encode_big(com);
     }
     else
-    {
-#ifndef NO_ENCODE_SMALL
-      if(com->small_code==1)
-      {
-        res=encode_medium(com);
-      }
-      else
-      {
-        res=encode_small(com);
-      }
-#else
-{
-res=encode_medium(com);
-}
-#endif
+    { /* this should not happen */
+      res=GUP_INTERNAL;
     }
     com->bw_buf->current=com->rbuf_current;
   }
