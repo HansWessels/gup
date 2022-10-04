@@ -385,6 +385,7 @@ printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, bin
 	}
 #endif
 
+#if 0
 	if ((result = gup_io_write_announce(file, binsize_read)) == GUP_OK)
 	{
 		uint8 *p = gup_io_get_current(file, &bytes_left);
@@ -392,6 +393,31 @@ printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, bin
 		memcpy(p, binbuf, binsize_read);
 		p += binsize_read;
 		gup_io_set_current(file, p);
+	}
+#endif
+
+	{
+		char msgbuf[4096];
+		
+		for (size_t i = 0; i < binsize_read; i += 20)
+		{
+			char *dst = msgbuf;
+			size_t dstsize = 4096;
+
+			strcpy(msgbuf, "\n{ ");
+			dstsize -= strlen(dst);
+			dst += strlen(dst);
+			for (int j = 0; j < 20; j++)
+			{
+				snprintf(dst, dstsize, "0x%02X, ", binbuf[i + j]);
+				dstsize -= strlen(dst);
+				dst += strlen(dst);
+			}
+			strcat(msgbuf, " },");
+
+			unsigned long real_len;
+			write(msgbuf, strlen(msgbuf), real_len);
+		}
 	}
 
 
