@@ -580,7 +580,7 @@ gup_result encode_big(packstruct *com)
   bytes_to_do--;
   refill_count--;
   if(com->speed==2)
-  {
+  { /* fastest least compression */
     c_codetype match0;
     pointer_type ptr0;
     while (bytes_to_do)
@@ -743,7 +743,7 @@ gup_result encode_big(packstruct *com)
     }
   }
   else if(com->speed==1)
-  {
+  { /* medium speed, medium compression */
     c_codetype match0;
     pointer_type ptr0;
     while (bytes_to_do)
@@ -903,7 +903,7 @@ gup_result encode_big(packstruct *com)
     }
   }
   else
-  {
+  { /* slow speed, best compression */
     c_codetype match0 = -1;
     c_codetype match1 = -1;
     pointer_type ptr0 = 0;
