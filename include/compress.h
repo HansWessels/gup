@@ -350,6 +350,8 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 
 #define GZIP     0x200   /* GZIP implode method, 32k dictionary, maxmatch = 258 */
 
+#define NI_MODE_1 0x301  /* ni packer mode 1 */
+
 #ifndef NOT_USE_STD_packstruct
 
 typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCODE.MAC aanpassen */
@@ -380,6 +382,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   uint8 *rbuf_start;             /* start output buffer */
   uint8 *rbuf_tail;              /* einde output buffer */
   uint8 *rbuf_current;           /* output buffer */
+  uint8 *command_byte_ptr;       /* plek waar commandbyte(s) geschreven moeten worden */
 
   uint8 *bufbase;                /* base adres van de buffers */
   uint16 hufbufsize;             /* grootte huffman buffers */

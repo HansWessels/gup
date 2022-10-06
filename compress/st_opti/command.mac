@@ -51,6 +51,8 @@ rbuf_start:      ds.l 1;          /* start output buffer */
 rbuf_tail:       ds.l 1;          /* einde output buffer */
 ;  uint8 *rbuf_current;           /* output buffer */
 rbuf_current:    ds.l 1;          /* output buffer */
+;  uint8 *command_byte_ptr;       /* plek waar commandbyte(s) geschreven moeten worden */
+command_byte_ptr: ds.l 1;         /* plek waar commandbyte(s) geschreven moeten worden */
 ;  uint8 *bufbase;                /* base adres van encode buffers */
 bufbase:         ds.l 1;          /* base adres van encode buffers */
 ;  uint16 hufbufsize;             /* grootte huffman buffers */

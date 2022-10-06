@@ -277,6 +277,7 @@ gup_result store(packstruct *com);
 gup_result announce(unsigned long bits, packstruct *com);     /* kondigt aantal bits in huffblok aan */
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
 gup_result compress_m4(packstruct *com);
+gup_result compress_n1(packstruct *com);
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
@@ -286,6 +287,10 @@ unsigned long count_m4_bits(unsigned long* packed_bytes,
                             packstruct *com,
                             uint16 entries, c_codetype *chars,
                             pointer_type *ptrs);
+unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
+                            uint16 entries, /* aantal character die moeten worden gepacked */
+                            c_codetype * p, /* pointer naar de karakters     */
+                            pointer_type * q);
 
 void make_hufftable(uint8* len, uint16* tabel, uint16* freq, uint16 totaalfreq, int nchar, int max_hufflen, packstruct *com); /* maakt huffman tabel */
 void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
@@ -378,6 +383,11 @@ gup_result init_encode(packstruct *com)
       com->maxptr= MAX_M4_PTR;
       com->compress=compress_m4;
       i_fastlog=init_m4_fast_log;
+      break;
+    case NI_MODE_1:
+      com->maxptr= MAX_M4_PTR;
+      com->compress=compress_n1;
+      i_fastlog=init_n1_fast_log;
       break;
     case GNU_ARJ_MODE_7:
       com->n_ptr=ARJ_NPT;
@@ -3228,6 +3238,327 @@ unsigned long count_m4_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
 
 #endif
 
+
+#ifndef NOT_USE_STD_compress_n1
+
+int32 first_bit_set32(uint32 u);
+int n1_lit_len(uint32 val);
+int n1_len_len(uint32 val);
+int n1_ptr_len(uint32 val);
+void store_n1_len_val(uint32 val, packstruct *com);
+void store_n1_literal_val(uint32 val, packstruct *com);
+void store_n1_ptr_val(int32_t val, packstruct *com);
+
+
+/*
+** Voor de n1 packer zijn meerdere log functies nodig, 
+** er wordt voor gekozen om deze niet via een look-up tabel te doen 
+** maar via een functie. De compiler kan deze mooi inlinen 
+** en maak gebruik van intrinsic log2 gcc:
+** int32_t log2_uint32 (uint32_t u)
+** {
+**   if (u == 0) { return INT32_MIN; }
+**
+**  return ((int32_t)31 - (int32_t)__builtin_clz(u));
+** }
+**/
+
+int32 first_bit_set32(uint32 u)
+{ /* first set bit at... pos 1 .. 32, 0 means no bits set */
+  if (u == 0) { return 0; }
+  return ((int32)32 - (int32)__builtin_clz(u));
+}
+
+int n1_lit_len(uint32 val)
+{ /* bereken de code lengte voor val, 1 <= val <= 2^32 -1 */
+	return 2*first_bit_set32(val+1);
+}
+
+int n1_len_len(uint32 val)
+{ /* bereken de code lengte voor val, 2 <= val <= 2^32 */
+	return 2*first_bit_set32(val);
+}
+
+int n1_ptr_len(uint32 val)
+{ /* bereken de code lengte voor val, 0 <= val <= 65536 */
+	if(val<256)
+	{
+		return 9;
+	}
+	else
+	{
+		return 17;
+	}
+}
+
+#define ST_BIT_N1(val_0)				                       \
+{ /* store a 1 or a 0 */                                   \
+  unsigned long val=val_0;                                 \
+  if(com->bits_in_bitbuf==0)                               \
+  { /* reserveer plek in bytestream */                     \
+  	 com->command_byte_ptr=com->rbuf_current++;             \
+  	 com->bitbuf=0;                                         \
+  }                                                        \
+  com->bits_in_bitbuf++;                                   \
+  com->bitbuf+=com->bitbuf+val;                            \
+  if (com->bits_in_bitbuf >= 8)                            \
+  {                                                        \
+    com->bits_in_bitbuf=0;                                 \
+    *com->command_byte_ptr=(uint8)com->bitbuf;             \
+  }                                                        \
+}
+
+void store_n1_len_val(uint32 val, packstruct *com)
+{ /* waarde val >=2 */
+	int bits_to_do=first_bit_set32(val);
+	uint32 mask=1<<bits_to_do;
+	mask>>=1;
+	do
+	{
+		if((val&mask)==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+		mask>>=1;
+		if(mask==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+	}while(mask!=0);
+}
+
+void store_n1_literal_val(uint32 val, packstruct *com)
+{ /* waarde val >=1 */
+	store_n1_len_val(val+1, com);
+}
+
+void store_n1_ptr_val(int32_t val, packstruct *com)
+{ /* waarde val >=1 <=65536 */
+	if(val<256)
+	{
+		val=-val;
+		*com->rbuf_current++ = (uint8) (val*0xff);
+		ST_BIT_N1(0);
+	}
+	else
+	{
+		val=-val;
+		*com->rbuf_current++ = (uint8) ((val>>8)*0xff);
+		ST_BIT_N1(1);
+		*com->rbuf_current++ = (uint8) (val*0xff);
+	}
+}
+
+gup_result compress_n1(packstruct *com)
+{
+  /*
+   * pointer lengte codering:
+   * 8 xxxxxxxx0              0 -   255   9 bits
+   * 16 xxxxxxxx1xxxxxxxx   256 - 65536  17 bits
+   *
+   * len codering:
+   * 1 x0              :  2 -   3   2 bits
+   * 2 x1x0            :  4 -   7   4 bits
+   * 3 x1x1x0          :  8 -  15   6 bits
+   * 4 x1x1x1x0        : 16 -  31   8 bits
+   * 5 x1x1x1x1x0      : 32 -  63  10 bits
+   * 6 x1x1x1x1x1x0    : 64 - 127  12 bits
+   * 7 x1x1x1x1x1x1x0  :128 - 255  14 bits
+   * 8 x1x1x1x1x1x1x1x0:129 - 256  16 bits
+   * enz...
+   *   
+  */
+  uint16 entries = (uint16) (com->charp - com->chars);
+  c_codetype *p = com->chars;
+  pointer_type *q = com->pointers;
+  if (entries > com->hufbufsize)
+  {
+    entries = com->hufbufsize;
+  }
+  if (com->matchstring != NULL)
+  {
+    ARJ_Assert(com->backmatch!=NULL);
+    {
+      uint16 pointer_count=0;
+      uint16 i=entries;
+      c_codetype *p = com->chars;
+      do
+      {
+        if(*p++>(NLIT-1))
+        {
+          pointer_count++;
+        }
+      }
+      while (--i!=0);
+      com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
+    }
+    {
+      /* 
+        Code die backmatch stringlengtes optimaliseert.
+        Bij een backmatch zijn er twee opeenvolgende matches, waarbij 
+        de laatste match een backmatch waarde groter dan nul heeft.
+        Deze laatste macth kunnen we groter laten worden tenkoste van de 
+        grootte van de match die ervoor ligt... We optimaliseren de lengte.
+      */
+      uint8* bp=com->backmatch;
+      c_codetype *p = com->chars;
+      uint16 i = entries;
+      do
+      {
+        c_codetype kar = *p++;
+        if (kar >= (NLIT))
+        { /* gevonden een ptr-len */
+          uint8 len=*bp++; /* backmatch lengte */
+          if(len>0)
+          { /* we kunnen een backmatch doen */
+            c_codetype kar_1=p[-2]+MIN_MATCH-NLIT; /* lengte van de vorige match */
+            uint8 offset=1;
+            uint8 optlen;
+            kar+=MIN_MATCH-NLIT; /* matchlengte huidige match */
+            optlen=n1_len_len(kar_1)+n1_len_len(kar);
+            do
+            {
+              if((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen)
+              {
+                bp[-1]-=offset;
+                p[-2]-=offset;
+                p[-1]+=offset;
+                kar+=offset;
+                kar_1-=offset;
+                optlen=n1_len_len(kar_1)+n1_len_len(kar);
+                offset=1;
+              }
+              else
+              {
+                offset++;
+              }
+            }
+            while(--len!=0);
+          }
+        }
+      }
+      while (--i!=0);
+    }
+  }
+  {
+    unsigned long m_size;
+    long bits_comming = count_n1_bits(&m_size, entries, com->chars, com->pointers);
+    {
+      gup_result res;
+      if((res=announce(bits_comming, com))!=GUP_OK)
+      {
+        return res;
+      }
+    }
+    #ifdef PP_AFTER
+    com->print_progres(m_size, com->pp_propagator);
+    #endif
+    com->bytes_packed += m_size;
+  }
+  {
+    uint16 literal_run = 0;
+    c_codetype* literal_run_start=p;
+    entries++;
+    while (--entries != 0)
+    {
+      c_codetype kar = *p++;
+      if (kar < NLIT)
+      { /*- store literal */
+        literal_run++;
+      }
+      else
+      {
+        if(literal_run>0)
+        {
+          store_n1_literal_val(literal_run, com);
+          do
+          {
+            *com->rbuf_current++=*literal_run_start++;
+          } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
+        }
+        kar += MIN_MATCH - NLIT;
+        store_n1_len_val(kar, com);
+        store_n1_ptr_val(*q++, com);
+        literal_run_start=p;
+      }
+    }
+  }
+  entries=(uint16)(com->charp-p);
+  if (com->matchstring != NULL)
+  {
+    long ptrctr = q - com->pointers;
+    long i = (com->charp - com->chars) - entries;
+    memmove(com->backmatch, com->backmatch+ptrctr, i);
+    com->msp -= 4 * (long)ptrctr;
+    com->bmp-=ptrctr;
+  }
+  com->charp = com->chars+entries;
+  com->ptrp = com->pointers+(com->ptrp-q);
+  memmove(com->chars, p, entries*sizeof(*p));
+  memmove(com->pointers, q, entries*sizeof(*q));
+  return GUP_OK;
+}
+
+#endif
+
+#ifndef NOT_USE_STD_count_n1_bits
+
+unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
+                            uint16 entries, /* aantal character die moeten worden gepacked */
+                            c_codetype * p, /* pointer naar de karakters     */
+                            pointer_type * q  /* pointer naar de pointers    */
+									)
+{
+  unsigned long bits = 0;
+  unsigned long bytes = 0;
+  uint16 literal_run = 0;
+
+  entries++;
+  while (--entries != 0)
+  {
+    c_codetype kar = *p++;
+
+    if (kar < NLIT)
+    { /* store literal */
+    	literal_run++;
+    }
+    else
+    { /* ptr-len maar */
+    	if(literal_run>0)
+    	{ /* bereken ruimte voor de literals */
+    		bytes+=literal_run;
+    		bits+=literal_run*8;
+    		bits+=n1_len_len(literal_run);
+    		literal_run=0;
+    	}
+    	kar+=MIN_MATCH-NLIT;
+      bytes+=kar;
+      bits+=n1_len_len(kar);
+      kar=*q++;
+      bits+=n1_ptr_len(kar);
+    }
+  }
+  if(literal_run>0)
+  { /* bereken ruimte voor de literals */
+    bytes+=literal_run;
+    bits+=literal_run*8;
+    bits+=n1_len_len(literal_run);
+  }
+  *packed_bytes = bytes;
+  return bits;
+}
+
+#endif
+
+
 #ifndef NOT_USE_STD_compress_lzs
 
 gup_result compress_lzs(packstruct *com)
@@ -3671,6 +4002,26 @@ void init_m4_fast_log(packstruct *com)
   memset(p, 13, 64);
   p+=64;
   memset(p, 14, 128);
+}
+
+#endif
+
+#ifndef NOT_USE_STD_init_n1_fast_log
+
+void init_n1_fast_log(packstruct *com)
+{
+  /*
+   * fastlog tabel voor ni mode 1.
+   */
+  /*
+   * pointer lengte codering:
+   *  9: xxxxxxxx0             0 -   255 9 bits
+   * 16: xxxxxxxx1xxxxxxxx     0 - 65535 17 bits
+   */
+  uint8 *p = com->fast_log;
+  memset(p, 9, 256);
+  p+=256;
+  memset(p, 17, 65536-256);
 }
 
 #endif
