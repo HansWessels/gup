@@ -23,6 +23,9 @@
  *             GNU_ARJ_MODE_7   arj mode 7, 64K dictionary,                *
  *                                  huffman encoding, not compatible with  *
  *                                  the original (R. Jung) arj.            *
+ *             NI_MODE_x        Ni packer packing methodds are hosted in   *
+ *                                 arj archives wits packing modes         *
+ *                                 starting at method $10 for mode 0.      *
  *             LHA_LZS_         LHARC mode LZS                             *
  *             LHA_AFX_         LHARC mode afx (same as LZ5)               *
  *             LHA_LZ5_         LHARC mode LZ5                             *
@@ -333,6 +336,16 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 #define ARJ_MODE_3 3     /* arj mode 3 */
 #define ARJ_MODE_4 4     /* arj mode 4 */
 #define GNU_ARJ_MODE_7 7 /* gnu arj mode 7 */
+#define NI_MODE_0 0x11   /* ni packer mode 0 */
+#define NI_MODE_1 0x11   /* ni packer mode 1 */
+#define NI_MODE_2 0x11   /* ni packer mode 2 */
+#define NI_MODE_3 0x11   /* ni packer mode 3 */
+#define NI_MODE_4 0x11   /* ni packer mode 4 */
+#define NI_MODE_5 0x11   /* ni packer mode 5 */
+#define NI_MODE_6 0x11   /* ni packer mode 6 */
+#define NI_MODE_7 0x11   /* ni packer mode 7 */
+#define NI_MODE_8 0x11   /* ni packer mode 8 */
+#define NI_MODE_9 0x11   /* ni packer mode 9 */
 
 #define LHA_LHD_ 0x100   /* LHarc directory method */
 #define LHA_LZ4_ 0x101   /* no compression */
@@ -350,7 +363,6 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 
 #define GZIP     0x200   /* GZIP implode method, 32k dictionary, maxmatch = 258 */
 
-#define NI_MODE_1 0x301  /* ni packer mode 1 */
 
 #ifndef NOT_USE_STD_packstruct
 

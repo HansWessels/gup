@@ -142,7 +142,7 @@ void usage(char *n)
 		   "   f: Freshen files in archive      v: Verbosely list contents of archive\n"
 		   " * l: List contents of archive    * x: eXtract files with full pathname\n"
 		   "<Switches>\n"
-		   "   c: skip time-stamp Check         n: only New files (not exist)\n"
+		   "   c: skip time-stamp Check\n"
 		   "   d: with Delete (move)          * r: Recurse subdirectories\n"
 		   " * e: Exclude paths from names      u: Update files (new and newer)\n"
 		   "   f: Freshen existing files      * v: enable multiple Volumes\n"
@@ -152,8 +152,10 @@ void usage(char *n)
 		   " * lh: with LZH Method 0,4,5,6      y: assume Yes on all queries\n"
 		   " * lz: with LZS Method s,5\n"
 		   "   gz: GZIP mode\n"
-		   " * m: with Method 0, 1, 2, 3, 4, 7\n",
-		   n, n);
+		   " * m?: with Method 0, 1, 2, 3, 4, 7\n"
+		   " * n?: with Ni packer method 0-9\n"
+		   , n, n
+		   );
 	exit(0);
 }
 
@@ -300,6 +302,66 @@ void setoption(char *o)
 			break;
 		case '7':
 			opts.mode = GNU_ARJ_MODE_7;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		}
+		break;
+	case 'n':
+		switch (o[1])
+		{
+		default:
+			printf("Unknown option [%c] in parameter \"%s\".\n"
+				   "Ignoring parameter.\n\n", (o[1] ? o[1] : ' '), o);
+			break;
+
+		case '0':
+			opts.mode = NI_MODE_0;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '1':
+			opts.mode = NI_MODE_1;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '2':
+			opts.mode = NI_MODE_2;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '3':
+			opts.mode = NI_MODE_3;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '4':
+			opts.mode = NI_MODE_4;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '5':
+			opts.mode = NI_MODE_5;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '6':
+			opts.mode = NI_MODE_6;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '7':
+			opts.mode = NI_MODE_7;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '8':
+			opts.mode = NI_MODE_8;
+			opts.type = AT_ARJ;
+			default_mode = FALSE;
+			break;
+		case '9':
+			opts.mode = NI_MODE_9;
 			opts.type = AT_ARJ;
 			default_mode = FALSE;
 			break;
