@@ -869,11 +869,25 @@ test: gup
 	./test_check_archive_size.sh  test.arj
 	make testdump
 
-testdump: gup
+testdump: testcdump testasmdump testbindump
+
+testcdump: gup
 	-rm test.cdump
-	echo "=== testing DUMP MODES ==="
+	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump *.spec
 	od -A d -t x1 test.cdump | tee test.cdump.hexdump
+
+testasmdump: gup
+	-rm test.asmdump
+	echo "=== testing DUMP MODES: ASM ==="
+	$(GUP_EXE) a test.asmdump *.spec
+	od -A d -t x1 test.asmdump | tee test.asmdump.hexdump
+
+testbindump: gup
+	-rm test.bindump
+	echo "=== testing DUMP MODES: RAW BINARY ==="
+	$(GUP_EXE) a test.bindump *.spec
+	od -A d -t x1 test.bindump | tee test.bindump.hexdump
 
 clean:
 	-rm **/*.bak
@@ -885,7 +899,7 @@ clean:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
