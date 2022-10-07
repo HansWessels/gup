@@ -690,7 +690,7 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
@@ -852,7 +852,7 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
@@ -1313,7 +1313,7 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
@@ -1379,7 +1379,7 @@ gup_result encode_big(packstruct *com)
       {
         {
           gup_result res;
-          if((res=flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+          if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
           {
             return res;
           }
@@ -1401,7 +1401,7 @@ gup_result encode_big(packstruct *com)
   */
   {
     gup_result res;
-    if((res=flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+    if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
     {
       return res;
     }

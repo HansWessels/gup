@@ -481,12 +481,12 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   void* gm_propagator;
   void (*gfree)(void *ptr, void* gf_propagator); /* routine for freeing encode buffers */
   void* gf_propagator;
-  gup_result (*buf_write_announce)(long count, buf_fhandle_t* bw_buf, 
-              void* bw_propagator); /* routine for writing the arj file */
+  gup_result (*buf_write_announce)(long count, buf_fhandle_t* bw_buf, void* bw_propagator); /* routine for writing the arj file */
   buf_fhandle_t* bw_buf;
   void* bw_propagator;
   long (*buf_read_crc)(long count, void *buf, void* brc_propagator); /* read routine for reading the original file */
   void* brc_propagator;
+  gup_result (*flush_bitbuf)(struct packstruct_t *com); /* output the last bits in bitbuf */
 } packstruct;
 #endif
 

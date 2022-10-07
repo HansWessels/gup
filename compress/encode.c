@@ -363,13 +363,13 @@ uint8 *get_buf(unsigned long *buflen, packstruct *com) /* geeft begin adres en l
   machine onafhankelijk gefixed wordt. (Hopelijk.)
 */
 
-
 gup_result init_encode(packstruct *com)
 {
   void (*i_fastlog)(packstruct *com);
   com->compress=compress_chars;
   com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
   com->use_align=1;              /* use align macro */
+  com->flush_bitbuf=flush_bitbuf; /* use flush_bitbuf() by default */
   switch(com->mode)
   {
     case ARJ_MODE_1:
@@ -390,6 +390,7 @@ gup_result init_encode(packstruct *com)
       com->maxptr= MAX_M4_PTR;
       com->compress=compress_n1;
       i_fastlog=init_n1_fast_log;
+      com->flush_bitbuf=flush_n1_bitbuf; /* use flush_n1_bitbuf() */
       break;
     case GNU_ARJ_MODE_7:
       com->n_ptr=ARJ_NPT;
@@ -660,8 +661,7 @@ gup_result store(packstruct *com)
       {
         bytes_left=com->mv_bytes_left;
       }
-      if((bytes_read=com->buf_read_crc(bytes_left, com->bw_buf->current, 
-                                       com->brc_propagator))<0)
+      if((bytes_read=com->buf_read_crc(bytes_left, com->bw_buf->current, com->brc_propagator))<0)
       {
         return GUP_READ_ERROR; /* ("read error"); */
       }
@@ -757,11 +757,12 @@ gup_result flush_bitbuf(packstruct *com)
 {
   if (com->bits_in_bitbuf>0)
   {
-    if ((com->rbuf_current+4) >= com->rbuf_tail)
+    int bytes_extra=(com->bits_in_bitbuf+7)>>3;
+    if ((com->rbuf_current+bytes_extra) >= com->rbuf_tail)
     {
       gup_result res;
       com->bw_buf->current=com->rbuf_current;
-      res=com->buf_write_announce(4, com->bw_buf, com->bw_propagator);
+      res=com->buf_write_announce(bytes_extra, com->bw_buf, com->bw_propagator);
       if(res!=GUP_OK)
       {
         return res;
@@ -770,16 +771,25 @@ gup_result flush_bitbuf(packstruct *com)
       com->rbuf_tail=com->bw_buf->end;
       ALIGN_BUFP(com);
     }
-    *com->rbuf_current++ = (uint8) (com->bitbuf >> 24);
-    *com->rbuf_current++ = (uint8) (com->bitbuf >> 16);
-    /*
-     * ((uint16 *) com->rbuf_current)++ = com->bitbuf >> 16;
-    */
-    *com->rbuf_current++ = (uint8) (com->bitbuf >> 8);
-    *com->rbuf_current++ = (uint8) (com->bitbuf);
-    /*
-     * ((uint16 *) com->rbuf_current)++ = com->bitbuf;
-    */
+    if(bytes_extra>0)
+    {
+      *com->rbuf_current++ = (uint8) (com->bitbuf >> 24);
+      bytes_extra--;
+    }
+    if(bytes_extra>0)
+    {
+      *com->rbuf_current++ = (uint8) (com->bitbuf >> 16);
+      bytes_extra--;
+    }
+    if(bytes_extra>0)
+    {
+      *com->rbuf_current++ = (uint8) (com->bitbuf >> 8);
+      bytes_extra--;
+    }
+    if(bytes_extra>0)
+    {
+      *com->rbuf_current++ = (uint8) (com->bitbuf);
+    }
   }
   return GUP_OK;
 }
@@ -3911,8 +3921,7 @@ gup_result re_crc(unsigned long origsize, packstruct * com)
   if(buffer==NULL)
   {
     gup_result res;
-    res=com->buf_write_announce(com->bw_buf->end - com->bw_buf->start, 
-                                com->bw_buf, com->bw_propagator);
+    res=com->buf_write_announce(com->bw_buf->end - com->bw_buf->start, com->bw_buf, com->bw_propagator);
     if(res!=GUP_OK)
     {
       return res;
