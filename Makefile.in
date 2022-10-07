@@ -872,28 +872,32 @@ test: gup
 testdump: testcdump testasmdump testbindump
 
 testcdump: gup
-	-rm test.cdump
+	-rm test.cdump*
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump *.spec
 	cat test.cdump | tee test.cdump.hexdump
 
 testasmdump: gup
-	-rm test.asmdump
+	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump *.spec
 	cat test.asmdump | tee test.asmdump.hexdump
 
 testbindump: gup
-	-rm test.bindump
+	-rm test.bindump*
 	echo "=== testing DUMP MODES: RAW BINARY ==="
 	$(GUP_EXE) a test.bindump *.spec
 	od -A d -t x1 test.bindump | tee test.bindump.hexdump
+	if ! test -e test.sollwert.bindump.hexdump.txt ; then cp test.bindump.hexdump test.sollwert.bindump.hexdump.txt ; fi
+	diff -u test.bindump.hexdump test.sollwert.bindump.hexdump.txt
 
 clean:
 	-rm **/*.bak
 	-rm **/*.i
 	-rm **/*~
 	-rm **/*.o **/*.a **/*.lo **/*.la **/*.obj
+	-rm **/*.meta.nfo
+	-rm **/*.cdump **/*.asmdump **/*.bindump
 	-rm $(GUP_EXE)
 
 superclean: clean

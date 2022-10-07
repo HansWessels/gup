@@ -17,6 +17,10 @@
 #include <time.h>
 #include <sys/types.h>
 
+#include <fstream>
+#include <string>
+#include <iostream>
+
 #if (OS == OS_WIN32)
 #include <windows.h>
 #endif
@@ -164,7 +168,7 @@ gup_result dump_archive::write_main_header(const mainheader *header)
 		comment = "";
 
 	if (!cur_main_hdr)
-		cur_main_hdr = new dump_mainheader(comment);
+		cur_main_hdr = new dump_mainheader(src, comment);
 
 		//header->host_os;		/* Host os. */
 		//arj_conv_from_os_time(header->ctime);	/* Creation time. */
@@ -461,6 +465,11 @@ dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_p
 	if (!comment)
 		comment = "";
 
+	// ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+	std::string metafile_path(archive_path);
+	
+	metafile_path += ".meta.nfo";
+
 	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
 	char *filename;
@@ -486,6 +495,14 @@ dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_p
 
 	delete[] filename;
 
+    std::ofstream out(metafile_path);
+	 dst = reinterpret_cast<char *>(buf->get_start_ref());
+    std::string msg(dst, buf->length());
+    out << msg;
+    //out.close();
+    
+    buf->clear();
+	
 	return buf;
 }
 
@@ -519,6 +536,8 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *hea
 
 	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
 
+printf("> metafile: --> %s // %s\n", name_ptr, cur_main_hdr->archive_path.c_str());
+	
 	TRACE_ME();
 	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
 	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
@@ -539,36 +558,39 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *hea
 	size_t hdr_len = strlen(dst);	
 	buf->set_appended_length(hdr_len);
 
+	// ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+	std::string metafile_path(cur_main_hdr->archive_path);
+
+printf("> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
+	
+	metafile_path += ".";
+	metafile_path += name_ptr;
+	metafile_path += ".meta.nfo";
+
+printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
+
+    std::ofstream out(metafile_path);
+	 dst = reinterpret_cast<char *>(buf->get_start_ref());
+    std::string msg(dst, buf->length());
+    out << msg;
+    //out.close();
+
   	delete[] name_ptr;
+    
+    buf->clear();
   	
   	return buf;
 }
 
 dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
-	// reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
-	dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+	dump_output_bufptr_t buf(new dump_output_buffer(datasize));
 
-	for (size_t i = 0; i < datasize; i += 20)
-	{
-		char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t dstsize = buf->get_remaining_usable_size();
+	size_t dstsize = buf->get_remaining_usable_size();
+	assert(dstsize == datasize);
+	memcpy(buf->get_append_ref(), data, dstsize);
 
-		strcpy(dst, "\n{ ");
-		dstsize -= strlen(dst);
-		dst += strlen(dst);
-		for (int j = 0; j < 20; j++)
-		{
-			snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
-			dstsize -= strlen(dst);
-			dst += strlen(dst);
-		}
-		strcpy(dst, " },");
-
-		dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t hdr_len = strlen(dst);	
-		buf->set_appended_length(hdr_len);
-	}
+	buf->set_appended_length(datasize);
 
 	return buf;
 }
@@ -576,14 +598,8 @@ dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data,
 dump_output_bufptr_t bindump_archive::generate_end()
 {
 	dump_output_bufptr_t buf(new dump_output_buffer());
-	
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
-	END OF DUMP\n\
-*/\n\n");
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+	// no sentinel bytes at all. nada. zilch. noppes. niente.	
 	
 	return buf;
 }

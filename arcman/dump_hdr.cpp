@@ -52,14 +52,16 @@
  *																			 *
  *****************************************************************************/
 
-dump_mainheader::dump_mainheader(const char *comment) : arj_mainheader(comment), arc_output_size(0), current_file_pack_start_offset(0)
+dump_mainheader::dump_mainheader(const char *archive_filepath, const char *comment) 
+: arj_mainheader(comment), archive_path(archive_filepath), arc_output_size(0), current_file_pack_start_offset(0)
 {
-	TRACE_ME();
+	TRACE_ME_EX("archive_path = %s", archive_path.c_str());
 }
 
-dump_mainheader::dump_mainheader(const dump_mainheader& from) : arj_mainheader(from), arc_output_size(0), current_file_pack_start_offset(0)
+dump_mainheader::dump_mainheader(const dump_mainheader& from) 
+: arj_mainheader(from), archive_path(from.archive_path), arc_output_size(from.arc_output_size), current_file_pack_start_offset(from.current_file_pack_start_offset)
 {
-	TRACE_ME();
+	TRACE_ME_EX("archive_path = %s", archive_path.c_str());
 }
 
 dump_mainheader::~dump_mainheader()
