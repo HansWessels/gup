@@ -876,12 +876,16 @@ testcdump: gup
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump *.spec
 	cat test.cdump | tee test.cdump.hexdump
+	if ! test -e test.sollwert.cdump.hexdump.txt ; then cp test.cdump.hexdump test.sollwert.cdump.hexdump.txt ; fi
+	diff -u test.cdump.hexdump test.sollwert.cdump.hexdump.txt
 
 testasmdump: gup
 	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump *.spec
 	cat test.asmdump | tee test.asmdump.hexdump
+	if ! test -e test.sollwert.asmdump.hexdump.txt ; then cp test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt ; fi
+	diff -u test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt
 
 testbindump: gup
 	-rm test.bindump*
