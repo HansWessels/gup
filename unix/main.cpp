@@ -129,33 +129,64 @@ static int default_mode = TRUE;			/* Use default method for archive type. */
    jqstring: set parameter to string
  */
 
-void usage(char *n)
+static void usage_at_2cols(const char *table[], size_t tablesize)
+{
+	size_t count = tablesize;
+	size_t offset = (count + 1) / 2;
+	const int W = 38;
+	for (size_t i = 0; i < offset; i++)
+	{
+		if (i + offset < tablesize)
+			printf("%*s %*s\n", -W, table[i], -W, table[i + offset]);
+		else
+			printf("%s\n", table[i]);
+	}
+}
+
+static void usage(const char *n)
 {
 	printf("GUP " VERSION " " SYSTEM " " __DATE__ " " __TIME__ "\n"
 		   "Copyright (c) 1995,1996,1998 H. Wessels, J. Klaren & W. Klaren\n\n"
 		   "Type \'%s -?\' or something like it for more help.\n"
 		   "Usage: %s <command> [-<sw> [-<sw>...]] <archive_name> [<file_names>...]\n"
 		   "<Commands> - implemented commands marked with \'*\'\n"
-		   " * a: Add files to archive          m: Move files to archive\n"
-		   "   d: Delete files from archive   * t: Test integrity of archive\n"
-		   "   e: Extract files from archive    u: Update files to archive\n"
-		   "   f: Freshen files in archive      v: Verbosely list contents of archive\n"
-		   " * l: List contents of archive    * x: eXtract files with full pathname\n"
-		   "<Switches>\n"
-		   "   c: skip time-stamp Check\n"
-		   "   d: with Delete (move)          * r: Recurse subdirectories\n"
-		   " * e: Exclude paths from names      u: Update files (new and newer)\n"
-		   "   f: Freshen existing files      * v: enable multiple Volumes\n"
-		   "   g: Garble with password          w: assign Work directory\n"
-		   "   i: no progress Indicator         x: eXclude selected files\n"
-		   "   jm: maximum compression (default)\n"
-		   " * lh: with LZH Method 0,4,5,6      y: assume Yes on all queries\n"
-		   " * lz: with LZS Method s,5\n"
-		   "   gz: GZIP mode\n"
-		   " * m?: with Method 0, 1, 2, 3, 4, 7\n"
-		   " * n?: with Ni packer method 0-9\n"
 		   , n, n
 		   );
+	const char *items[] = {
+		   "* a: Add files to archive",
+		   "  d: Delete files from archive",
+		   "  e: Extract files from archive",
+		   "  f: Freshen files in archive",
+		   "* l: List contents of archive",
+		   "  m: Move files to archive",
+		   "* t: Test integrity of archive",
+		   "  u: Update files to archive",
+		   "  v: Verbosely list contents of archive",
+		   "* x: eXtract files with full pathname",
+	};
+	usage_at_2cols(items, sizeof(items) / sizeof(items[0]));
+	printf("<Switches>\n");
+	const char *optitems[] = {
+		   "  c: skip time-stamp Check",
+		   "  d: with Delete (move)",
+		   "* e: Exclude paths from names",
+		   "  f: Freshen existing files",
+		   "  g: Garble with password",
+		   "  i: no progress Indicator",
+		   "  jm: maximum compression (default)",
+		   "* lh: with LZH Method 0,4,5,6",
+		   "* lz: with LZS Method s,5",
+		   "  gz: GZIP mode",
+		   "* m?: with Method 0, 1, 2, 3, 4, 7",
+		   "* n?: with Ni packer method 0-9",
+		   "* r: Recurse subdirectories",
+		   "  u: Update files (new and newer)",
+		   "* v: enable multiple Volumes",
+		   "  w: assign Work directory",
+		   "  x: eXclude selected files",
+		   "  y: assume Yes on all queries",
+	};
+	usage_at_2cols(optitems, sizeof(optitems) / sizeof(optitems[0]));
 	exit(0);
 }
 
@@ -527,7 +558,7 @@ int parse(int argc, char *argv[])
 	return i;
 }
 
-void help(const char *n)
+static void help(const char *n)
 {
 	printf("This is the extensive help of %s\ncore dumped ;)\n", n);
 	exit(0);
@@ -548,7 +579,7 @@ void doexit(void)
 /* duplicate the files in the array - just to be on the safe side
  * not the fastest implementation, but uses the littlest memory
  */
-char **args2f(char *files[])
+static char **args2f(char *files[])
 {
 	long n = 0, i = 0;
 	char **ret, *p;

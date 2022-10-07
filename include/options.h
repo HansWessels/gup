@@ -34,8 +34,8 @@ typedef enum
 
 typedef struct options
 {
-	char *programname;					/* Program name. */
-	char *arj_name;						/* Name of the archive. */
+	const char *programname;		/* Program name. */
+	char *arj_name;					/* Name of the archive. */
 	char **args;						/* Further args to functions (eg files to pack). */
 
 	COMMAND command;
