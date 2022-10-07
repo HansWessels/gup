@@ -273,8 +273,10 @@
 /* eerst ff wat definities */
 
 void init_bitbuffer(packstruct *com);
+gup_result flush_n1_bitbuf(packstruct *com);
+gup_result flush_bitbuf(packstruct *com);
 gup_result store(packstruct *com);
-gup_result announce(unsigned long bits, packstruct *com);     /* kondigt aantal bits in huffblok aan */
+gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal bytes in huffblok aan */
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
 gup_result compress_m4(packstruct *com);
 gup_result compress_n1(packstruct *com);
@@ -647,8 +649,7 @@ gup_result store(packstruct *com)
       if (bytes_left == 0)
       {
         gup_result res;
-        res=com->buf_write_announce(com->bw_buf->current-com->bw_buf->start, 
-                                    com->bw_buf, com->bw_propagator);
+        res=com->buf_write_announce(com->bw_buf->current-com->bw_buf->start, com->bw_buf, com->bw_propagator);
         if(res!=GUP_OK)
         {
           return res;
@@ -689,8 +690,7 @@ gup_result store(packstruct *com)
       if (bytes_left == 0)
       {
         gup_result res;
-        res=com->buf_write_announce(com->bw_buf->current-com->bw_buf->start, 
-                                    com->bw_buf, com->bw_propagator);
+        res=com->buf_write_announce(com->bw_buf->current-com->bw_buf->start, com->bw_buf, com->bw_propagator);
         if(res!=GUP_OK)
         {
           return res;
@@ -786,18 +786,29 @@ gup_result flush_bitbuf(packstruct *com)
 
 #endif
 
+#ifndef NOT_USE_STD_flush_n1_bitbuf
+
+gup_result flush_n1_bitbuf(packstruct *com)
+{
+  if (com->bits_in_bitbuf>0)
+  {
+    com->bits_in_bitbuf=0;                                 \
+    *com->command_byte_ptr=(uint8)com->bitbuf;             \
+  }
+  return GUP_OK;
+}
+
+#endif
+
 #ifndef NOT_USE_STD_announce
 
-gup_result announce(unsigned long bits, packstruct *com)
+gup_result announce(unsigned long bytes, packstruct *com)
 {
-  bits+=com->bits_rest;
-  com->bits_rest=(int16)(bits&7);
-  bits>>=3;
-  if((com->rbuf_current+bits)>=com->rbuf_tail)
+  if((com->rbuf_current+bytes)>=com->rbuf_tail)
   {
     gup_result res;
     com->bw_buf->current=com->rbuf_current;
-    res=com->buf_write_announce(bits, com->bw_buf, com->bw_propagator);
+    res=com->buf_write_announce(bytes, com->bw_buf, com->bw_propagator);
     if(res!=GUP_OK)
     {
       return res;
@@ -806,7 +817,6 @@ gup_result announce(unsigned long bits, packstruct *com)
     com->rbuf_tail=com->bw_buf->end;
     ALIGN_BUFP(com);
   }
-  com->packed_size += bits;
   return GUP_OK;
 }
 
@@ -1783,10 +1793,13 @@ gup_result compress_chars(packstruct *com)
     */
     {
       gup_result res;
-      if((res=announce(bits_comming, com))!=GUP_OK)
+      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
       {
         return res;
       }
+      bits_comming+=com->bits_rest;
+      com->bits_rest=(int16)(bits_comming&7);
+      com->packed_size += bits_comming>>3;
     }
     #ifdef PP_AFTER
     com->print_progres(m_size, com->pp_propagator);
@@ -3054,10 +3067,13 @@ gup_result compress_m4(packstruct *com)
     }
     {
       gup_result res;
-      if((res=announce(bits_comming, com))!=GUP_OK)
+      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
       {
         return res;
       }
+      bits_comming+=com->bits_rest;
+      com->bits_rest=(int16)(bits_comming&7);
+      com->packed_size += bits_comming>>3;
     }
     #ifdef PP_AFTER
     com->print_progres(m_size, com->pp_propagator);
@@ -3453,10 +3469,13 @@ gup_result compress_n1(packstruct *com)
     long bits_comming = count_n1_bits(&m_size, entries, com->chars, com->pointers);
     {
       gup_result res;
-      if((res=announce(bits_comming, com))!=GUP_OK)
+      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
       {
         return res;
       }
+      bits_comming+=com->bits_rest;
+      com->bits_rest=(int16)(bits_comming&7);
+      com->packed_size += bits_comming>>3;
     }
     #ifdef PP_AFTER
     com->print_progres(m_size, com->pp_propagator);
@@ -3592,10 +3611,13 @@ gup_result compress_lzs(packstruct *com)
     }
     {
       gup_result res;
-      if((res=announce(bits_comming, com))!=GUP_OK)
+      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
       {
         return res;
       }
+      bits_comming+=com->bits_rest;
+      com->bits_rest=(int16)(bits_comming&7);
+      com->packed_size += bits_comming>>3;
     }
     #ifdef PP_AFTER
     com->print_progres(m_size, com->pp_propagator);
