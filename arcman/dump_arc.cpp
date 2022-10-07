@@ -456,6 +456,138 @@ bindump_archive::~bindump_archive()
 	TRACE_ME();
 }
 
+dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+{
+	if (!comment)
+		comment = "";
+
+	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+
+	char *filename;
+	const char *src;
+	uint16 fspecpos = 0;
+	unsigned long total_hdr_size, bytes_left;
+
+	filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
+
+	//uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+	DUMP name: %s\n\
+	DUMP filename: %s\n\
+	comment: %s\n\
+	creation time: %12u\n\
+	archive size: %12zu\n\
+*/\n\n", archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+
+	delete[] filename;
+
+	return buf;
+}
+
+dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *header)
+{
+	char *name_ptr;
+	unsigned long total_hdr_size, bytes_left;
+   	const char *src;
+   	uint16 fspec_pos;
+
+	src = header->get_filename();
+	const char *comment = header->get_comment();
+	if (!comment)
+		comment = "";
+	header->get_file_stat();
+
+	name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+
+		header->method;	/* Packing mode. */
+		header->file_type;	/* File type. */
+
+//		header->orig_time_stamp;	/* Time stamp. */
+		header->compsize;	/* Compressed size. */
+		header->origsize;	/* Original size. */
+		header->file_crc;	/* File CRC. */
+		fspec_pos;			/* File spec position in filename. */
+//		header->orig_file_mode;	/* File attributes. */
+//		header->host_data;	/* Host data. */
+
+			header->offset;	/* Extended file position. */
+
+	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+
+	TRACE_ME();
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+	FILE name: %s\n\
+	FILE filename: %s\n\
+	comment: %s\n\
+	creation time:                 \n\
+	filesize uncompressed: %12lu\n\
+	filesize packed:       %12lu\n\
+	CRC:                     0x%08lx\n\
+*/\n\n", src, name_ptr, comment,
+		(unsigned long)header->origsize,
+		(unsigned long)header->compsize,
+		(unsigned long)header->file_crc
+);
+
+	TRACE_ME();
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+
+  	delete[] name_ptr;
+  	
+  	return buf;
+}
+
+dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize)
+{
+	// reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
+	dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+
+	for (size_t i = 0; i < datasize; i += 20)
+	{
+		char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+		size_t dstsize = buf->get_remaining_usable_size();
+
+		strcpy(dst, "\n{ ");
+		dstsize -= strlen(dst);
+		dst += strlen(dst);
+		for (int j = 0; j < 20; j++)
+		{
+			snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
+			dstsize -= strlen(dst);
+			dst += strlen(dst);
+		}
+		strcpy(dst, " },");
+
+		dst = reinterpret_cast<char *>(buf->get_append_ref());
+		size_t hdr_len = strlen(dst);	
+		buf->set_appended_length(hdr_len);
+	}
+
+	return buf;
+}
+
+dump_output_bufptr_t bindump_archive::generate_end()
+{
+	dump_output_bufptr_t buf(new dump_output_buffer());
+	
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
+	END OF DUMP\n\
+*/\n\n");
+
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+	
+	return buf;
+}
+
 
 
 //===================================================================================
@@ -629,6 +761,138 @@ asmdump_archive::asmdump_archive()
 asmdump_archive::~asmdump_archive()
 {
 	TRACE_ME();
+}
+
+dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+{
+	if (!comment)
+		comment = "";
+
+	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+
+	char *filename;
+	const char *src;
+	uint16 fspecpos = 0;
+	unsigned long total_hdr_size, bytes_left;
+
+	filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
+
+	//uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+	DUMP name: %s\n\
+	DUMP filename: %s\n\
+	comment: %s\n\
+	creation time: %12u\n\
+	archive size: %12zu\n\
+*/\n\n", archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+
+	delete[] filename;
+
+	return buf;
+}
+
+dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *header)
+{
+	char *name_ptr;
+	unsigned long total_hdr_size, bytes_left;
+   	const char *src;
+   	uint16 fspec_pos;
+
+	src = header->get_filename();
+	const char *comment = header->get_comment();
+	if (!comment)
+		comment = "";
+	header->get_file_stat();
+
+	name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+
+		header->method;	/* Packing mode. */
+		header->file_type;	/* File type. */
+
+//		header->orig_time_stamp;	/* Time stamp. */
+		header->compsize;	/* Compressed size. */
+		header->origsize;	/* Original size. */
+		header->file_crc;	/* File CRC. */
+		fspec_pos;			/* File spec position in filename. */
+//		header->orig_file_mode;	/* File attributes. */
+//		header->host_data;	/* Host data. */
+
+			header->offset;	/* Extended file position. */
+
+	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+
+	TRACE_ME();
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+	FILE name: %s\n\
+	FILE filename: %s\n\
+	comment: %s\n\
+	creation time:                 \n\
+	filesize uncompressed: %12lu\n\
+	filesize packed:       %12lu\n\
+	CRC:                     0x%08lx\n\
+*/\n\n", src, name_ptr, comment,
+		(unsigned long)header->origsize,
+		(unsigned long)header->compsize,
+		(unsigned long)header->file_crc
+);
+
+	TRACE_ME();
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+
+  	delete[] name_ptr;
+  	
+  	return buf;
+}
+
+dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
+{
+	// reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
+	dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+
+	for (size_t i = 0; i < datasize; i += 20)
+	{
+		char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+		size_t dstsize = buf->get_remaining_usable_size();
+
+		strcpy(dst, "\n{ ");
+		dstsize -= strlen(dst);
+		dst += strlen(dst);
+		for (int j = 0; j < 20; j++)
+		{
+			snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
+			dstsize -= strlen(dst);
+			dst += strlen(dst);
+		}
+		strcpy(dst, " },");
+
+		dst = reinterpret_cast<char *>(buf->get_append_ref());
+		size_t hdr_len = strlen(dst);	
+		buf->set_appended_length(hdr_len);
+	}
+
+	return buf;
+}
+
+dump_output_bufptr_t asmdump_archive::generate_end()
+{
+	dump_output_bufptr_t buf(new dump_output_buffer());
+	
+	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+	snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
+	END OF DUMP\n\
+*/\n\n");
+
+	size_t hdr_len = strlen(dst);	
+	buf->set_appended_length(hdr_len);
+	
+	return buf;
 }
 
 #endif // ENABLE_DUMP_OUTPUT_MODES

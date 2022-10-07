@@ -176,26 +176,10 @@ class bindump_archive : public dump_archive
 	 * Functions for opening and closing the archive.
 	 */
 
-	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_file_header(const fileheader *header)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_end()
-	{
-		dump_output_bufptr_t buf;
-		return buf;
-	}
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
+	virtual dump_output_bufptr_t generate_end();
 };
 
 
@@ -229,26 +213,10 @@ class asmdump_archive : public dump_archive
 	 * Functions for opening and closing the archive.
 	 */
 
-	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_file_header(const fileheader *header)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize)
-	{
-		return nullptr;
-	}
-
-	virtual dump_output_bufptr_t generate_end()
-	{
-		dump_output_bufptr_t buf;
-		return buf;
-	}
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
+	virtual dump_output_bufptr_t generate_end();
 };
 
 #endif
