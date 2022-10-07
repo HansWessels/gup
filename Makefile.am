@@ -66,13 +66,13 @@ testcdump: gup
 	-rm test.cdump
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump *.spec
-	od -A d -t x1 test.cdump | tee test.cdump.hexdump
+	cat test.cdump | tee test.cdump.hexdump
 
 testasmdump: gup
 	-rm test.asmdump
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump *.spec
-	od -A d -t x1 test.asmdump | tee test.asmdump.hexdump
+	cat test.asmdump | tee test.asmdump.hexdump
 
 testbindump: gup
 	-rm test.bindump
