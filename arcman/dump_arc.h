@@ -34,8 +34,79 @@
 
 #if ENABLE_DUMP_OUTPUT_MODES
 
+#include <memory>
+#include <assert.h>
+
 #include "arj_hdr.h"
 #include "arj_arc.h"
+
+// buffer type used to hold dump mode headers while they are generated.
+class dump_output_buffer
+{
+protected:
+	uint8_t *base_ptr;		// pointer to allocated buffer space
+	size_t used_length;		// length (in bytes) filled with useful data
+	size_t alloc_size;	
+	
+public:	
+	dump_output_buffer() : dump_output_buffer(512)
+	{
+	}	
+	dump_output_buffer(size_t max_size) : used_length(0)
+	{
+		base_ptr = new uint8_t[max_size];
+		alloc_size = max_size;
+	}	
+	~dump_output_buffer()
+	{
+		delete[] base_ptr;
+	}	
+
+	// hacky, can cause memory failures when used incorrectly:
+	// get a non-const reference to the buffer space.
+	uint8_t *get_start_ref() 
+	{
+		return base_ptr;
+	}
+	size_t size() 
+	{
+		return alloc_size;
+	}
+	size_t length()
+	{
+		return used_length;
+	}
+	// ditto: pointer + size for append to already buffered data:
+	uint8_t *get_append_ref() 
+	{
+		return base_ptr + used_length;
+	}
+	size_t get_remaining_usable_size()
+	{
+		assert(alloc_size > used_length);  // still some space left to fill? no? then barf!
+		return alloc_size - used_length;
+	}
+	// and to complement the hacky/unsafe interface above: here's where
+	// you tell how much useful stuff you appended to the buffer space:
+	void set_appended_length(size_t len) 
+	{
+		assert(used_length + len <= alloc_size);
+		used_length += len;
+	}
+	void set_total_used_length(size_t len) 
+	{
+		assert(len <= alloc_size);
+		used_length = len;
+	}
+	void clear() 
+	{
+		used_length = 0;
+	}
+};
+
+typedef std::unique_ptr<dump_output_buffer> dump_output_bufptr_t;
+
+
 
 class dump_archive : public arj_archive
 {
@@ -80,6 +151,16 @@ class dump_archive : public arj_archive
 	virtual void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos);
 	// Set the current position in the file to the given value. Any bytes after this position that are in the buffer are discarded.
 	virtual void gup_io_set_position(buf_fhandle_t *file, long position);
+	
+	/*
+	 * Overloadable handlers used for producing the various dump output formats.
+	 */
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size) = 0;
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header) = 0;
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize) = 0;
+	virtual dump_output_bufptr_t generate_end() = 0;
+	
+	
 };
 
 
@@ -94,6 +175,27 @@ class bindump_archive : public dump_archive
 	/*
 	 * Functions for opening and closing the archive.
 	 */
+
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_end()
+	{
+		dump_output_bufptr_t buf;
+		return buf;
+	}
 };
 
 
@@ -106,6 +208,14 @@ class cdump_archive : public dump_archive
 	/*
 	 * Functions for opening and closing the archive.
 	 */
+
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
+
+	virtual dump_output_bufptr_t generate_end();
 };
 
 
@@ -118,6 +228,27 @@ class asmdump_archive : public dump_archive
 	/*
 	 * Functions for opening and closing the archive.
 	 */
+
+	virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_file_header(const fileheader *header)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize)
+	{
+		return nullptr;
+	}
+
+	virtual dump_output_bufptr_t generate_end()
+	{
+		dump_output_bufptr_t buf;
+		return buf;
+	}
 };
 
 #endif
