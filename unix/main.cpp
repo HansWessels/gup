@@ -594,7 +594,7 @@ int main(int argc, char *argv[])
 
 		memset(&opts, 0, sizeof(opts));
 		opts.recursive = 1;
-		opts.jm = 0;
+		opts.jm = 1;
 		opts.speed = 0;
 		opts.mode = GNU_ARJ_MODE_7;
 		opts.stream = 0;

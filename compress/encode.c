@@ -3587,11 +3587,30 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
 
 #endif
 
+#ifndef NOT_USE_STD_init_n1_fast_log
+
+void init_n1_fast_log(packstruct *com)
+{
+  /*
+   * fastlog tabel voor ni mode 1.
+   */
+  /*
+   * pointer lengte codering:
+   *  9: xxxxxxxx0             0 -   255 9 bits
+   * 16: xxxxxxxx1xxxxxxxx     0 - 65535 17 bits
+   */
+  uint8 *p = com->fast_log;
+  memset(p, 9, 256);
+  p+=256;
+  memset(p, 17, 65536-256);
+}
+
+#endif
 
 #ifndef NOT_USE_STD_compress_lzs
 
 gup_result compress_lzs(packstruct *com)
-{
+{ /* LZS and LZ5 compression at: https://github.com/fragglet/lhasa/tree/master/lib */
   uint16 entries = (uint16) (com->charp - com->chars);
   unsigned int i;
   c_codetype *p = com->chars;
@@ -3635,21 +3654,21 @@ gup_result compress_lzs(packstruct *com)
     com->bytes_packed += m_size;
   }
 	{
-    p = com->chars;
+      p = com->chars;
 		i = entries;
 		do
 		{
 		  c_codetype kar=*p++;
 			if(kar<NLIT)
 			{ /* literal */
-        ST_BITS(0x100+kar, 9);
-				pos++;
+           ST_BITS(0x100+kar, 9);
+			  pos++;
 			}
 			else
 			{ /* pointer len */
 			  ST_BITS((pos-*q++)&dic_size, 12);
-				ST_BITS(kar-NLIT+1, 4);
-        pos+=kar-NLIT+MIN_MATCH;
+			  ST_BITS(kar-NLIT+1, 4);
+           pos+=kar-NLIT+MIN_MATCH;
 			}
 		}
 		while(--i != 0);
@@ -4033,26 +4052,6 @@ void init_m4_fast_log(packstruct *com)
   memset(p, 13, 64);
   p+=64;
   memset(p, 14, 128);
-}
-
-#endif
-
-#ifndef NOT_USE_STD_init_n1_fast_log
-
-void init_n1_fast_log(packstruct *com)
-{
-  /*
-   * fastlog tabel voor ni mode 1.
-   */
-  /*
-   * pointer lengte codering:
-   *  9: xxxxxxxx0             0 -   255 9 bits
-   * 16: xxxxxxxx1xxxxxxxx     0 - 65535 17 bits
-   */
-  uint8 *p = com->fast_log;
-  memset(p, 9, 256);
-  p+=256;
-  memset(p, 17, 65536-256);
 }
 
 #endif
