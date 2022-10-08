@@ -336,16 +336,16 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 #define ARJ_MODE_3 3     /* arj mode 3 */
 #define ARJ_MODE_4 4     /* arj mode 4 */
 #define GNU_ARJ_MODE_7 7 /* gnu arj mode 7 */
-#define NI_MODE_0 0x11   /* ni packer mode 0 */
+#define NI_MODE_0 0x10   /* ni packer mode 0 */
 #define NI_MODE_1 0x11   /* ni packer mode 1 */
-#define NI_MODE_2 0x11   /* ni packer mode 2 */
-#define NI_MODE_3 0x11   /* ni packer mode 3 */
-#define NI_MODE_4 0x11   /* ni packer mode 4 */
-#define NI_MODE_5 0x11   /* ni packer mode 5 */
-#define NI_MODE_6 0x11   /* ni packer mode 6 */
-#define NI_MODE_7 0x11   /* ni packer mode 7 */
-#define NI_MODE_8 0x11   /* ni packer mode 8 */
-#define NI_MODE_9 0x11   /* ni packer mode 9 */
+#define NI_MODE_2 0x12   /* ni packer mode 2 */
+#define NI_MODE_3 0x13   /* ni packer mode 3 */
+#define NI_MODE_4 0x14   /* ni packer mode 4 */
+#define NI_MODE_5 0x15   /* ni packer mode 5 */
+#define NI_MODE_6 0x16   /* ni packer mode 6 */
+#define NI_MODE_7 0x17   /* ni packer mode 7 */
+#define NI_MODE_8 0x18   /* ni packer mode 8 */
+#define NI_MODE_9 0x19   /* ni packer mode 9 */
 
 #define LHA_LHD_ 0x100   /* LHarc directory method */
 #define LHA_LZ4_ 0x101   /* no compression */

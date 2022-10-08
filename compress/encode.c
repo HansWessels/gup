@@ -3285,6 +3285,7 @@ int32 first_bit_set32(uint32 u);
 int n1_lit_len(uint32 val);
 int n1_len_len(uint32 val);
 int n1_ptr_len(uint32 val);
+void store_n1_val(uint32 val, packstruct *com)
 void store_n1_len_val(uint32 val, packstruct *com);
 void store_n1_literal_val(uint32 val, packstruct *com);
 void store_n1_ptr_val(int32_t val, packstruct *com);
@@ -3348,7 +3349,7 @@ int n1_ptr_len(uint32 val)
   }                                                        \
 }
 
-void store_n1_len_val(uint32 val, packstruct *com)
+void store_n1_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
 	int bits_to_do=first_bit_set32(val);
 	uint32 mask=1<<bits_to_do;
@@ -3375,9 +3376,16 @@ void store_n1_len_val(uint32 val, packstruct *com)
 	}while(mask!=0);
 }
 
+void store_n1_len_val(uint32 val, packstruct *com)
+{ /* waarde val >=2 */
+	store_n1_val(val, com)
+	ST_BIT_N1(1);
+}
+
 void store_n1_literal_val(uint32 val, packstruct *com)
 { /* waarde val >=1 */
 	store_n1_len_val(val+1, com);
+	ST_BIT_N1(0);
 }
 
 void store_n1_ptr_val(int32_t val, packstruct *com)

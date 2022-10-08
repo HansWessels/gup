@@ -261,27 +261,35 @@ gup_result decode(decode_struct *com)
   gup_result ret;
   com->rbuf_current=com->br_buf->current;
   com->rbuf_tail=com->br_buf->end;
-  if (com->mode == 0)
+  switch(com->mode)
   {
+  case STORE:
     ret=decode_m0(com);
-  }
-  else if (com->mode == 4)
-  {
-    ret=decode_m4(com);
-  }
-  else
-	{ /* mode is 1-3 or 7 */
-	  if((com->mode==LHA_LH4_) || (com->mode==LHA_LH5_))
-    {
-      com->n_ptr=LHA_NPT;
-      com->m_ptr_bit=LHA_PBIT;
-    }
-    else
-    {
-      com->n_ptr=ARJ_NPT;
-      com->m_ptr_bit=ARJ_PBIT;
-    }
+    break;
+  case ARJ_MODE_1:
+  case ARJ_MODE_2:
+  case ARJ_MODE_3:
+  case GNU_ARJ_MODE_7:
+  case LHA_LH6_:
+  case LHA_LH7_:
+    com->n_ptr=ARJ_NPT;
+    com->m_ptr_bit=ARJ_PBIT;
     ret=decode_big(com);
+    break;
+  case ARJ_MODE_4:
+    ret=decode_m4(com);
+    break;
+  case LHA_LH4_:
+  case LHA_LH5_:
+    com->n_ptr=LHA_NPT;
+    com->m_ptr_bit=LHA_PBIT;
+    ret=decode_big(com);
+    break;
+  case NI_MODE_1:
+    ret=decode_n1(com);
+    break;
+  default:
+    res=GUP_HDR_UNKNOWN_METHOD;
   }
   com->br_buf->current=com->rbuf_current;
   return ret;
@@ -1036,4 +1044,297 @@ gup_result decode_m4(decode_struct *com)
 
 #endif
 
- 
+#ifndef NOT_USE_STD_decode_n1
+
+gup_result get_n1_bit(int *bit, decode_struct *com)
+{ get a bit from the data stream */
+ 	if(com->bits_in_bitbuf==0)
+ 	{ /* fill bitbuf */
+  		if(com->rbuf_current>com->rbuf_tail)
+		{
+			gup_result res;
+			if((res=read_data(com))!=GUP_OK)
+			{
+				return res;
+			}
+		}
+  		com->bitbuf=*com->rbuf_current++;
+  		com->bits_in_bitbuf=8;
+	}
+	*bit=(com->bitbuf&0x80)>>7;
+	com->bitbuf+=com->bitbuf;
+	com->bits_in_bitbuf--;
+	return GUP_OK;
+}
+
+gup_result decode_n1(decode_struct *com)
+{
+	uint8* buff=com->buffstart;
+	uint8* buffend;
+	buffend=com->buffstart+65536L;
+	if(com->origsize==0)
+	{
+		return GUP_OK; /* exit succes? */
+	}
+	com->bits_in_bitbuf=0;
+	do
+	{
+		uint32 len;
+		int bit;
+		gup_result res;
+		if((res=decode_n1_len(&len, com))!=GUP_OK)
+		{
+			return res;
+		}
+		if((res=get_n1_bit(&bit, com))!=GUP_OK)
+		{
+			return res;
+		}
+		if(bit==0)
+		{ /* literal run */
+			len--;
+			if(origsize>=len)
+			{
+				com->origsize-=len;
+			}
+			else
+			{  /* this should not happen */
+				len=(int)com->origsize;
+				com->origsize=0;
+			}
+			do
+			{
+		  		if(com->rbuf_current > com->rbuf_tail)
+				{
+					gup_result res;
+					if((res=read_data(com))!=GUP_OK)
+					{
+						return res;
+					}
+				}
+  				*buff++=*com->rbuf_current++;
+  				if(buff>=buffend)
+  				{
+					gup_result err;
+					com->print_progres(65536L, com->pp_propagator);
+  					if ((err = com->write_crc(65536L, com->buffstart, com->wc_propagator))!=GUP_OK)
+  					{
+  						return err;
+  					}
+					buff-=65536L;
+					memmove(com->buffstart-65536L, com->buffstart, 65536L);
+				}
+			} while(--len!=0)
+		}
+		else
+		{ /* ptr len */
+			uint32 ptr;
+			uint8* src;
+			if(origsize>=len)
+			{
+				com->origsize-=len;
+			}
+			else
+			{  /* this should not happen */
+				len=(int)com->origsize;
+				com->origsize=0;
+			}
+			if((res=decode_n1_ptr(&ptr, com))!=GUP_OK)
+			{
+				return res;
+			}
+			do
+			{
+  				*buff++=*src++;
+  				com->origsize--;
+  				if(buff>=buffend)
+  				{
+					gup_result err;
+					com->print_progres(65536L, com->pp_propagator);
+  					if ((err = com->write_crc(65536L, com->buffstart, com->wc_propagator))!=GUP_OK)
+  					{
+  						return err;
+  					}
+					buff-=65536L;
+					src-=65536L;
+					memmove(com->buffstart-65536L, com->buffstart, 65536L);
+				}
+			} while(--len!=0)
+		}
+	} while(com->origsize!=0)
+	{
+		unsigned long len;
+		if((len=(buff-com->buffstart))!=0)
+		{
+			gup_result err;
+			com->print_progres(len, com->pp_propagator);
+			if ((err = com->write_crc(len, com->buffstart, com->wc_propagator))!=GUP_OK)
+			{
+				return err;
+			}
+		}
+	}
+	return GUP_OK; /* exit succes */
+}
+  
+  	
+
+  int bib; /* bits in bitbuf */
+  uint8 bitbuf;
+  bib=8;
+  bitbuf=*com->rbuf_current++;
+  if(com->rbuf_current>com->rbuf_tail)
+  {
+    gup_result res;
+    if((res=read_data(com))!=GUP_OK)
+    {
+      return res;
+    }
+  }
+  for(;;)
+  { /* decode loop */
+    kartype kar;
+    if((kar=(kartype)(bitbuf>>(BITBUFSIZE-9)))>255)
+    { /* pointer length combinatie */
+      uint16 ptr;
+      
+      if(kar<480)
+      {
+        if(kar<384)
+        {
+          TRASHBITS(2);
+          kar=3+(kartype)(bitbuf>>(BITBUFSIZE-1));
+          TRASHBITS(1);
+        }
+        else
+        {
+          if(kar<448)
+          {
+            TRASHBITS(3);
+            kar=5+(kartype)(bitbuf>>(BITBUFSIZE-2));
+            TRASHBITS(2);
+          }
+          else
+          {
+            TRASHBITS(4);
+            kar=9+(kartype)(bitbuf>>(BITBUFSIZE-3));
+            TRASHBITS(3);
+          }
+        }
+      }
+      else
+      {
+        if(kar<504)
+        {
+          if(kar<496)
+          {
+            TRASHBITS(5);
+            kar=17+(kartype)(bitbuf>>(BITBUFSIZE-4));
+            TRASHBITS(4);
+          }
+          else
+          {
+            TRASHBITS(6);
+            kar=33+(kartype)(bitbuf>>(BITBUFSIZE-5));
+            TRASHBITS(5);
+          }
+        }
+        else
+        {
+          if(kar<508)
+          {
+            TRASHBITS(7);
+            kar=65+(kartype)(bitbuf>>(BITBUFSIZE-6));
+            TRASHBITS(6);
+          }
+          else
+          {
+            TRASHBITS(7);
+            kar=129+(kartype)(bitbuf>>(BITBUFSIZE-7));
+            TRASHBITS(7);
+          }
+        }
+      }
+      if((ptr=(uint16)(bitbuf>>(BITBUFSIZE-4)))<12)
+      {
+        if(ptr<8)
+        {
+          ptr=(uint16)(bitbuf>>(BITBUFSIZE-10));
+          TRASHBITS(10);
+        }
+        else
+        {
+          TRASHBITS(2);
+          ptr=512+(uint16)(bitbuf>>(BITBUFSIZE-10));
+          TRASHBITS(10);
+        }
+      }
+      else
+      {
+        if(ptr<14)
+        {
+          TRASHBITS(3);
+          ptr=1536+(uint16)(bitbuf>>(BITBUFSIZE-11));
+          TRASHBITS(11);
+        }
+        else
+        {
+          TRASHBITS(4);
+          if(ptr<15)
+          {
+            ptr=3584+(uint16)(bitbuf>>(BITBUFSIZE-12));
+            TRASHBITS(12);
+          }
+          else
+          {
+            ptr=7680+(uint16)(bitbuf>>(BITBUFSIZE-13));
+            TRASHBITS(13);
+          }
+        }
+      }
+      {
+        uint8* q=buff-ptr-1;
+        do
+        {
+          *buff++=*q++;
+        } 
+        while(--kar>0);
+      }
+    }
+    else
+    {
+      *buff++=(uint8)kar;
+      TRASHBITS(9);
+    }
+    if(buff>=buffend)
+    {
+      if(com->origsize==0)
+      {
+      }
+      else
+      {
+        {
+          gup_result err;
+          com->print_progres(65536UL, com->pp_propagator);
+          if ((err = com->write_crc(65536UL, com->buffstart, com->wc_propagator))!=GUP_OK)
+          {
+            return err;
+          }
+        }
+        buff-=65536UL;
+        memmove(com->buffstart-16UL*1024UL, buffend-16UL*1024UL, 16UL*1024UL+MAXMATCH);
+        if(com->origsize>(65536L+MAXMATCH))
+        {
+          com->origsize-=65536UL;
+        }
+        else
+        {
+          buffend=com->buffstart+com->origsize;
+          com->origsize=0;
+        }
+      }
+    }
+  }
+}
+
+#endif 
