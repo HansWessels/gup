@@ -246,6 +246,16 @@
 #define NDEBUG /* no debugging */
 #endif
 
+#if 01
+  /* log literal en pointer len combi's */
+  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
+  #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
+#else
+  #define LOG_LITERAL(lit) /* */
+  #define LOG_PTR_LEN(len, ptr) /* */
+#endif
+
+
 /*
  * position of print progress update
  * When PP_AFTER is defined then print progress is updated when bytes
@@ -3098,10 +3108,12 @@ gup_result compress_m4(packstruct *com)
     if (kar < NLIT)
     { /*- store literal */
       ST_BITS(kar, 9);
+      LOG_LITERAL(kar);
     }
     else
     {
       kar += MIN_MATCH - NLIT;
+      LOG_PTR_LEN(kar, *p);
       if (kar < 17)
       {
         if (kar < 5)
