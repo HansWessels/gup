@@ -249,9 +249,11 @@
 #if 01
   /* log literal en pointer len combi's */
   #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
+  #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
 #else
   #define LOG_LITERAL(lit) /* */
+  #define LOG_LITERAL_RUN(len) /* */
   #define LOG_PTR_LEN(len, ptr) /* */
 #endif
 
@@ -3113,7 +3115,7 @@ gup_result compress_m4(packstruct *com)
     else
     {
       kar += MIN_MATCH - NLIT;
-      LOG_PTR_LEN(kar, *p);
+      LOG_PTR_LEN(kar, *q);
       if (kar < 17)
       {
         if (kar < 5)
@@ -3511,25 +3513,38 @@ gup_result compress_n1(packstruct *com)
     while (--entries != 0)
     {
       c_codetype kar = *p++;
+      
       if (kar < NLIT)
       { /*- store literal */
         literal_run++;
+        LOG_LITERAL(kar);
       }
       else
       {
         if(literal_run>0)
         {
           store_n1_literal_val(literal_run, com);
+          LOG_LITERAL_RUN(literal_run);
           do
           {
             *com->rbuf_current++=*literal_run_start++;
           } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
         }
         kar += MIN_MATCH - NLIT;
+        LOG_PTR_LEN(kar, *q);
         store_n1_len_val(kar, com);
         store_n1_ptr_val(*q++, com);
         literal_run_start=p;
       }
+    }
+    if(literal_run>0)
+    {
+      store_n1_literal_val(literal_run, com);
+      LOG_LITERAL_RUN(literal_run);
+      do
+      {
+        *com->rbuf_current++=*literal_run_start++;
+      } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
     }
   }
   entries=(uint16)(com->charp-p);
