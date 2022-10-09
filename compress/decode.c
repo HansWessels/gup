@@ -1202,7 +1202,7 @@ gup_result decode_n1(decode_struct *com)
   						return err;
   					}
 					dst-=65536L;
-					dst-=65536L;
+					src-=65536L;
 					memmove(com->buffstart-65536L, com->buffstart, 65536L);
 				}
 			} while(--len!=0);
