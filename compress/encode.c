@@ -246,15 +246,17 @@
 #define NDEBUG /* no debugging */
 #endif
 
-#if 01
+#if 0
   /* log literal en pointer len combi's */
   #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
+  #define LOG_bit(bit) printf("bit = %i\n",bit);
 #else
   #define LOG_LITERAL(lit) /* */
   #define LOG_LITERAL_RUN(len) /* */
   #define LOG_PTR_LEN(len, ptr) /* */
+  #define LOG_bit(bit) /* */
 #endif
 
 
@@ -814,8 +816,9 @@ gup_result flush_n1_bitbuf(packstruct *com)
 {
   if (com->bits_in_bitbuf>0)
   {
-    com->bits_in_bitbuf=0;                                 \
-    *com->command_byte_ptr=(uint8)com->bitbuf;             \
+  	 com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
+    *com->command_byte_ptr=(uint8)com->bitbuf;
+    com->bits_in_bitbuf=0;
   }
   return GUP_OK;
 }
@@ -3285,7 +3288,7 @@ int32 first_bit_set32(uint32 u);
 int n1_lit_len(uint32 val);
 int n1_len_len(uint32 val);
 int n1_ptr_len(uint32 val);
-void store_n1_val(uint32 val, packstruct *com)
+void store_n1_val(uint32 val, packstruct *com);
 void store_n1_len_val(uint32 val, packstruct *com);
 void store_n1_literal_val(uint32 val, packstruct *com);
 void store_n1_ptr_val(int32_t val, packstruct *com);
@@ -3332,26 +3335,27 @@ int n1_ptr_len(uint32 val)
 	}
 }
 
-#define ST_BIT_N1(val_0)				                       \
-{ /* store a 1 or a 0 */                                   \
-  unsigned long val=val_0;                                 \
-  if(com->bits_in_bitbuf==0)                               \
-  { /* reserveer plek in bytestream */                     \
-  	 com->command_byte_ptr=com->rbuf_current++;             \
-  	 com->bitbuf=0;                                         \
-  }                                                        \
-  com->bits_in_bitbuf++;                                   \
-  com->bitbuf+=com->bitbuf+val;                            \
-  if (com->bits_in_bitbuf >= 8)                            \
-  {                                                        \
-    com->bits_in_bitbuf=0;                                 \
-    *com->command_byte_ptr=(uint8)com->bitbuf;             \
-  }                                                        \
+#define ST_BIT_N1(bit)												\
+{ /* store a 1 or a 0 */											\
+  int val=bit;				                                 \
+  LOG_bit(val);														\
+  if(com->bits_in_bitbuf==0)										\
+  { /* reserveer plek in bytestream */							\
+  	 com->command_byte_ptr=com->rbuf_current++;				\
+  	 com->bitbuf=0;													\
+  }																		\
+  com->bits_in_bitbuf++;											\
+  com->bitbuf+=com->bitbuf+val;									\
+  if (com->bits_in_bitbuf >= 8)									\
+  {																		\
+    com->bits_in_bitbuf=0;											\
+    *com->command_byte_ptr=(uint8)com->bitbuf;				\
+  }																		\
 }
 
 void store_n1_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
-	int bits_to_do=first_bit_set32(val);
+	int bits_to_do=first_bit_set32(val)-1;
 	uint32 mask=1<<bits_to_do;
 	mask>>=1;
 	do
@@ -3378,30 +3382,31 @@ void store_n1_val(uint32 val, packstruct *com)
 
 void store_n1_len_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
-	store_n1_val(val, com)
+	store_n1_val(val, com);
 	ST_BIT_N1(1);
 }
 
 void store_n1_literal_val(uint32 val, packstruct *com)
 { /* waarde val >=1 */
-	store_n1_len_val(val+1, com);
+	store_n1_val(val+1, com);
 	ST_BIT_N1(0);
 }
 
 void store_n1_ptr_val(int32_t val, packstruct *com)
-{ /* waarde val >=1 <=65536 */
-	if(val<256)
+{ /* waarde val >=0 <=65535 */
+	val++;
+	if(val<=256)
 	{
 		val=-val;
-		*com->rbuf_current++ = (uint8) (val*0xff);
+		*com->rbuf_current++ = (uint8) (val&0xff);
 		ST_BIT_N1(0);
 	}
 	else
 	{
 		val=-val;
-		*com->rbuf_current++ = (uint8) ((val>>8)*0xff);
+		*com->rbuf_current++ = (uint8) ((val>>8)&0xff);
 		ST_BIT_N1(1);
-		*com->rbuf_current++ = (uint8) (val*0xff);
+		*com->rbuf_current++ = (uint8) (val&0xff);
 	}
 }
 
@@ -3525,7 +3530,6 @@ gup_result compress_n1(packstruct *com)
       if (kar < NLIT)
       { /*- store literal */
         literal_run++;
-        LOG_LITERAL(kar);
       }
       else
       {
@@ -3535,13 +3539,14 @@ gup_result compress_n1(packstruct *com)
           LOG_LITERAL_RUN(literal_run);
           do
           {
+	        LOG_LITERAL(*literal_run_start);
             *com->rbuf_current++=*literal_run_start++;
           } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
         }
         kar += MIN_MATCH - NLIT;
-        LOG_PTR_LEN(kar, *q);
         store_n1_len_val(kar, com);
         store_n1_ptr_val(*q++, com);
+        LOG_PTR_LEN(kar, q[-1]+1);
         literal_run_start=p;
       }
     }
@@ -3551,6 +3556,7 @@ gup_result compress_n1(packstruct *com)
       LOG_LITERAL_RUN(literal_run);
       do
       {
+        LOG_LITERAL(*literal_run_start);
         *com->rbuf_current++=*literal_run_start++;
       } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
     }
