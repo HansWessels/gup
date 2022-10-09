@@ -3315,12 +3315,12 @@ int32 first_bit_set32(uint32 u)
 
 int n1_lit_len(uint32 val)
 { /* bereken de code lengte voor val, 1 <= val <= 2^32 -1 */
-	return 2*first_bit_set32(val+1);
+	return 2*(first_bit_set32(val+1)-1)+1;
 }
 
 int n1_len_len(uint32 val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
-	return 2*first_bit_set32(val);
+	return 2*(first_bit_set32(val)-1)+1;
 }
 
 int n1_ptr_len(uint32 val)
@@ -3432,6 +3432,7 @@ gup_result compress_n1(packstruct *com)
   uint16 entries = (uint16) (com->charp - com->chars);
   c_codetype *p = com->chars;
   pointer_type *q = com->pointers;
+  uint8* start;
   if (entries > com->hufbufsize)
   {
     entries = com->hufbufsize;
@@ -3519,6 +3520,7 @@ gup_result compress_n1(packstruct *com)
     #endif
     com->bytes_packed += m_size;
   }
+  start=com->rbuf_current;
   {
     uint16 literal_run = 0;
     c_codetype* literal_run_start=p;
@@ -3561,6 +3563,7 @@ gup_result compress_n1(packstruct *com)
       } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
     }
   }
+  printf("Packed size =%li\n", com->rbuf_current-start);
   entries=(uint16)(com->charp-p);
   if (com->matchstring != NULL)
   {
@@ -3601,12 +3604,12 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     	literal_run++;
     }
     else
-    { /* ptr-len maar */
+    { /* ptr-len paar */
     	if(literal_run>0)
     	{ /* bereken ruimte voor de literals */
     		bytes+=literal_run;
     		bits+=literal_run*8;
-    		bits+=n1_len_len(literal_run);
+    		bits+=n1_lit_len(literal_run);
     		literal_run=0;
     	}
     	kar+=MIN_MATCH-NLIT;
@@ -3620,7 +3623,7 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
   { /* bereken ruimte voor de literals */
     bytes+=literal_run;
     bits+=literal_run*8;
-    bits+=n1_len_len(literal_run);
+    bits+=n1_lit_len(literal_run);
   }
   *packed_bytes = bytes;
   return bits;
