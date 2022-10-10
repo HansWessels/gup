@@ -3437,7 +3437,7 @@ gup_result compress_n1(packstruct *com)
   {
     entries = com->hufbufsize;
   }
-  { /* zorg ervoor dat een blok op een ptr/len match endigt */
+  { /* zorg ervoor dat een blok op een ptr/len match eindigt */
   	 uint16 literals=0;
   	 uint16 i=entries-1;
     while(p[i]<NLIT)
@@ -3482,55 +3482,61 @@ gup_result compress_n1(packstruct *com)
       while (--i!=0);
       com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
-    if(0)
+    if(1)
     {
       /* 
         Code die backmatch stringlengtes optimaliseert.
         Bij een backmatch zijn er twee opeenvolgende matches, waarbij 
         de laatste match een backmatch waarde groter dan nul heeft.
         Deze laatste macth kunnen we groter laten worden tenkoste van de 
-        grootte van de match die ervoor ligt... We optimaliseren de lengte.
+        grootte van de match die ervoor ligt...
       */
-      uint8* bp=com->backmatch;
-      c_codetype *p = com->chars;
-      uint16 i = entries;
+      int redo; /* geeft aan dat er een conversie heeft plaatsgevonden -> nog een iteratie */
       do
       {
-        c_codetype kar = *p++;
-        if (kar >= (NLIT))
-        { /* gevonden een ptr-len */
-          int len=*bp++; /* backmatch lengte */
-          if(len>0)
-          { /* we kunnen een backmatch doen */
-            c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;; /* lengte van de vorige match */
-            uint8 offset=1;
-            uint8 optlen;
-            kar+=MIN_MATCH-NLIT; /* matchlengte huidige match */
-            optlen=n1_len_len(kar_1)+n1_len_len(kar);
-            do
+        redo=0;
+        {
+          uint8* bp=com->backmatch;
+          c_codetype *p = com->chars;
+          uint16 i = entries;
+          do
+          {
+            c_codetype kar = *p++;
+            if (kar > (NLIT-1))
             {
-              if((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen)
+              uint8 len=*bp++;
+              if(len>0)
               {
-            printf("len-2=%3u, len-1=%3u, bm=%3i --> ", kar_1, kar, len);
-                bp[-1]-=offset;
-                p[-2]-=offset;
-                p[-1]+=offset;
-                kar+=offset;
-                kar_1-=offset;
-            printf("len-2=%3u, len-1=%3u, bm=%3i\n", kar_1, kar, len-1);
+                c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
+                int offset=1;
+                int optlen;
+                kar+=MIN_MATCH-NLIT;
                 optlen=n1_len_len(kar_1)+n1_len_len(kar);
-                offset=1;
-              }
-              else
-              {
-                offset++;
+                do
+                {
+                  if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && ((kar_1-offset)>1))
+                  {
+                    redo=1;
+                    bp[-1]-=offset;
+                    p[-2]-=offset;
+                    p[-1]+=offset;
+                    kar+=offset;
+                    kar_1-=offset;
+                    optlen=n1_len_len(kar_1)+n1_len_len(kar);
+                    offset=1;
+                  }
+                  else
+                  {
+                    offset++;
+                  }
+                }
+                while(--len!=0);
               }
             }
-            while(--len!=0);
           }
+          while (--i!=0);
         }
-      }
-      while (--i!=0);
+      } while(redo);
     }
   }
   {
@@ -3539,7 +3545,6 @@ gup_result compress_n1(packstruct *com)
     {
       gup_result res;
       long bytes_extra=0;
-  		printf("blok\n");
       if(com->command_byte_ptr!=NULL)
       { /* command byte pointer is gebruikt, is hij nu in gebruik? */
       	if(com->bits_in_bitbuf!=0)
@@ -3554,10 +3559,6 @@ gup_result compress_n1(packstruct *com)
       }
       if(com->command_byte_ptr!=NULL)
       {
-      	if(com->command_byte_ptr!=com->rbuf_current)
-      	{
-      		printf("We hebben een flushbuf gehad!!!!!!!!!!!!!!!\n");
-      	}
       	memcpy(com->rbuf_current, com->command_byte_ptr, bytes_extra);
       	com->command_byte_ptr=com->rbuf_current;
       	com->rbuf_current+=bytes_extra;
