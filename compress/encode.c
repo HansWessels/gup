@@ -3482,6 +3482,7 @@ gup_result compress_n1(packstruct *com)
       while (--i!=0);
       com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
+    if(0)
     {
       /* 
         Code die backmatch stringlengtes optimaliseert.
@@ -3505,18 +3506,18 @@ gup_result compress_n1(packstruct *com)
             uint8 offset=1;
             uint8 optlen;
             kar+=MIN_MATCH-NLIT; /* matchlengte huidige match */
-            printf("len-2 = %3u, len-1 = %3u, bm = %3i ...", kar_1, kar, len);
             optlen=n1_len_len(kar_1)+n1_len_len(kar);
             do
             {
               if((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen)
               {
+            printf("len-2=%3u, len-1=%3u, bm=%3i --> ", kar_1, kar, len);
                 bp[-1]-=offset;
                 p[-2]-=offset;
                 p[-1]+=offset;
                 kar+=offset;
                 kar_1-=offset;
-            printf("len-2 = %3u, len-1 = %3u, bm = %3i ...", kar_1, kar, len-1);
+            printf("len-2=%3u, len-1=%3u, bm=%3i\n", kar_1, kar, len-1);
                 optlen=n1_len_len(kar_1)+n1_len_len(kar);
                 offset=1;
               }
@@ -3526,7 +3527,6 @@ gup_result compress_n1(packstruct *com)
               }
             }
             while(--len!=0);
-            printf("\n");
           }
         }
       }
@@ -3558,6 +3558,7 @@ gup_result compress_n1(packstruct *com)
       	{
       		printf("We hebben een flushbuf gehad!!!!!!!!!!!!!!!\n");
       	}
+      	memcpy(com->rbuf_current, com->command_byte_ptr, bytes_extra);
       	com->command_byte_ptr=com->rbuf_current;
       	com->rbuf_current+=bytes_extra;
       }
