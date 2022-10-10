@@ -85,7 +85,7 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
+  #define LOG_LITERAL(lit) /* printf("Literal: %02X\n", lit); */
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
 #else
@@ -1140,13 +1140,14 @@ gup_result decode_n1(decode_struct *com)
   				if(dst>=dstend)
   				{
 					gup_result err;
-					com->print_progres(65536L, com->pp_propagator);
-  					if ((err = com->write_crc(65536L, com->buffstart, com->wc_propagator))!=GUP_OK)
+					long bytes=dst-com->buffstart;
+					com->print_progres(bytes, com->pp_propagator);
+  					if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
   					{
   						return err;
   					}
-					dst-=65536L;
-					memmove(com->buffstart-65536L, com->buffstart, 65536L);
+					dst-=bytes;
+					memmove(com->buffstart-bytes, com->buffstart, bytes);
 				}
 			} while(--len!=0);
 		}
@@ -1196,14 +1197,15 @@ gup_result decode_n1(decode_struct *com)
   				if(dst>=dstend)
   				{
 					gup_result err;
-					com->print_progres(65536L, com->pp_propagator);
-  					if ((err = com->write_crc(65536L, com->buffstart, com->wc_propagator))!=GUP_OK)
+					long bytes=dst-com->buffstart;
+					com->print_progres(bytes, com->pp_propagator);
+  					if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
   					{
   						return err;
   					}
-					dst-=65536L;
-					src-=65536L;
-					memmove(com->buffstart-65536L, com->buffstart, 65536L);
+					dst-=bytes;
+					src-=bytes;
+					memmove(com->buffstart-bytes, com->buffstart, bytes);
 				}
 			} while(--len!=0);
 		}

@@ -248,10 +248,10 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
+  #define LOG_LITERAL(lit) /* printf("Literal: %02X\n", lit); */
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
-  #define LOG_bit(bit) printf("bit = %i\n",bit);
+  #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
 #else
   #define LOG_LITERAL(lit) /* */
   #define LOG_LITERAL_RUN(len) /* */
@@ -405,6 +405,7 @@ gup_result init_encode(packstruct *com)
       com->compress=compress_n1;
       i_fastlog=init_n1_fast_log;
       com->flush_bitbuf=flush_n1_bitbuf; /* use flush_n1_bitbuf() */
+      com->command_byte_ptr=NULL;
       break;
     case GNU_ARJ_MODE_7:
       com->n_ptr=ARJ_NPT;
@@ -783,7 +784,6 @@ gup_result flush_bitbuf(packstruct *com)
       }
       com->rbuf_current=com->bw_buf->current;
       com->rbuf_tail=com->bw_buf->end;
-      ALIGN_BUFP(com);
     }
     if(bytes_extra>0)
     {
@@ -840,7 +840,6 @@ gup_result announce(unsigned long bytes, packstruct *com)
     }
     com->rbuf_current=com->bw_buf->current;
     com->rbuf_tail=com->bw_buf->end;
-    ALIGN_BUFP(com);
   }
   return GUP_OK;
 }
@@ -3284,6 +3283,8 @@ unsigned long count_m4_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
 
 #ifndef NOT_USE_STD_compress_n1
 
+#define MAX_N1_LIT_COUNT 65534
+
 int32 first_bit_set32(uint32 u);
 int n1_lit_len(uint32 val);
 int n1_len_len(uint32 val);
@@ -3432,10 +3433,37 @@ gup_result compress_n1(packstruct *com)
   uint16 entries = (uint16) (com->charp - com->chars);
   c_codetype *p = com->chars;
   pointer_type *q = com->pointers;
-  uint8* start;
   if (entries > com->hufbufsize)
   {
     entries = com->hufbufsize;
+  }
+  { /* zorg ervoor dat een blok op een ptr/len match endigt */
+  	 uint16 literals=0;
+  	 uint16 i=entries-1;
+    while(p[i]<NLIT)
+    {
+    	literals++;
+    	if(i==0)
+    	{ /* alleen maar literals in het blok */
+    		i=entries-1;
+    		break;
+    	}
+    	if(literals==MAX_N1_LIT_COUNT)
+    	{ /* een maximum blok aan literals */
+		   while(p[i]<NLIT)
+    		{ /* is het hele blok literals of kunnen we toch een pointer length vinden */
+    			if(i==0)
+    			{ /* alleen maar literals in het blok */
+    				break;
+    			}
+    			i--;
+    		}
+    		i+=MAX_N1_LIT_COUNT-1;
+    		break;
+    	}
+    	i--;
+    }
+    entries=i+1;
   }
   if (com->matchstring != NULL)
   {
@@ -3470,13 +3498,14 @@ gup_result compress_n1(packstruct *com)
         c_codetype kar = *p++;
         if (kar >= (NLIT))
         { /* gevonden een ptr-len */
-          uint8 len=*bp++; /* backmatch lengte */
+          int len=*bp++; /* backmatch lengte */
           if(len>0)
           { /* we kunnen een backmatch doen */
-            c_codetype kar_1=p[-2]+MIN_MATCH-NLIT; /* lengte van de vorige match */
+            c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;; /* lengte van de vorige match */
             uint8 offset=1;
             uint8 optlen;
             kar+=MIN_MATCH-NLIT; /* matchlengte huidige match */
+            printf("len-2 = %3u, len-1 = %3u, bm = %3i ...", kar_1, kar, len);
             optlen=n1_len_len(kar_1)+n1_len_len(kar);
             do
             {
@@ -3487,6 +3516,7 @@ gup_result compress_n1(packstruct *com)
                 p[-1]+=offset;
                 kar+=offset;
                 kar_1-=offset;
+            printf("len-2 = %3u, len-1 = %3u, bm = %3i ...", kar_1, kar, len-1);
                 optlen=n1_len_len(kar_1)+n1_len_len(kar);
                 offset=1;
               }
@@ -3496,6 +3526,7 @@ gup_result compress_n1(packstruct *com)
               }
             }
             while(--len!=0);
+            printf("\n");
           }
         }
       }
@@ -3507,9 +3538,28 @@ gup_result compress_n1(packstruct *com)
     long bits_comming = count_n1_bits(&m_size, entries, com->chars, com->pointers);
     {
       gup_result res;
-      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
+      long bytes_extra=0;
+  		printf("blok\n");
+      if(com->command_byte_ptr!=NULL)
+      { /* command byte pointer is gebruikt, is hij nu in gebruik? */
+      	if(com->bits_in_bitbuf!=0)
+      	{ /* er zitten bits in de bitbuf, we mogen wegschrijven tot de command_byte_ptr */
+      		bytes_extra=com->rbuf_current-com->command_byte_ptr;
+      		com->rbuf_current=com->command_byte_ptr;
+      	}
+      }
+      if((res=announce(bytes_extra+((bits_comming+7)>>3), com))!=GUP_OK)
       {
         return res;
+      }
+      if(com->command_byte_ptr!=NULL)
+      {
+      	if(com->command_byte_ptr!=com->rbuf_current)
+      	{
+      		printf("We hebben een flushbuf gehad!!!!!!!!!!!!!!!\n");
+      	}
+      	com->command_byte_ptr=com->rbuf_current;
+      	com->rbuf_current+=bytes_extra;
       }
       bits_comming+=com->bits_rest;
       com->bits_rest=(int16)(bits_comming&7);
@@ -3520,7 +3570,6 @@ gup_result compress_n1(packstruct *com)
     #endif
     com->bytes_packed += m_size;
   }
-  start=com->rbuf_current;
   {
     uint16 literal_run = 0;
     c_codetype* literal_run_start=p;
@@ -3532,6 +3581,17 @@ gup_result compress_n1(packstruct *com)
       if (kar < NLIT)
       { /*- store literal */
         literal_run++;
+        if(literal_run==MAX_N1_LIT_COUNT)
+        { /* maximum number of literals reached */
+           store_n1_literal_val(literal_run, com);
+           LOG_LITERAL_RUN(literal_run);
+           do
+           {
+	          LOG_LITERAL(*literal_run_start);
+             *com->rbuf_current++=*literal_run_start++;
+          } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
+          literal_run_start=p;
+        }
       }
       else
       {
@@ -3563,7 +3623,6 @@ gup_result compress_n1(packstruct *com)
       } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
     }
   }
-  printf("Packed size =%li\n", com->rbuf_current-start);
   entries=(uint16)(com->charp-p);
   if (com->matchstring != NULL)
   {
@@ -3602,6 +3661,13 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     if (kar < NLIT)
     { /* store literal */
     	literal_run++;
+      if(literal_run==MAX_N1_LIT_COUNT)
+      { /* maximum number of literals reached */
+    		bytes+=literal_run;
+    		bits+=literal_run*8;
+    		bits+=n1_lit_len(literal_run);
+    		literal_run=0;
+    	}
     }
     else
     { /* ptr-len paar */
