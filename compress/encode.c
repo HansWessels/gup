@@ -401,7 +401,7 @@ gup_result init_encode(packstruct *com)
       i_fastlog=init_m4_fast_log;
       break;
     case NI_MODE_1:
-      com->maxptr= MAX_M4_PTR;
+      com->maxptr= 65534UL;
       com->compress=compress_n1;
       i_fastlog=init_n1_fast_log;
       com->flush_bitbuf=flush_n1_bitbuf; /* use flush_n1_bitbuf() */
@@ -3482,7 +3482,6 @@ gup_result compress_n1(packstruct *com)
       while (--i!=0);
       com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
-    if(1)
     {
       /* 
         Code die backmatch stringlengtes optimaliseert.
@@ -3514,7 +3513,7 @@ gup_result compress_n1(packstruct *com)
                 optlen=n1_len_len(kar_1)+n1_len_len(kar);
                 do
                 {
-                  if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && ((kar_1-offset)>1))
+                  if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && ((kar_1-offset)>2))
                   {
                     redo=1;
                     bp[-1]-=offset;

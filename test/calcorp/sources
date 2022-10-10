@@ -1,0 +1,41 @@
+Text Compression Corpus
+
+abbrev	source
+
+bib	Bibliographic files (refer format)
+book1	Hardy: Far from the madding crowd
+book2	Witten: Principles of computer speech
+geo	Geophysical data
+news	News batch file
+obj1	Compiled code for Vax: compilation of progp
+obj2	Compiled code for Apple Macintosh: Knowledge support system
+paper1	Witten, Neal and Cleary: Arithmetic coding for data compression
+paper2	Witten: Computer (in)security
+paper3	Witten: In search of "autonomy"
+paper4	Cleary: Programming by example revisited
+paper5	Cleary: A logical implementation of arithmetic 
+paper6	Cleary: Compact hash tables using bidirectional linear probing
+pic	Picture number 5 from the CCITT Facsimile test files (text + drawings)
+progc	C source code: compress version 4.0
+progl	Lisp source code: system software
+progp	Pascal source code: prediction by partial matching evaluation program
+trans	Transcript of a session on a terminal
+
+
+Additions and alterations will be coordinated by
+
+Until March 1988:
+
+Tim Bell
+Dept of Computer Science
+University of Calgary
+Calgary, Alberta
+Canada T2M 4H9
+
+From April 1988:
+
+Tim Bell
+Dept of Computer Science
+University of Canterbury
+Christchurch
+New Zealand

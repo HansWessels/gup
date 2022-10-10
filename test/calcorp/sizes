@@ -1,0 +1,21 @@
+These were measured by the Unix utility 'wc'
+
+           lines   words  characters
+bib         6280   19274  111261 
+book1      16622  141274  768771 
+book2      15634  101221  610856 
+geo           18     617  102400 
+news       10059   53939  377109 
+obj1          87     495   21504 
+obj2        1213    4600  246814
+paper1      1250    8512   53161 
+paper2      1731   13829   82199 
+paper3      1100    7219   46526 
+paper4       294    2166   13286 
+paper5       320    2099   11954 
+paper6      1019    6753   38105 
+pic	       0      49  513216
+progc       1487    6313   39611 
+progl       2244    9235   71646 
+progp       1966    4847   49379 
+trans       2737    9255   93695 
