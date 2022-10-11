@@ -3485,73 +3485,49 @@ gup_result compress_n1(packstruct *com)
         Deze laatste macth kunnen we groter laten worden tenkoste van de 
         grootte van de match die ervoor ligt...
       */
-      int redo; /* geeft aan dat er een conversie heeft plaatsgevonden -> nog een iteratie */
-      do
       {
-        redo=0;
+        uint8* bp=com->backmatch;
+        c_codetype *p = com->chars;
+        int i = entries;
+        do
         {
-          uint8* bp=com->backmatch;
-          c_codetype *p = com->chars;
-          uint16 i = entries;
-          do
+          c_codetype kar = *p++;
+          if (kar > (NLIT-1))
           {
-            c_codetype kar = *p++;
-            if (kar > (NLIT-1))
+            uint8 len=*bp++;
+            if(len>0)
             {
-              uint8 len=*bp++;
-              if(len>0)
+              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
+              int offset=1;
+              int optlen;
+              kar+=MIN_MATCH-NLIT;
+              optlen=n1_len_len(kar_1)+n1_len_len(kar);
+              do
               {
-                c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
-                int offset=1;
-                int optlen;
-                kar+=MIN_MATCH-NLIT;
-                optlen=n1_len_len(kar_1)+n1_len_len(kar);
-                do
+                if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && (((kar_1-offset)>2) || ((kar_1-offset)==1)))
                 {
-                  if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && ((kar_1-offset)>1))
+                  bp[-1]-=offset;
+                  p[-2]-=offset;
+                  p[-1]+=offset;
+                  kar+=offset;
+                  kar_1-=offset;
+                  optlen=n1_len_len(kar_1)+n1_len_len(kar);
+                  offset=1;
+                  if((p[-2]+MIN_MATCH-NLIT)==1)
                   {
-                    redo=1;
-                    bp[-1]-=offset;
-                    p[-2]-=offset;
-                    p[-1]+=offset;
-                    kar+=offset;
-                    kar_1-=offset;
-                    optlen=n1_len_len(kar_1)+n1_len_len(kar);
-                    offset=1;
-                  }
-                  else
-                  {
-                    offset++;
+                  	printf("Hit!");
+                	  p[-2]=-1;
                   }
                 }
-                while(--len!=0);
+                else
+                {
+                  offset++;
+                }
               }
+              while(--len!=0);
             }
           }
-          while (--i!=0);
-        }
-      } while(redo);
-      { /* converteer nu alle matches van lengte 1 naar een literal, kijk of een lengte twee match een literal moet worden */
-      	c_codetype *p = com->chars;
-      	pointer_type *q = com->pointers;
-			uint16 i = entries;
-         do
-         {
-         	c_codetype kar = *p++;
-         	if (kar > (NLIT-1))
-            {
-            	kar+=MIN_MATCH-NLIT;
-            	if(kar==1)
-            	{ /* converteer naar 1 literal */
-            		p[-1]=-1;
-            	}
-            	else if((kar==2) && (n1_ptr_len(*q)))
-            	{ /* converteer naar 2 literals */
-            		p[-1]=-2;
-            	}
-            	q++; /* next pointer */
-            }
-         } while (--i!=0);
+        } while (--i!=0);
       }
     }
   }
@@ -3604,91 +3580,22 @@ gup_result compress_n1(packstruct *com)
         literal_run++;
         if(literal_run==MAX_N1_LIT_COUNT)
         { /* maximum number of literals reached */
-           if(kar==-2)
-           { /* special case, er kan maar 1 van deze 2 mee... */
-             p[-1]=-1; /* nu 1 literal vervangen en de volgende keer ook maar 1 literal vervangen */
-           }
            store_n1_literal_val(literal_run, com);
            LOG_LITERAL_RUN(literal_run);
            do
            {
              c_codetype kar=*literal_run_start++;
-             if(kar==-2)
-             {
+				 if(kar==-1)
+             { /* geconverteerde ptr len */
+             	printf("Hit!");
                kar=*r++;	
-	            LOG_LITERAL(kar);
-               *com->rbuf_current++=kar;
-               kar=*r++;	
-	            LOG_LITERAL(kar);
-               *com->rbuf_current++=kar;
-               r+=2;
-               q++; /* skip pointer */
-               literal_run--;
-             }
-             else if(kar==-1)
-             {
-               kar=*r++;	
-	            LOG_LITERAL(kar);
-               *com->rbuf_current++=kar;
                r+=3;
                q++; /* skip pointer */
              }
-             else
-             {
-	            LOG_LITERAL(kar);
-               *com->rbuf_current++=kar;
-             }
+             LOG_LITERAL(kar);
+             *com->rbuf_current++=kar;
            } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
-           if(kar==-2)
-           { /* special case, er kan maar 1 van deze 2 mee... */
-             q--; /* we komen nog een keer langs deze pointer */
-             r-=4; /* we moeten deze literals ook nog een keer gebruiken */
-             *r=r[1]; /* schuif 1 literal op */
-             literal_run_start=p-1;
-           }
-           else
-           {
-             literal_run_start=p;
-           }
-        }
-        if(kar==-2)
-        {
-          literal_run++;
-          if(literal_run==MAX_N1_LIT_COUNT)
-          { /* maximum number of literals reached */
-            store_n1_literal_val(literal_run, com);
-            LOG_LITERAL_RUN(literal_run);
-          	do
-          	{
-            	c_codetype kar=*literal_run_start++;
-             	if(kar==-2)
-            	{
-            		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-             		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-            		r+=2;
-            		q++; /* skip pointer */
-            		literal_run--;
-            	}
-            	else if(kar==-1)
-            	{
-            		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-            		r+=3;
-            		q++; /* skip pointer */
-            	}
-            	else
-            	{
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-            	}
-           	} while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
-            literal_run_start=p;
-          }
+           literal_run_start=p;
         }
       }
       else
@@ -3700,31 +3607,14 @@ gup_result compress_n1(packstruct *com)
           	do
           	{
             	c_codetype kar=*literal_run_start++;
-             	if(kar==-2)
+            	if(kar==-1)
             	{
             		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-             		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-            		r+=2;
-            		q++; /* skip pointer */
-            		literal_run--;
-            	}
-            	else if(kar==-1)
-            	{
-            		kar=*r++;	
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
             		r+=3;
             		q++; /* skip pointer */
             	}
-            	else
-            	{
-	         		LOG_LITERAL(kar);
-            		*com->rbuf_current++=kar;
-            	}
+         		LOG_LITERAL(kar);
+           		*com->rbuf_current++=kar;
            	} while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
          }
          kar += MIN_MATCH - NLIT;
@@ -3742,31 +3632,14 @@ gup_result compress_n1(packstruct *com)
       do
       {
       	c_codetype kar=*literal_run_start++;
-      	if(kar==-2)
+      	if(kar==-1)
       	{
       		kar=*r++;	
-	   		LOG_LITERAL(kar);
-      		*com->rbuf_current++=kar;
-       		kar=*r++;	
-	   		LOG_LITERAL(kar);
-      		*com->rbuf_current++=kar;
-      		r+=2;
-      		q++; /* skip pointer */
-      		literal_run--;
-      	}
-      	else if(kar==-1)
-      	{
-      		kar=*r++;	
-	   		LOG_LITERAL(kar);
-      		*com->rbuf_current++=kar;
       		r+=3;
       		q++; /* skip pointer */
       	}
-      	else
-      	{
-	   		LOG_LITERAL(kar);
-      		*com->rbuf_current++=kar;
-      	}
+   		LOG_LITERAL(kar);
+     		*com->rbuf_current++=kar;
       } while(--literal_run!=0); /* aan het einde van deze loop is literal_run weer 0 */
       literal_run_start=p;
     }
@@ -3815,17 +3688,6 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     		bits+=literal_run*8;
     		bits+=n1_lit_len(literal_run);
     		literal_run=0;
-    	}
-    	if(kar==-2)
-    	{
-    		literal_run++;
-       	if(literal_run==MAX_N1_LIT_COUNT)
-      	{ /* maximum number of literals reached */
-    			bytes+=literal_run;
-    			bits+=literal_run*8;
-    			bits+=n1_lit_len(literal_run);
-    			literal_run=0;
-    		}
     	}
     	if(kar<0)
     	{ /* geconverteerde ptr len, next pointer */
