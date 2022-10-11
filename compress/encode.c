@@ -3322,7 +3322,7 @@ int n1_lit_len(uint32 val)
 
 int n1_len_len(uint32 val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
-	return 2*(first_bit_set32(val)-1)+1;
+	return 2*(first_bit_set32(val-1)-1)+1;
 }
 
 int n1_ptr_len(uint32 val)
@@ -3383,8 +3383,8 @@ void store_n1_val(uint32 val, packstruct *com)
 }
 
 void store_n1_len_val(uint32 val, packstruct *com)
-{ /* waarde val >=2 */
-	store_n1_val(val, com);
+{ /* waarde val >=3 */
+	store_n1_val(val-1, com);
 	ST_BIT_N1(1);
 }
 

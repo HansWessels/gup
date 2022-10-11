@@ -1155,6 +1155,7 @@ gup_result decode_n1(decode_struct *com)
 		{ /* ptr len */
 			int32 ptr;
 			uint8* src;
+			len++;
 			if(com->origsize>=len)
 			{
 				com->origsize-=len;
