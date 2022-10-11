@@ -3422,20 +3422,6 @@ gup_result compress_n1(packstruct *com)
   if (com->matchstring != NULL)
   {
     ARJ_Assert(com->backmatch!=NULL);
-    { /* is deze code wel nodig? */
-      int pointer_count=0;
-      int i=entries;
-      c_codetype *p = com->chars;
-      do
-      {
-        if(*p++>(NLIT-1))
-        {
-          pointer_count++;
-        }
-      }
-      while (--i!=0);
-      com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
-    }
     {
       /* 
         Code die backmatch stringlengtes optimaliseert.
@@ -3447,6 +3433,8 @@ gup_result compress_n1(packstruct *com)
       {
         uint8* bp=com->backmatch;
         c_codetype *p = com->chars;
+        pointer_type *q= com->pointers;
+        *bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
         int i = entries;
         do
         {
@@ -3463,19 +3451,15 @@ gup_result compress_n1(packstruct *com)
               optlen=n1_len_len(kar_1)+n1_len_len(kar);
               do
               {
-                if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && (((kar_1-offset)>2) || ((kar_1-offset)==1)))
+                if(((n1_len_len(kar_1-offset)+n1_len_len(kar+offset))<optlen) && ((kar_1-offset)>2))
                 {
-                  bp[-1]-=offset;
-                  p[-2]-=offset;
-                  p[-1]+=offset;
-                  kar+=offset;
-                  kar_1-=offset;
-                  optlen=n1_len_len(kar_1)+n1_len_len(kar);
-                  offset=1;
-                  if((p[-2]+MIN_MATCH-NLIT)==1)
-                  {
-                	  p[-2]=-1;
-                  }
+                 	bp[-1]-=offset;
+                 	p[-2]-=offset;
+                 	p[-1]+=offset;
+                 	kar+=offset;
+                 	kar_1-=offset;
+                 	optlen=n1_len_len(kar_1)+n1_len_len(kar);
+                 	offset=1;
                 }
                 else
                 {
@@ -3483,7 +3467,29 @@ gup_result compress_n1(packstruct *com)
                 }
               }
               while(--len!=0);
+              offset--;
+              if((kar_1-offset)<3)
+              { /* conversie naar 1 of 2? */
+              	 if((kar_1-offset)==2)
+              	 { /* conversie naar 2? */
+              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>=18)
+              	 	{
+                 		bp[-1]-=offset;
+                 		p[-2]=-2;
+                 		p[-1]+=offset;
+                 		printf("2");
+                 	}
+              	 }
+              	 else if((kar_1-offset)==1)
+              	 { /* conversie naar 1 */
+                 	bp[-1]-=offset;
+                 	p[-2]=-1;
+                 	p[-1]+=offset;
+              		printf("1");
+                }
+              }
             }
+            q++; /* next pointer */
           }
         } while (--i!=0);
       }
@@ -3540,6 +3546,16 @@ gup_result compress_n1(packstruct *com)
         		r+=3;
         		q++; /* skip pointer */
         	}
+        	else if(kar==-2)
+        	{
+        		kar=*r++;	
+     			LOG_LITERAL(kar);
+     			*com->rbuf_current++=kar;
+      		ST_BIT_N1(0);
+        		kar=*r++;	
+        		r+=2;
+        		q++; /* skip pointer */
+        	}
      		LOG_LITERAL(kar);
      		*com->rbuf_current++=kar;
       }
@@ -3594,6 +3610,11 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     	bits+=9;
     	if(kar<0)
     	{ /* geconverteerde ptr len, next pointer */
+    		if(kar==-2)
+    		{ /* dubbele zeef */
+  				bytes++;
+    			bits+=9;
+    		}
     		q++;
     	}
     }
