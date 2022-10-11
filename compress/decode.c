@@ -1108,53 +1108,40 @@ gup_result decode_n1(decode_struct *com)
 	}
 	do
 	{
-		uint32 len;
 		int bit;
-		DECODE_N1_LEN(len);
 		GET_N1_BIT(bit);
 		if(bit==0)
 		{ /* literal run */
-			len--;
-			LOG_LITERAL_RUN(len)
-			if(com->origsize>=len)
+			com->origsize--;
+	  		if(com->rbuf_current > com->rbuf_tail)
 			{
-				com->origsize-=len;
-			}
-			else
-			{  /* this should not happen */
-				len=com->origsize;
-				com->origsize=0;
-			}
-			do
-			{
-		  		if(com->rbuf_current > com->rbuf_tail)
+				gup_result res;
+				if((res=read_data(com))!=GUP_OK)
 				{
-					gup_result res;
-					if((res=read_data(com))!=GUP_OK)
-					{
-						return res;
-					}
+					return res;
 				}
-				LOG_LITERAL(*com->rbuf_current);
-  				*dst++=*com->rbuf_current++;
-  				if(dst>=dstend)
-  				{
-					gup_result err;
-					long bytes=dst-com->buffstart;
-					com->print_progres(bytes, com->pp_propagator);
-  					if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
-  					{
-  						return err;
-  					}
-					dst-=bytes;
-					memmove(com->buffstart-bytes, com->buffstart, bytes);
+			}
+			LOG_LITERAL(*com->rbuf_current);
+			*dst++=*com->rbuf_current++;
+			if(dst>=dstend)
+			{
+				gup_result err;
+				long bytes=dst-com->buffstart;
+				com->print_progres(bytes, com->pp_propagator);
+				if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
+				{
+					return err;
 				}
-			} while(--len!=0);
+				dst-=bytes;
+				memmove(com->buffstart-bytes, com->buffstart, bytes);
+			}
 		}
 		else
 		{ /* ptr len */
 			int32 ptr;
 			uint8* src;
+			int len;
+			DECODE_N1_LEN(len);
 			len++;
 			if(com->origsize>=len)
 			{
