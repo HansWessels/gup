@@ -402,6 +402,7 @@ gup_result init_encode(packstruct *com)
       break;
     case NI_MODE_1:
       com->maxptr= 65534UL;
+      com->max_match=MAX_MATCH;
       com->compress=compress_n1;
       i_fastlog=init_n1_fast_log;
       com->flush_bitbuf=flush_n1_bitbuf; /* use flush_n1_bitbuf() */
@@ -3515,7 +3516,6 @@ gup_result compress_n1(packstruct *com)
                   offset=1;
                   if((p[-2]+MIN_MATCH-NLIT)==1)
                   {
-                  	printf("Hit!");
                 	  p[-2]=-1;
                   }
                 }

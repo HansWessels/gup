@@ -88,7 +88,7 @@ extern "C"
 #define MAX_PTR   26623                /* arj dictionary is 26k */
 #define PTR_CONV MAX_PTR+1             /* array size voor pointer conversie */
 #define MIN_MATCH 3                    /* Minimale match lengte */
-#define MAX_MATCH 258                  /* maximale match lengte = 258 */
+#define MAX_MATCH 4095         /* maximale match lengte = 258 */
 #define MATCH_CONV MAX_MATCH+1         /* array count start bij 0! */
 #define DIC_SIZE 2*65536UL
 #define DIC_SIZE_MEDIUM 65536UL
