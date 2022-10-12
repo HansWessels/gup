@@ -1106,12 +1106,37 @@ gup_result decode_n1(decode_struct *com)
 	{
 		return GUP_OK; /* exit succes? */
 	}
-	do
+	{ /* start met een literal */
+		com->origsize--;
+  		if(com->rbuf_current > com->rbuf_tail)
+		{
+			gup_result res;
+			if((res=read_data(com))!=GUP_OK)
+			{
+				return res;
+			}
+		}
+		LOG_LITERAL(*com->rbuf_current);
+		*dst++=*com->rbuf_current++;
+		if(dst>=dstend)
+		{
+			gup_result err;
+			long bytes=dst-com->buffstart;
+			com->print_progres(bytes, com->pp_propagator);
+			if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
+			{
+				return err;
+			}
+			dst-=bytes;
+			memmove(com->buffstart-bytes, com->buffstart, bytes);
+		}
+	}
+	while(com->origsize!=0)
 	{
 		int bit;
 		GET_N1_BIT(bit);
 		if(bit==0)
-		{ /* literal run */
+		{ /* literal */
 			com->origsize--;
 	  		if(com->rbuf_current > com->rbuf_tail)
 			{
@@ -1197,7 +1222,7 @@ gup_result decode_n1(decode_struct *com)
 				}
 			} while(--len!=0);
 		}
-	} while(com->origsize!=0);
+	}
 	{
 		unsigned long len;
 		if((len=(dst-com->buffstart))!=0)

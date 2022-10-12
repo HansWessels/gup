@@ -751,14 +751,7 @@ gup_result encode(packstruct *com)
     com->rbuf_current=com->bw_buf->current;
     com->rbuf_tail=com->bw_buf->end;
     com->mv_bits_left=0;
-    if(com->small_code==0)
-    {
-      res=encode_big(com);
-    }
-    else
-    { /* this should not happen */
-      res=GUP_INTERNAL;
-    }
+    res=encode_big(com);
     com->bw_buf->current=com->rbuf_current;
   }
   return res;
@@ -821,6 +814,7 @@ gup_result flush_n1_bitbuf(packstruct *com)
     *com->command_byte_ptr=(uint8)com->bitbuf;
     com->bits_in_bitbuf=0;
   }
+  com->command_byte_ptr=NULL;
   return GUP_OK;
 }
 
@@ -3472,12 +3466,11 @@ gup_result compress_n1(packstruct *com)
               { /* conversie naar 1 of 2? */
               	 if((kar_1-offset)==2)
               	 { /* conversie naar 2? */
-              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>=18)
+              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>=18) /* groter of gelijk aan lengte twee literals */
               	 	{
                  		bp[-1]-=offset;
                  		p[-2]=-2;
                  		p[-1]+=offset;
-                 		printf("2");
                  	}
               	 }
               	 else if((kar_1-offset)==1)
@@ -3485,7 +3478,6 @@ gup_result compress_n1(packstruct *com)
                  	bp[-1]-=offset;
                  	p[-2]=-1;
                  	p[-1]+=offset;
-              		printf("1");
                 }
               }
             }
@@ -3508,6 +3500,10 @@ gup_result compress_n1(packstruct *com)
       		bytes_extra=com->rbuf_current-com->command_byte_ptr;
       		com->rbuf_current=com->command_byte_ptr;
       	}
+      }
+      else
+      { /* bij het eerste blok beginnen we met een literal, 1 bit minder versturen */
+      	bits_comming--;
       }
       if((res=announce(bytes_extra+((bits_comming+7)>>3), com))!=GUP_OK)
       {
@@ -3532,6 +3528,13 @@ gup_result compress_n1(packstruct *com)
     c_codetype *p = com->chars;
     pointer_type *q = com->pointers;
     uint8 *r = com->matchstring;
+    if(com->command_byte_ptr==NULL)
+    { /* eerste byte is gratis */
+      c_codetype kar = *p++;
+  		LOG_LITERAL(kar);
+  		*com->rbuf_current++=kar;
+  		entries--;
+    }
     entries++;
     while (--entries != 0)
     {
