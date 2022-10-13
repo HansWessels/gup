@@ -337,7 +337,7 @@ gup_result do_list2(archive *archive, fileheader *ah,
 	(void) archive;
 	(void) opts;
 
-	printf("%s\n%10ld %10ld %4i%% %4d %s\n", name,
+	printf("%-40s  %10ld %10ld %4i%% %4X %s\n", name,
 			ah->origsize,
 			ah->compsize,
 			(ah->origsize == 0) ? 100 : (int)(100 * ah->compsize / ah->origsize),
@@ -349,8 +349,8 @@ gup_result do_list2(archive *archive, fileheader *ah,
 
 int list_arj(OPTIONS *opts)
 {
-	printf("Filename\nOriginal Compressed Ratio Mode\n");
-	printf("---------- ---------- ----- ----\n");
+	printf("Filename                                    Original Compressed Ratio Mode\n");
+	printf("                                          ---------- ---------- ----- ----\n");
 
 	scan_arj_directory(opts, do_list1, do_list2);
 
