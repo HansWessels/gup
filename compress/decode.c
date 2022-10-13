@@ -99,6 +99,7 @@
 gup_result decode_big(decode_struct *com);
 gup_result decode_m4(decode_struct *com);
 gup_result decode_m0(decode_struct *com);
+gup_result decode_n0(decode_struct *com);
 gup_result decode_n1(decode_struct *com);
 gup_result read_data(decode_struct *com);
 
@@ -297,6 +298,9 @@ gup_result decode(decode_struct *com)
     com->n_ptr=LHA_NPT;
     com->m_ptr_bit=LHA_PBIT;
     ret=decode_big(com);
+    break;
+  case NI_MODE_0:
+    ret=decode_n0(com);
     break;
   case NI_MODE_1:
     ret=decode_n1(com);
@@ -1057,10 +1061,187 @@ gup_result decode_m4(decode_struct *com)
 
 #endif
 
-#ifndef NOT_USE_STD_decode_n1
+#ifndef NOT_USE_STD_decode_n0
 
-gup_result get_n1_bit(uint32 *bit, decode_struct *com);
-gup_result decode_n1_len(uint32 *len, decode_struct *com);
+#define GET_N0_BIT(bit)								\
+{ /* get a bit from the data stream */			\
+ 	if(bits_in_bitbuf==0)							\
+ 	{ /* fill bitbuf */								\
+  		if(com->rbuf_current>com->rbuf_tail)	\
+		{													\
+			gup_result res;							\
+			if((res=read_data(com))!=GUP_OK)		\
+			{												\
+				return res;								\
+			}												\
+		}													\
+  		bitbuf=*com->rbuf_current++;				\
+  		bits_in_bitbuf=8;								\
+	}														\
+	bit=(bitbuf&0x80)>>7;							\
+	bitbuf+=bitbuf;									\
+	bits_in_bitbuf--;									\
+}
+
+#define DECODE_N0_LEN(val)							\
+{ /* get value 2 - 2^32-1 */						\
+	int bit;												\
+	val=1;												\
+	do														\
+	{														\
+		GET_N0_BIT(bit);								\
+		val+=val+bit;									\
+		GET_N0_BIT(bit);								\
+	} while(bit!=0);									\
+}
+
+
+gup_result decode_n0(decode_struct *com)
+{
+	uint8* dst=com->buffstart;
+	uint8* dstend;
+	uint8 bitbuf=0;
+	int bits_in_bitbuf=0;
+	dstend=com->buffstart+65536L;
+	if(com->origsize==0)
+	{
+		return GUP_OK; /* exit succes? */
+	}
+	{ /* start met een literal */
+		com->origsize--;
+  		if(com->rbuf_current > com->rbuf_tail)
+		{
+			gup_result res;
+			if((res=read_data(com))!=GUP_OK)
+			{
+				return res;
+			}
+		}
+		LOG_LITERAL(*com->rbuf_current);
+		*dst++=*com->rbuf_current++;
+		if(dst>=dstend)
+		{
+			gup_result err;
+			long bytes=dst-com->buffstart;
+			com->print_progres(bytes, com->pp_propagator);
+			if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
+			{
+				return err;
+			}
+			dst-=bytes;
+			memmove(com->buffstart-bytes, com->buffstart, bytes);
+		}
+	}
+	for(;;)
+	{
+		int bit;
+		GET_N0_BIT(bit);
+		if(bit==0)
+		{ /* literal */
+	  		if(com->rbuf_current > com->rbuf_tail)
+			{
+				gup_result res;
+				if((res=read_data(com))!=GUP_OK)
+				{
+					return res;
+				}
+			}
+			LOG_LITERAL(*com->rbuf_current);
+			*dst++=*com->rbuf_current++;
+			if(dst>=dstend)
+			{
+				gup_result err;
+				long bytes=dst-com->buffstart;
+				com->print_progres(bytes, com->pp_propagator);
+				if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
+				{
+					return err;
+				}
+				dst-=bytes;
+				memmove(com->buffstart-bytes, com->buffstart, bytes);
+			}
+		}
+		else
+		{ /* ptr len */
+			int32 ptr;
+			uint8* src;
+			uint8 data;
+			int len;
+			ptr=-1;
+			ptr<<=8;
+	  		if(com->rbuf_current > com->rbuf_tail)
+			{
+				gup_result res;
+				if((res=read_data(com))!=GUP_OK)
+				{
+					return res;
+				}
+			}
+			data=*com->rbuf_current++;
+			GET_N0_BIT(bit);
+			if(bit==0)
+			{
+				ptr|=data;
+			}
+			else
+			{ /* 16 bit pointer */
+				if(data==0)
+				{
+					break; /* end of stream */
+				}
+				ptr|=~data;
+				ptr<<=8;
+		  		if(com->rbuf_current > com->rbuf_tail)
+				{
+					gup_result res;
+					if((res=read_data(com))!=GUP_OK)
+					{
+						return res;
+					}
+				}
+				ptr|=*com->rbuf_current++;
+			}
+			DECODE_N0_LEN(len);
+			len++;
+			LOG_PTR_LEN(len, -ptr)
+			src=dst+ptr;
+			do
+			{
+  				*dst++=*src++;
+  				if(dst>=dstend)
+  				{
+					gup_result err;
+					long bytes=dst-com->buffstart;
+					com->print_progres(bytes, com->pp_propagator);
+  					if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
+  					{
+  						return err;
+  					}
+					dst-=bytes;
+					src-=bytes;
+					memmove(com->buffstart-bytes, com->buffstart, bytes);
+				}
+			} while(--len!=0);
+		}
+	}
+	{
+		unsigned long len;
+		if((len=(dst-com->buffstart))!=0)
+		{
+			gup_result err;
+			com->print_progres(len, com->pp_propagator);
+			if ((err = com->write_crc(len, com->buffstart, com->wc_propagator))!=GUP_OK)
+			{
+				return err;
+			}
+		}
+	}
+	return GUP_OK; /* exit succes */
+}
+
+#endif 
+
+#ifndef NOT_USE_STD_decode_n1
 
 #define GET_N1_BIT(bit)								\
 { /* get a bit from the data stream */			\

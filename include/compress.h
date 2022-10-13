@@ -486,7 +486,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   void* bw_propagator;
   long (*buf_read_crc)(long count, void *buf, void* brc_propagator); /* read routine for reading the original file */
   void* brc_propagator;
-  gup_result (*flush_bitbuf)(struct packstruct_t *com); /* output the last bits in bitbuf */
+  gup_result (*close_packed_stream)(struct packstruct_t *com); /* output the last bits in bitbuf */
 } packstruct;
 #endif
 

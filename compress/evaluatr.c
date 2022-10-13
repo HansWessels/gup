@@ -690,18 +690,10 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
-            }
-            if(com->mv_bits_left!=0)
-            {
-              com->mv_bytes_left--;
-            }
-            if(com->bits_rest!=0)
-            {
-              com->packed_size++; /* corrigeer packed_size */
             }
             return GUP_OK;
           }
@@ -852,18 +844,10 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
-            }
-            if(com->mv_bits_left!=0)
-            {
-              com->mv_bytes_left--;
-            }
-            if(com->bits_rest!=0)
-            {
-              com->packed_size++; /* corrigeer packed_size */
             }
             return GUP_OK;
           }
@@ -1313,18 +1297,10 @@ gup_result encode_big(packstruct *com)
           {
             {
               gup_result res;
-              if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
               {
                 return res;
               }
-            }
-            if(com->mv_bits_left!=0)
-            {
-              com->mv_bytes_left--;
-            }
-            if(com->bits_rest!=0)
-            {
-              com->packed_size++; /* corrigeer packed_size */
             }
             return GUP_OK;
           }
@@ -1379,43 +1355,24 @@ gup_result encode_big(packstruct *com)
       {
         {
           gup_result res;
-          if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+          if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
           {
             return res;
           }
-        }
-        if(com->mv_bits_left!=0)
-        {
-          com->mv_bytes_left--;
-        }
-        if(com->bits_rest!=0)
-        {
-          com->packed_size++; /* corrigeer packed_size */
         }
         return GUP_OK;
       }
     }
   }
   /*
-   * Nu alleen nog even bitbuf wegschrijven
+   * Nu alleen compresse bitstram afsluiten
   */
   {
     gup_result res;
-    if((res=com->flush_bitbuf(com))!=GUP_OK)   /* flush bitbuf */
+    if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
     {
       return res;
     }
-  }
-  if(com->mv_mode)
-  {
-    if(com->mv_bits_left!=0)
-    {
-      com->mv_bytes_left--;
-    }
-  }
-  if(com->bits_rest!=0)
-  {
-    com->packed_size++; /* corrigeer packed_size */
   }
   return GUP_OK;
 }
