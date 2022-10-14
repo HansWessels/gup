@@ -9,7 +9,9 @@
 ** call function with pointer to an unsigned long[256] array
 */
 
-void make_crc32_table(unsigned long crc_table[])
+#include <stdint.h>
+
+void make_crc32_table(uint32_t crc_table[])
 {
   int max_bits=8;
   int bits=1;
@@ -21,8 +23,8 @@ void make_crc32_table(unsigned long crc_table[])
     do
     {
       int j=(1<<bits)-1;
-      unsigned int done=i<<(max_bits-2*bits);
-      unsigned long crc=crc_table[done<<bits];
+      int done=i<<(max_bits-2*bits);
+      uint32_t crc=crc_table[done<<bits];
       int offset=(int)((crc&j)<<(max_bits-bits));
       crc>>=bits;
       do
@@ -43,15 +45,16 @@ void make_crc32_table(unsigned long crc_table[])
 ** call function with count: nuber of bytes to CRC, data: pointer to data bytes
 */
 
-unsigned long crc32(unsigned loung count, unsigned char* data, unsigned long crc_table[])
+uint32_t crc32(unsigned long count, uint8_t* data, uint32_t crc_table[])
 {
-	unsigned long crc=(unsigned long)-1;
-	do
+	uint32_t crc=(uint32_t)-1;
+	while(count--!=0)
 	{
-		unsigned char kar = *data++;
-		kar ^= (uint8) crc;
+		uint8_t c = *data++;
+		c ^= (uint8_t) crc;
 		crc >>= 8;
-		crc ^= crc_table[kar];
-	}  while (--count != 0);
+		crc ^= crc_table[c];
+	}
+	crc=~crc;
 	return crc;
 }

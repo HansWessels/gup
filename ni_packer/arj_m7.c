@@ -5,25 +5,22 @@
 
 /*
   call:
-  decode(src, dst, depack_mem);
-  src        = packed data, important: two NULL bytes have to be inserted at
-                                       ^^^^^^^^^^^^^^                         
-                                       the end of the packed data.
+  decode(src, dst);
+  src        = packed data
   dst        = memory to depack to, the size has to be the original size
                of the packed data
-  depack_mem = temporary memory which can be used by the depack routine
-               the size has to be DEPACK_MALLOC_SIZE
   result     = 0 everything is OK
-               -1 depack error, packed data is damaged, or the 
-                                two NULL bytes are missing
+              -1 depack error, something went wrong
 */
 
 #include <string.h>
 #include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-typedef unsigned char byte;         /* unsigned 8 bit */
-typedef unsigned short int word;    /* unsigned 16 bit */
-typedef signed short int kartype;   /* signed 16 bit */
+typedef uint8_t byte;         /* unsigned 8 bit */
+typedef uint16_t word;    /* unsigned 16 bit */
+typedef int16_t kartype;   /* signed 16 bit */
 
 #undef DEBUG_MODE      /* debug mode on, undef for no debuging */
 
@@ -50,7 +47,7 @@ typedef signed short int kartype;   /* signed 16 bit */
     while(--i>=0)                                           \
     {                                                       \
       newbuf<<=8;                                           \
-      newbuf+=*src++;                                       \
+      newbuf+=*data++;                                       \
       bib+=8;                                               \
     }                                                       \
     bitbuf+=newbuf;                                         \
@@ -58,7 +55,7 @@ typedef signed short int kartype;   /* signed 16 bit */
   bitbuf<<=xbits;                                           \
 }
 
-int decode(byte *src, byte* dst, byte* base)
+void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
 {
   int karshlvl;             /* size of character shift */
   int ptrshlvl;             /* size of pointer shift */
@@ -69,6 +66,16 @@ int decode(byte *src, byte* dst, byte* base)
   byte *karlen;
   byte *huff2ptr;
   byte *ptrlen;
+  byte *base;
+  byte *base_base; /* so I can free it at the end */
+  byte *end;
+  base=(byte *)malloc(DEPACK_MALLOC_SIZE);
+  if(base==NULL)
+  { /* malloc error */
+  	 return;
+  }
+  base_base=base;
+  end=dst+size;
   huff2kar=(void*)base;
   base+=sizeof(kartype)*65536UL;
   karlen=base+CHARS;
@@ -85,7 +92,7 @@ int decode(byte *src, byte* dst, byte* base)
     while(--i>=0)
     {
       bitbuf<<=8;
-      bitbuf+=*src++;
+      bitbuf+=*data++;
       bib+=8;
     }
     bib-=16;
@@ -113,56 +120,10 @@ int decode(byte *src, byte* dst, byte* base)
         }
         {
           byte* q=dst-ptr-1;
-          int c=kar>>4;
-          switch(kar&0xf)
-          { /*
-              start of an unrolled loop, kar characters are to be copied,
-              small lengths are usually far more propable the big lengths,
-              minimum distance between source and destination is 1, maximum is 64k
-              minimum copy value is 3, maximum value is 258 (theoretically, in arj 
-              the maximum length is 256, but I can easily switch to 258, and get 
-              incompatible with Jung. Max lentgh of 258 is done for compatibility 
-              with GZIP (not supported yet, but intention is here.
-            */
-            default:
-            do
-            {
+          do
+          {
               *dst++=*q++;
-            case 15:
-              *dst++=*q++;
-            case 14:
-              *dst++=*q++;
-            case 13:
-              *dst++=*q++;
-            case 12:
-              *dst++=*q++;
-            case 11:
-              *dst++=*q++;
-            case 10:
-              *dst++=*q++;
-            case 9:
-              *dst++=*q++;
-            case 8:
-              *dst++=*q++;
-            case 7:
-              *dst++=*q++;
-            case 6:
-              *dst++=*q++;
-            case 5:
-              *dst++=*q++;
-            case 4:
-              *dst++=*q++;
-            case 3:
-              *dst++=*q++;
-            case 2:
-              *dst++=*q++;
-            case 1:
-              *dst++=*q++;
-            case 0:
-              ;
-            } 
-            while(--c>=0);
-          }
+          } while(--kar>0);
         }
       }
       else
@@ -170,6 +131,11 @@ int decode(byte *src, byte* dst, byte* base)
         *dst++=(byte)kar;      /* use lower eight bits of negative number as literal character */
         TRASHBITS(karlen[kar]); /* maximum size of trashbits will be 16, small values (6-9) are more common */
       }
+    }
+    if(dst>=end)
+    {
+    	free(base_base);
+    	return;
     }
     /* end of heavily used main loop */
     { /* read new huffman codes */
@@ -180,7 +146,8 @@ int decode(byte *src, byte* dst, byte* base)
       huffcount=bitbuf>>(BITBUFSIZE-16);
       if(huffcount==0)
       { /* stream end code */
-        return 0; /* exit succes */
+        free(base_base);
+        return; /* exit succes */
       }
       TRASHBITS(16);
       { /* read huffman codes for the character lengths */
@@ -268,7 +235,8 @@ int decode(byte *src, byte* dst, byte* base)
 #ifdef DEBUG_MODE
                 printf("First huffman table is bad!\n");
 #endif
-                return -1;
+                free(base_base);
+                return;
               }
             }
             p=ptrlen;
@@ -379,7 +347,8 @@ int decode(byte *src, byte* dst, byte* base)
 #ifdef DEBUG_MODE
                 printf("Second huffman table is bad!\n");
 #endif
-                return -1;
+                free(base_base);
+                return;
               }
             }
             p=karlen-CHARS;
@@ -479,7 +448,8 @@ int decode(byte *src, byte* dst, byte* base)
 #ifdef DEBUG_MODE
                 printf("Third huffman table is bad!\n");
 #endif
-                return -1;
+                free(base_base);
+                return;
               }
             }
             p=ptrlen;
