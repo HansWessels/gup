@@ -1,0 +1,236 @@
+/*
+**
+** test program for testing the Ni packer depack code
+**
+** in: arj file containing the compressed data
+**
+** the data will be depacked, integrety checked, timed, and thrown away
+**
+** 2022, Hans Wessels
+**
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+extern void unstore(unsigned long size, unsigned char *data, unsigned char *dst);
+extern void decode_m7(unsigned long size, unsigned char *data, unsigned char *dst);
+extern void decode_m4(unsigned long size, unsigned char *data, unsigned char *dst);
+extern void decode_n0(unsigned char *data, unsigned char *dst);
+
+void make_crc32_table(unsigned long crc_table[]);
+unsigend long crc32(unsigned loung count, unsigned char* data);
+
+#define ARJ_HEADER_ID 		0xEA60U
+
+#define STORE 0          /* general store */
+#define ARJ_MODE_1 1     /* arj mode 1 */
+#define ARJ_MODE_2 2     /* arj mode 2 */
+#define ARJ_MODE_3 3     /* arj mode 3 */
+#define ARJ_MODE_4 4     /* arj mode 4 */
+#define GNU_ARJ_MODE_7 7 /* gnu arj mode 7 */
+#define NI_MODE_0 0x10   /* ni packer mode 0 */
+#define NI_MODE_1 0x11   /* ni packer mode 1 */
+#define NI_MODE_2 0x12   /* ni packer mode 2 */
+#define NI_MODE_3 0x13   /* ni packer mode 3 */
+#define NI_MODE_4 0x14   /* ni packer mode 4 */
+#define NI_MODE_5 0x15   /* ni packer mode 5 */
+#define NI_MODE_6 0x16   /* ni packer mode 6 */
+#define NI_MODE_7 0x17   /* ni packer mode 7 */
+#define NI_MODE_8 0x18   /* ni packer mode 8 */
+#define NI_MODE_9 0x19   /* ni packer mode 9 */
+
+unsigned long crc_table[256]; /* CRC32 table to check the results of de depack routines */
+
+unsigned char get_byte(unsigned char *p)
+{
+	return p[0];
+}
+
+unsigned int get_word(unsigned char *p)
+{
+	unsigned int res;
+	res=p[1];
+	res<<=8;
+	res|=p[0];
+	return res;
+}
+
+unsigned long get_long(unsigned char *p)
+{
+	unsigned long res;
+	res=p[3];
+	res<<=8;
+	res|=p[2];
+	res<<=8;
+	res|=p[1];
+	res<<=8;
+	res|=p[0];
+	return res;
+}
+
+void decode(int mode, unsigned long size, unsigned long crc, unsigned char *data)
+{ /* decode the data pointed to data */
+	unsigned char *dst;
+	dst=malloc(size+1024);
+	if(dst==NULL)
+	{
+		printf("Malloc error, %lu bytes\n", size+1024)
+		return;
+	}
+	clock_t start = clock();
+	switch(mode)
+	{
+	case store:
+		unstore(size, data, dst);
+		break;
+	case ARJ_MODE_1:
+	case ARJ_MODE_2:
+	case ARJ_MODE_3:
+	case GNU_ARJ_MODE_7:
+		decode_m7(size, data, dst);
+		break;
+	case ARJ_MODE_4:
+		decode_m4(size, data, dst);
+		break;
+	case NI_MODE_0:
+		decode_n0(data, dst);
+		break;
+	default:
+		printf("Unknown method: %i", mode);
+		break;
+	}
+	printf(" %.3f s", (double)(clock() - start) / CLOCKS_PER_SEC);
+	if(crc32(size, dst)==crc)
+	{
+		printf("CRC OK");
+	}
+	else
+	{
+		printf("CRC ERROR!");
+	}
+	dst(data);
+}
+
+int main(int argc, char *argv[])
+{
+	char *filenaam;
+	unsigned char *data;
+	unsigned long offset;
+	unsigned long file_size;
+	FILE* f;
+	if(argc==2)
+	{
+		filenaam=argv[1];
+	}
+	else
+	{
+		printf("Usage: %s <file to be tested>\n", argv[0]);
+		return -1;
+	}
+	f=fopen(filenaam, "rb");
+	if(f==NULL)
+	{
+		printf("File open error %s", filenaam);
+		return -1;
+	}
+	fseek(f, 0, SEEK_END);
+	file_size = ftell(f);
+	data = (char*)malloc(file_size + 1024);
+	if (data == NULL)
+	{
+		printf("Malloc error voor file data!\n");
+		fclose(f);
+		return -1;
+	}
+	fseek(f, 0, SEEK_SET);
+	(void)!fread(data, 1, file_size, f);
+	fclose(f);
+	make_crc32_table(crc_table);
+	offset=0;
+   /*      DATA10.BIN                   7082          2644  10  5944648C */
+	printf("File name:               original        packed mode CRC32\n");
+	for(;;)
+	{
+		if(offset>=file_size)
+		{
+			printf("Unexpected end of data reached, aborting\n");
+			break;
+		}
+		/* zoek header */
+		if(get_word(data+offset)==ARJ_HEADER_ID)
+		{ /* ARJ header gevonden */
+			unsigned int header_size;
+			unsigned int header_size_1;
+			unsigned long compressed_size;
+			unsigned long original_size;
+			unsigned long crc32;
+			int file_naam_pos;
+			int method;
+			char* naam;
+			header_size=get_word(data+offset+2);
+			if(header_size==0)
+			{ /* end of archive */
+				break;
+			}
+			header_size_1=get_byte(data+offset+4);
+			if(offset+header_size>=file_size)
+			{
+				printf("Unexpected end of data reached, aborting\n");
+				break;
+			}
+			if(get_byte(data+offset+0xA)!=0)
+			{ /* not a compressed binary file, we are not interested */
+				offset+=header_size+8;
+				while(get_word(data+offset)!=0)
+				{
+					offset+=get_word(data+offset)+6;
+					if(offset+2>=file_size)
+					{
+						printf("Unexpected end of data reached, aborting\n");
+						break;
+					}
+				}
+				offset+=2;
+				continue;
+			}
+			method=get_byte(data+offset+9);
+			compressed_size=get_long(data+offset+0x10);
+			original_size=get_long(data+offset+0x14);
+			crc32=get_long(data+offset+0x18);
+			file_naam_pos=get_word(data+offset+0x1C);
+			naam=data+offset+header_size_1+4;
+			printf("%-20s", naam+file_naam_pos);
+			printf(" %12lu ", original_size);
+			printf(" %12lu ", compressed_size);
+			printf(" %2X ", method);
+			printf(" %08lX\n", crc32);
+			offset+=header_size+8;
+			while(get_word(data+offset)!=0)
+			{
+				printf("Oei, extra header!\n");
+				offset+=get_word(data+offset)+6;
+				if(offset+2>=file_size)
+				{
+					printf("Unexpected end of data reached, aborting\n");
+					break;
+				}
+			}
+			offset+=2;
+			if(offset+compressed_size>=file_size)
+			{
+				printf("Unexpected end of data reached, aborting\n");
+				break;
+			}
+			offset+=compressed_size;
+		}
+		else
+		{
+			offset++;
+		}
+	}
+	free(data);
+	return 0;
+}
+
