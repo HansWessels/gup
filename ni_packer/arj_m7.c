@@ -5,12 +5,10 @@
 
 /*
   call:
-  decode(src, dst);
-  src        = packed data
-  dst        = memory to depack to, the size has to be the original size
-               of the packed data
-  result     = 0 everything is OK
-              -1 depack error, something went wrong
+  void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
+  size       = original size
+  dst        = destenestion to depack to
+  data       = packed data
 */
 
 #include <string.h>

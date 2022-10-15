@@ -326,7 +326,7 @@ typedef struct
   pointer_type ptr;
 } hist_struct;
 
-typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker */];
+typedef hist_struct history[65536 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker */];
 
 /* definitions for the pack methods */
 
