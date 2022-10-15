@@ -17,7 +17,11 @@ export decode_n0
 decode_n0:
 	move.l	A2,-(SP)			; save A2
 	moveq		#-128,D1			; bit buffer sentry
-	bra.s    .start
+.lit:
+	move.b	(A1)+,(A0)+		; copy
+.loop:
+	bsr.s		.get_bit			; is het een pointer len of een literal?
+	bcc.s		.lit				; pointer
 .ptr_len:
 	moveq    #-1,D0			; init offset
 	move.b	(A1)+,D0			; 1e 8 bits
@@ -38,11 +42,6 @@ decode_n0:
 .copy_loop:
 	move.b	(A2)+,(A0)+		; copy
 	dbra		D0,.copy_loop
-.loop:
-	bsr.s		.get_bit			; is het een pointer len of een literal?
-	bcs.s		.ptr_len			; pointer
-.start:
-	move.b	(A1)+,(A0)+		; copy
 	bra.s    .loop
 .get_bit:						; zet bit in x-bit status register
 	add.b		D1,D1				; schuif bit naar buiten
