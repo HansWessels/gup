@@ -1,51 +1,2 @@
 ;********************************************************************
-;*                                                                  *
-;* GNU ARJ. Copyright(c) 1996, The ARJ development team.            *
-;*                                                                  *
-;********************************************************************
-;*
-;* Pure C project file.
-;*
-;* $Author: hans $
-;* $Date: 2000-07-30 16:15:21 +0200 (Sun, 30 Jul 2000) $
-;* $Revision: 155 $
-;* $Log$
-;* Revision 1.4  2000/07/30 14:15:21  hans
-;* Updated to GUP 0.0.4.
-;*
-;* Revision 1.3  1998/01/03 22:43:15  hwessels
-;* Sources van Hans, 03-01-1997.
-;*
-;* Revision 1.1  1996/11/20 20:50:38  wklaren
-;* First version.
-;*
-;********************************************************************
-
-arjbeta.ttp
-.C[ -K -P -Y -I -I..\include -I..\compress ]
-.L[ -S=32768 ]
-.S[ -S -Y ]
-=
-lib\original\pcvstrtn.s
-
-arjbeta.c  (..\include\arjbeta.h, ..\include\crc.h, ..\include\compress.h, scan.h, port.h, ..\include\gup.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h, file_buf.h)
-scan.c     (..\include\arjbeta.h, scan.h, port.h, ..\include\gup_err.h, ..\include\compress.h, ..\include\gup.h, ..\compress\st_opti\opti.h, file_buf.h)
-arj_hdr.c	 (arj_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)
-lha_hdr.c	 (lha_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)
-gz_hdr.c	 (gz_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)
-arj_outp.c (..\include\arjbeta.h, ..\include\compress.h, port.h, ..\include\gup.h, arj_outp.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h)
-file_buf.c (..\include\arjbeta.h, ..\include\compress.h, port.h, ..\include\gup.h, arj_outp.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h, file_buf.h)
-
-
-s_header.c (..\include\arjbeta.h, ..\include\compress.h, scan.h, port.h, ..\include\gup.h, ..\compress\st_opti\opti.h, 
-            arjbeta.c, scan.c, arj_hdr.c, lha_hdr.c, gz_hdr.c, arj_outp.c,
-            ..\compress\crc.c, ..\compress\sld.c, ..\compress\sld_med.c,
-            ..\compress\sld_smll.c, ..\compress\st_opti\st_opti.c, ..\compress\st_opti\chaoscrc.s
-            , ..\compress\st_opti\sld.s, ..\compress\st_opti\sldf.s)
-
-..\compress\compress.prj
-
-PCTOSLIB.LIB
-PCSTDLIB.LIB
-PCEXTLIB.LIB
- 
+;*                                                                  *;* GNU ARJ. Copyright(c) 1996, The ARJ development team.            *;*                                                                  *;********************************************************************;*;* Pure C project file.;*;* $Author: hans $;* $Date: 2000-07-30 16:15:21 +0200 (Sun, 30 Jul 2000) $;* $Revision: 155 $;* $Log$;* Revision 1.4  2000/07/30 14:15:21  hans;* Updated to GUP 0.0.4.;*;* Revision 1.3  1998/01/03 22:43:15  hwessels;* Sources van Hans, 03-01-1997.;*;* Revision 1.1  1996/11/20 20:50:38  wklaren;* First version.;*;********************************************************************arjbeta.ttp.C[ -K -P -Y -I -I..\include -I..\compress ].L[ -S=32768 ].S[ -S -Y ]=lib\original\pcvstrtn.sarjbeta.c  (..\include\arjbeta.h, ..\include\crc.h, ..\include\compress.h, scan.h, port.h, ..\include\gup.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h, file_buf.h)scan.c     (..\include\arjbeta.h, scan.h, port.h, ..\include\gup_err.h, ..\include\compress.h, ..\include\gup.h, ..\compress\st_opti\opti.h, file_buf.h)arj_hdr.c	 (arj_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)lha_hdr.c	 (lha_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)gz_hdr.c	 (gz_hdr.h, ..\include\gup.h, ..\include\compress.h, ..\compress\st_opti\opti.h, file_buf.h)arj_outp.c (..\include\arjbeta.h, ..\include\compress.h, port.h, ..\include\gup.h, arj_outp.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h)file_buf.c (..\include\arjbeta.h, ..\include\compress.h, port.h, ..\include\gup.h, arj_outp.h, ..\include\gup_err.h, ..\compress\st_opti\opti.h, file_buf.h)s_header.c (..\include\arjbeta.h, ..\include\compress.h, scan.h, port.h, ..\include\gup.h, ..\compress\st_opti\opti.h,             arjbeta.c, scan.c, arj_hdr.c, lha_hdr.c, gz_hdr.c, arj_outp.c,            ..\compress\crc.c, ..\compress\sld.c, ..\compress\sld_med.c,            ..\compress\sld_smll.c, ..\compress\st_opti\st_opti.c, ..\compress\st_opti\chaoscrc.s            , ..\compress\st_opti\sld.s, ..\compress\st_opti\sldf.s)..\compress\compress.prjPCTOSLIB.LIBPCSTDLIB.LIBPCEXTLIB.LIB 

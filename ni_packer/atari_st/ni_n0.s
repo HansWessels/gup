@@ -11,6 +11,9 @@
 ; A1 = src
 ; A2 = copy pointer
 ; alternatief pointer 8 of 16 bit, min match = 3
+
+export decode_n0
+
 decode_n0:
 	move.l	A2,-(SP)			; save A2
 	moveq		#-128,D1			; bit buffer sentry

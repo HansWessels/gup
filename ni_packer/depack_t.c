@@ -12,9 +12,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #include <time.h>
+
+#ifdef __PUREC__
+	#define CLOCKS_PER_SEC CLK_TCK
+	typedef signed char             int8_t;
+	typedef signed short int        int16_t;
+	typedef signed long int         int32_t;
+	typedef unsigned char           uint8_t;
+	typedef unsigned short int      uint16_t;
+	typedef unsigned long int       uint32_t;
+#else
+	#include <stdint.h>
+#endif
 
 
 extern void unstore(unsigned long size, uint8_t *dst, uint8_t *data);
@@ -77,14 +88,15 @@ uint32_t get_long(unsigned char *p)
 void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 { /* decode the data pointed to data */
 	uint8_t *dst;
-	uint32_t res_crc;
+	uint32_t res_crc=0;
+	clock_t start;
 	dst=(uint8_t *)malloc(size+1024);
 	if(dst==NULL)
 	{
 		printf("Malloc error, %lu bytes\n", size+1024);
 		return;
 	}
-	clock_t start = clock();
+	start = clock();
 	switch(mode)
 	{
 	case STORE:
@@ -103,10 +115,10 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 		decode_n0(dst, data);
 		break;
 	default:
-		printf("Unknown method: %i", mode);
+		printf("Unknown method: %X", mode);
 		break;
 	}
-	printf(" %3.3f s ", (double)(clock() - start) / CLOCKS_PER_SEC);
+	printf(" %7.3f s ", (double)(clock() - start) / CLOCKS_PER_SEC);
 	if((res_crc=crc32(size, dst, crc_table))==crc)
 	{
 		printf("CRC OK");

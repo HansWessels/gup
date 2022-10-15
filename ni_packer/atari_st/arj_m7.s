@@ -75,8 +75,9 @@ decode_m7:
      lea     c_len-c_table(A2),A5 ;
      lea     avail-c_len(A5),A3
 .blocksize_zero:              ; load a new Hufmann table
-     move.w  D6,D1            ; blocksize
+     tst.l   D0
      beq.s   .decode_einde
+     move.w  D6,D1            ; blocksize
      subq.w  #1,D1            ; adapt blocksize for dbra
      movem.l D0-D1/A0/A2,-(SP)
      moveq   #16,D3           ; pop 16 bits
