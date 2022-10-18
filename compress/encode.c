@@ -260,6 +260,7 @@
 #endif
 
 
+
 /*
  * position of print progress update
  * When PP_AFTER is defined then print progress is updated when bytes
@@ -282,6 +283,26 @@
 #include "evaluatr.h"
 #include "encode.h"
 
+#if 01
+#define STATISTICS
+	#define LIT_STAT_FINE 65 /* tot LIT_RUN_FINE exact bijhouden, daarboven log */
+	#define LIT_STAT_COUNT 33
+	#define LEN_RUN_FINE 65
+	#define LEN_RUN_COUNT 33
+	#define LEN_STAT_FINE (MAX_MATCH+1)
+	#define LEN_STAT_COUNT 33
+	#define PTR_STAT_FINE 257
+	#define PTR_STAT_COUNT 33
+	#define STAT_MAX (MAX_MATCH+1)
+	static unsigned long lit_stat_fine[LIT_STAT_FINE]={0};
+	static unsigned long lit_stat[LIT_STAT_COUNT]={0};
+	static unsigned long len_run_stat_fine[LEN_RUN_FINE]={0};
+	static unsigned long len_run_stat[LEN_RUN_COUNT]={0};
+	static unsigned long len_stat_fine[LEN_STAT_FINE]={0};
+	static unsigned long len_stat[LEN_STAT_COUNT]={0};
+	static unsigned long ptr_stat_fine[PTR_STAT_FINE]={0};
+	static unsigned long ptr_stat[PTR_STAT_COUNT]={0};
+#endif
 
 
 /* eerst ff wat definities */
@@ -3768,20 +3789,24 @@ void store_n1_len_val(uint32 val, packstruct *com)
 
 void store_n1_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
+	int ptr_len;
+	int mask; /* 4 bits */
 	val++;
-	if(val<=256)
+	ptrlen=first_bit_set32(val);
+	mask=8;
+	do
 	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) (val&0xff);
-		ST_BIT_N1(0);
-	}
-	else
-	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) ((val>>8)&0xff);
-		ST_BIT_N1(1);
-		*com->rbuf_current++ = (uint8) (val&0xff);
-	}
+		if((val&mask)==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+		mask>>=1;
+	}while(mask!=0);
+	
 }
 
 gup_result compress_n1(packstruct *com)
@@ -3803,6 +3828,69 @@ gup_result compress_n1(packstruct *com)
    *   
   */
   int entries = (int) (com->charp - com->chars);
+#ifdef STATISTICS
+	{
+		c_codetype *p = com->chars;
+		pointer_type *q= com->pointers;
+		int i=entries;
+		unsigned int lit_run=0;
+		unsigned int len_run=0;
+		while(i-->0)
+		{
+			c_codetype kar = *p++;
+			if (kar > (NLIT-1))
+			{
+				len_run++;
+				kar+=MIN_MATCH-NLIT;
+				/* if(lit_run!=0) */
+				{
+					if(lit_run<LIT_STAT_FINE)
+					{
+						lit_stat_fine[lit_run]++;
+					}
+					lit_stat[first_bit_set32(lit_run)]++;
+					lit_run=0;
+				}
+				if(kar<LEN_STAT_FINE)
+				{
+					len_stat_fine[kar]++;
+				}
+				len_stat[first_bit_set32(kar)]++;
+				if(*q<PTR_STAT_FINE)
+				{
+					ptr_stat_fine[*q]++;
+				}
+				ptr_stat[first_bit_set32(*q++)]++;
+			}
+			else
+			{
+				lit_run++;
+				/* if(len_run!=0) */
+				{
+					if(len_run<LEN_RUN_FINE)
+					{
+						len_run_stat_fine[len_run]++;
+					}
+					len_run_stat[first_bit_set32(len_run)]++;
+					len_run=0;
+				}
+				if(kar<0)
+				{
+					q++;
+					if(kar==-2)
+					{
+						lit_run++;
+						if(len_run<LEN_RUN_FINE)
+						{
+							len_run_stat_fine[len_run]++;
+						}
+						len_run_stat[first_bit_set32(len_run)]++;
+					}
+				}
+			}
+		}
+	}
+#endif
   if (com->matchstring != NULL)
   {
     ARJ_Assert(com->backmatch!=NULL);
@@ -4049,6 +4137,84 @@ gup_result close_n1_stream(packstruct *com)
   {
     com->packed_size++; /* corrigeer packed_size */
   }
+#ifdef STATISTICS
+	{
+		int i;
+		printf("************************************ Statistics results ************************************\n");
+		printf("  i    Lit run log(lit run)       ptr   log(ptr)   len run log(len run)       len   log(len)\n");
+		for(i=0; i<STAT_MAX; i++)
+		{
+			printf("%4i", i);
+			if(i<LIT_STAT_FINE)
+			{
+				printf(" %10lu", lit_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LIT_STAT_COUNT)
+			{
+				printf(" %10lu", lit_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_FINE)
+			{
+				printf(" %10lu", ptr_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_COUNT)
+			{
+				printf(" %10lu", ptr_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_FINE)
+			{
+				printf(" %10lu", len_run_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_COUNT)
+			{
+				printf(" %10lu", len_run_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+		
+			if(i<LEN_STAT_FINE)
+			{
+				printf(" %10lu", len_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_STAT_COUNT)
+			{
+				printf(" %10lu", len_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			printf("\n");
+		}
+		printf("********************************** Statistics results end **********************************\n");
+	}
+#endif
  return GUP_OK;
 }
 
