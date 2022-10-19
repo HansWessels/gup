@@ -1312,13 +1312,12 @@ gup_result decode_n1(decode_struct *com)
 			memmove(com->buffstart-bytes, com->buffstart, bytes);
 		}
 	}
-	while(com->origsize!=0)
+	for(;;)
 	{
 		int bit;
 		GET_N1_BIT(bit);
 		if(bit==0)
 		{ /* literal */
-			com->origsize--;
 	  		if(com->rbuf_current > com->rbuf_tail)
 			{
 				gup_result res;
@@ -1346,18 +1345,8 @@ gup_result decode_n1(decode_struct *com)
 		{ /* ptr len */
 			int32 ptr;
 			uint8* src;
+			uint8 data;
 			int len;
-			DECODE_N1_LEN(len);
-			len++;
-			if(com->origsize>=len)
-			{
-				com->origsize-=len;
-			}
-			else
-			{  /* this should not happen */
-				len=com->origsize;
-				com->origsize=0;
-			}
 			ptr=-1;
 			ptr<<=8;
 	  		if(com->rbuf_current > com->rbuf_tail)
@@ -1368,10 +1357,19 @@ gup_result decode_n1(decode_struct *com)
 					return res;
 				}
 			}
-			ptr|=*com->rbuf_current++;
+			data=*com->rbuf_current++;
 			GET_N1_BIT(bit);
-			if(bit!=0)
+			if(bit==0)
+			{
+				ptr|=data;
+			}
+			else
 			{ /* 16 bit pointer */
+				if(data==0)
+				{
+					break; /* end of stream */
+				}
+				ptr|=~data;
 				ptr<<=8;
 		  		if(com->rbuf_current > com->rbuf_tail)
 				{
@@ -1383,6 +1381,8 @@ gup_result decode_n1(decode_struct *com)
 				}
 				ptr|=*com->rbuf_current++;
 			}
+			DECODE_N1_LEN(len);
+			len++;
 			LOG_PTR_LEN(len, -ptr)
 			src=dst+ptr;
 			do
