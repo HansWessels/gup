@@ -3706,11 +3706,8 @@ gup_result close_n0_stream(packstruct *com)
 
 #endif
 
-#ifndef NOT_USE_STD_compress_n1
+#ifndef N1T_USE_STD_compress_n1
 
-#define MAX_N1_LIT_COUNT 65534
-
-int32 first_bit_set32(uint32 u);
 int n1_lit_len(uint32 val);
 int n1_len_len(uint32 val);
 int n1_ptr_len(uint32 val);
@@ -3718,7 +3715,6 @@ void store_n1_val(uint32 val, packstruct *com);
 void store_n1_len_val(uint32 val, packstruct *com);
 void store_n1_literal_val(uint32 val, packstruct *com);
 void store_n1_ptr_val(int32_t val, packstruct *com);
-
 
 int n1_len_len(uint32 val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
@@ -3737,7 +3733,7 @@ int n1_ptr_len(uint32 val)
 	}
 }
 
-#define ST_BIT_N1(bit)												\
+#define ST_BIT_N0(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
   LOG_bit(val);														\
@@ -3764,20 +3760,20 @@ void store_n1_val(uint32 val, packstruct *com)
 	{
 		if((val&mask)==0)
 		{
-			ST_BIT_N1(0);
+			ST_BIT_N0(0);
 		}
 		else
 		{
-			ST_BIT_N1(1);
+			ST_BIT_N0(1);
 		}
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N1(0);
+			ST_BIT_N0(0);
 		}
 		else
 		{
-			ST_BIT_N1(1);
+			ST_BIT_N0(1);
 		}
 	}while(mask!=0);
 }
@@ -3789,24 +3785,20 @@ void store_n1_len_val(uint32 val, packstruct *com)
 
 void store_n1_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
-	int ptr_len;
-	int mask; /* 4 bits */
 	val++;
-	ptrlen=first_bit_set32(val);
-	mask=8;
-	do
+	if(val<=256)
 	{
-		if((val&mask)==0)
-		{
-			ST_BIT_N1(0);
-		}
-		else
-		{
-			ST_BIT_N1(1);
-		}
-		mask>>=1;
-	}while(mask!=0);
-	
+		val=-val;
+		*com->rbuf_current++ = (uint8) (val&0xff);
+		ST_BIT_N0(0);
+	}
+	else
+	{
+		val=-val;
+		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
+		ST_BIT_N0(1);
+		*com->rbuf_current++ = (uint8) (val&0xff);
+	}
 }
 
 gup_result compress_n1(packstruct *com)
@@ -3828,69 +3820,6 @@ gup_result compress_n1(packstruct *com)
    *   
   */
   int entries = (int) (com->charp - com->chars);
-#ifdef STATISTICS
-	{
-		c_codetype *p = com->chars;
-		pointer_type *q= com->pointers;
-		int i=entries;
-		unsigned int lit_run=0;
-		unsigned int len_run=0;
-		while(i-->0)
-		{
-			c_codetype kar = *p++;
-			if (kar > (NLIT-1))
-			{
-				len_run++;
-				kar+=MIN_MATCH-NLIT;
-				/* if(lit_run!=0) */
-				{
-					if(lit_run<LIT_STAT_FINE)
-					{
-						lit_stat_fine[lit_run]++;
-					}
-					lit_stat[first_bit_set32(lit_run)]++;
-					lit_run=0;
-				}
-				if(kar<LEN_STAT_FINE)
-				{
-					len_stat_fine[kar]++;
-				}
-				len_stat[first_bit_set32(kar)]++;
-				if(*q<PTR_STAT_FINE)
-				{
-					ptr_stat_fine[*q]++;
-				}
-				ptr_stat[first_bit_set32(*q++)]++;
-			}
-			else
-			{
-				lit_run++;
-				/* if(len_run!=0) */
-				{
-					if(len_run<LEN_RUN_FINE)
-					{
-						len_run_stat_fine[len_run]++;
-					}
-					len_run_stat[first_bit_set32(len_run)]++;
-					len_run=0;
-				}
-				if(kar<0)
-				{
-					q++;
-					if(kar==-2)
-					{
-						lit_run++;
-						if(len_run<LEN_RUN_FINE)
-						{
-							len_run_stat_fine[len_run]++;
-						}
-						len_run_stat[first_bit_set32(len_run)]++;
-					}
-				}
-			}
-		}
-	}
-#endif
   if (com->matchstring != NULL)
   {
     ARJ_Assert(com->backmatch!=NULL);
@@ -4019,7 +3948,7 @@ gup_result compress_n1(packstruct *com)
       
       if (kar < NLIT)
       { /*- store literal */
-      	ST_BIT_N1(0);
+      	ST_BIT_N0(0);
         	if(kar==-1)
         	{
         		kar=*r++;	
@@ -4031,7 +3960,7 @@ gup_result compress_n1(packstruct *com)
         		kar=*r++;	
      			LOG_LITERAL(kar);
      			*com->rbuf_current++=kar;
-      		ST_BIT_N1(0);
+      		ST_BIT_N0(0);
         		kar=*r++;	
         		r+=2;
         		q++; /* skip pointer */
@@ -4041,10 +3970,10 @@ gup_result compress_n1(packstruct *com)
       }
       else
       {
-			ST_BIT_N1(1);
+			ST_BIT_N0(1);
          kar += MIN_MATCH - NLIT;
-         store_n1_len_val(kar, com);
          store_n1_ptr_val(*q++, com);
+         store_n1_len_val(kar, com);
          LOG_PTR_LEN(kar, q[-1]+1);
          r+=4; /* skip literals */
       }
@@ -4126,96 +4055,47 @@ void init_n1_fast_log(packstruct *com)
 
 gup_result close_n1_stream(packstruct *com)
 {
-  if (com->bits_in_bitbuf>0)
-  {
-  	 com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
-    *com->command_byte_ptr=(uint8)com->bitbuf;
-    com->bits_in_bitbuf=0;
-  }
-  com->command_byte_ptr=NULL;
-  if(com->bits_rest!=0)
-  {
-    com->packed_size++; /* corrigeer packed_size */
-  }
-#ifdef STATISTICS
-	{
-		int i;
-		printf("************************************ Statistics results ************************************\n");
-		printf("  i    Lit run log(lit run)       ptr   log(ptr)   len run log(len run)       len   log(len)\n");
-		for(i=0; i<STAT_MAX; i++)
-		{
-			printf("%4i", i);
-			if(i<LIT_STAT_FINE)
-			{
-				printf(" %10lu", lit_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LIT_STAT_COUNT)
-			{
-				printf(" %10lu", lit_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<PTR_STAT_FINE)
-			{
-				printf(" %10lu", ptr_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<PTR_STAT_COUNT)
-			{
-				printf(" %10lu", ptr_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_RUN_FINE)
-			{
-				printf(" %10lu", len_run_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_RUN_COUNT)
-			{
-				printf(" %10lu", len_run_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-		
-			if(i<LEN_STAT_FINE)
-			{
-				printf(" %10lu", len_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_STAT_COUNT)
-			{
-				printf(" %10lu", len_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			printf("\n");
+	long bits_comming=10; /* end of archive marker */
+	long bytes_extra=0;
+	gup_result res;
+	if(com->command_byte_ptr!=NULL)
+	{ /* command byte pointer is gebruikt, is hij nu in gebruik? */
+		if(com->bits_in_bitbuf!=0)
+		{ /* er zitten bits in de bitbuf, we mogen wegschrijven tot de command_byte_ptr */
+			bytes_extra=com->rbuf_current-com->command_byte_ptr;
+			com->rbuf_current=com->command_byte_ptr;
 		}
-		printf("********************************** Statistics results end **********************************\n");
 	}
-#endif
- return GUP_OK;
+	if((res=announce(bytes_extra+((bits_comming+7)>>3), com))!=GUP_OK)
+	{
+		return res;
+	}
+	if(com->command_byte_ptr!=NULL)
+	{
+		memcpy(com->rbuf_current, com->command_byte_ptr, bytes_extra);
+		com->command_byte_ptr=com->rbuf_current;
+		com->rbuf_current+=bytes_extra;
+   }
+   bits_comming+=com->bits_rest;
+   com->bits_rest=(int16)(bits_comming&7);
+   com->packed_size += bits_comming>>3;
+	{ /* schrijf n1 end of stream marker, een speciaal geformateerde ptr */
+		ST_BIT_N0(1); /* pointer comming */
+		*com->rbuf_current++ = 0; 
+		ST_BIT_N0(1); /* deze combi kan niet voorkomen */
+	}
+	if (com->bits_in_bitbuf>0)
+	{
+		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
+		*com->command_byte_ptr=(uint8)com->bitbuf;
+		com->bits_in_bitbuf=0;
+	}
+	com->command_byte_ptr=NULL;
+	if(com->bits_rest!=0)
+	{
+		com->packed_size++; /* corrigeer packed_size */
+	}
+	return GUP_OK;
 }
 
 #endif

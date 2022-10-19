@@ -32,6 +32,7 @@ extern void unstore(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_n0(uint8_t *dst, uint8_t *data);
+extern void decode_n1(uint8_t *dst, uint8_t *data);
 
 extern void make_crc32_table(uint32_t crc_table[]);
 extern uint32_t crc32(unsigned long count, uint8_t *data, uint32_t crc_table[]);
@@ -114,6 +115,9 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	case NI_MODE_0:
 		decode_n0(dst, data);
 		break;
+	case NI_MODE_1:
+		decode_n1(dst, data);
+		break;
 	default:
 		printf("Unknown method: %X", mode);
 		break;
@@ -129,6 +133,10 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	}
 	free(dst);
 }
+
+
+static unsigned long total_compressed_size=0;
+static unsigned long total_original_size=0;
 
 int main(int argc, char *argv[])
 {
@@ -223,6 +231,10 @@ int main(int argc, char *argv[])
 			printf(" %12lu ", compressed_size);
 			printf(" %2X ", method);
 			printf(" %08lX ", (unsigned long)crc32);
+
+			total_compressed_size+=compressed_size;
+			total_original_size+=original_size;
+
 			offset+=header_size+8;
 			while(get_word(data+offset)!=0)
 			{
@@ -248,6 +260,9 @@ int main(int argc, char *argv[])
 			offset++;
 		}
 	}
+	printf("\n%-20s", "totaal");
+	printf(" %12lu ", total_original_size);
+	printf(" %12lu\n", total_compressed_size);
 	free(data);
 	return 0;
 }
