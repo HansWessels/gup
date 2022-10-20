@@ -248,7 +248,7 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit); 
+  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
   #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
@@ -3809,6 +3809,7 @@ void store_n1_ptr_val(int32_t val, packstruct *com)
 	}
 	mask=1<<len;
 	mask>>=1;
+	val=~val;
 	do
 	{ /* send the ptr bits */
 		if((val&mask)==0)
@@ -4135,35 +4136,7 @@ void init_n1_fast_log(packstruct *com)
 
 gup_result close_n1_stream(packstruct *com)
 {
-	long bits_comming=10; /* end of archive marker */
-	long bytes_extra=0;
-	gup_result res;
-	if(com->command_byte_ptr!=NULL)
-	{ /* command byte pointer is gebruikt, is hij nu in gebruik? */
-		if(com->bits_in_bitbuf!=0)
-		{ /* er zitten bits in de bitbuf, we mogen wegschrijven tot de command_byte_ptr */
-			bytes_extra=com->rbuf_current-com->command_byte_ptr;
-			com->rbuf_current=com->command_byte_ptr;
-		}
-	}
-	if((res=announce(bytes_extra+((bits_comming+7)>>3), com))!=GUP_OK)
-	{
-		return res;
-	}
-	if(com->command_byte_ptr!=NULL)
-	{
-		memcpy(com->rbuf_current, com->command_byte_ptr, bytes_extra);
-		com->command_byte_ptr=com->rbuf_current;
-		com->rbuf_current+=bytes_extra;
-   }
-   bits_comming+=com->bits_rest;
-   com->bits_rest=(int16)(bits_comming&7);
-   com->packed_size += bits_comming>>3;
-	{ /* schrijf n1 end of stream marker, een speciaal geformateerde ptr */
-		ST_BIT_N1(1); /* pointer comming */
-		*com->rbuf_current++ = 0; 
-		ST_BIT_N1(1); /* deze combi kan niet voorkomen */
-	}
+	gup_result res=GUP_OK;
 	if (com->bits_in_bitbuf>0)
 	{
 		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
@@ -4253,7 +4226,7 @@ gup_result close_n1_stream(packstruct *com)
 		printf("********************************** Statistics results end **********************************\n");
 	}
 #endif
-	return GUP_OK;
+	return res;
 }
 
 #endif

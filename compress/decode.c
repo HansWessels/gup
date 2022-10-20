@@ -85,7 +85,7 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit) /* printf("Literal: %02X\n", lit); */
+  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
 #else
@@ -1263,6 +1263,29 @@ gup_result decode_n0(decode_struct *com)
 	bits_in_bitbuf--;									\
 }
 
+#define DECODE_N1_PTR(ptr)							\
+{ /* get value -1 - -65536 */						\
+	int len=0;											\
+	int bit;												\
+	int i=4;												\
+	do														\
+	{														\
+		GET_N1_BIT(bit);								\
+		len+=len+bit;									\
+	} while(--i!=0);									\
+	ptr=-1;												\
+	if(len>0)											\
+	{														\
+		ptr+=ptr;										\
+		len--;											\
+	}														\
+	do														\
+	{														\
+		GET_N1_BIT(bit);								\
+		ptr+=ptr+bit;									\
+	} while(len-->0);									\
+}															\
+
 #define DECODE_N1_LEN(val)							\
 { /* get value 2 - 2^32-1 */						\
 	int bit;												\
@@ -1275,7 +1298,6 @@ gup_result decode_n0(decode_struct *com)
 	} while(bit!=0);									\
 }
 
-
 gup_result decode_n1(decode_struct *com)
 {
 	uint8* dst=com->buffstart;
@@ -1283,12 +1305,12 @@ gup_result decode_n1(decode_struct *com)
 	uint8 bitbuf=0;
 	int bits_in_bitbuf=0;
 	dstend=com->buffstart+65536L;
+	unsigned long origsize=com->origsize;
 	if(com->origsize==0)
 	{
 		return GUP_OK; /* exit succes? */
 	}
 	{ /* start met een literal */
-		com->origsize--;
   		if(com->rbuf_current > com->rbuf_tail)
 		{
 			gup_result res;
@@ -1299,6 +1321,7 @@ gup_result decode_n1(decode_struct *com)
 		}
 		LOG_LITERAL(*com->rbuf_current);
 		*dst++=*com->rbuf_current++;
+		origsize--;
 		if(dst>=dstend)
 		{
 			gup_result err;
@@ -1312,7 +1335,7 @@ gup_result decode_n1(decode_struct *com)
 			memmove(com->buffstart-bytes, com->buffstart, bytes);
 		}
 	}
-	for(;;)
+	while(origsize>0)
 	{
 		int bit;
 		GET_N1_BIT(bit);
@@ -1328,6 +1351,7 @@ gup_result decode_n1(decode_struct *com)
 			}
 			LOG_LITERAL(*com->rbuf_current);
 			*dst++=*com->rbuf_current++;
+			origsize--;
 			if(dst>=dstend)
 			{
 				gup_result err;
@@ -1345,46 +1369,13 @@ gup_result decode_n1(decode_struct *com)
 		{ /* ptr len */
 			int32 ptr;
 			uint8* src;
-			uint8 data;
 			int len;
-			ptr=-1;
-			ptr<<=8;
-	  		if(com->rbuf_current > com->rbuf_tail)
-			{
-				gup_result res;
-				if((res=read_data(com))!=GUP_OK)
-				{
-					return res;
-				}
-			}
-			data=*com->rbuf_current++;
-			GET_N1_BIT(bit);
-			if(bit==0)
-			{
-				ptr|=data;
-			}
-			else
-			{ /* 16 bit pointer */
-				if(data==0)
-				{
-					break; /* end of stream */
-				}
-				ptr|=~data;
-				ptr<<=8;
-		  		if(com->rbuf_current > com->rbuf_tail)
-				{
-					gup_result res;
-					if((res=read_data(com))!=GUP_OK)
-					{
-						return res;
-					}
-				}
-				ptr|=*com->rbuf_current++;
-			}
+			DECODE_N1_PTR(ptr);
 			DECODE_N1_LEN(len);
 			len++;
 			LOG_PTR_LEN(len, -ptr)
 			src=dst+ptr;
+			origsize-=len;
 			do
 			{
   				*dst++=*src++;
