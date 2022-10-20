@@ -248,7 +248,7 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit) /* printf("Literal: %02X\n", lit); */
+  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit); 
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
   #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
@@ -283,17 +283,17 @@
 #include "evaluatr.h"
 #include "encode.h"
 
-#if 01
+#if 0
 #define STATISTICS
-	#define LIT_STAT_FINE 65 /* tot LIT_RUN_FINE exact bijhouden, daarboven log */
-	#define LIT_STAT_COUNT 33
-	#define LEN_RUN_FINE 65
+	#define LIT_STAT_FINE 300 /* tot LIT_RUN_FINE exact bijhouden, daarboven log */
+	#define LIT_STAT_COUNT 300
+	#define LEN_RUN_FINE 300
 	#define LEN_RUN_COUNT 33
-	#define LEN_STAT_FINE (MAX_MATCH+1)
-	#define LEN_STAT_COUNT 33
-	#define PTR_STAT_FINE 257
-	#define PTR_STAT_COUNT 33
-	#define STAT_MAX (MAX_MATCH+1)
+	#define LEN_STAT_FINE 300
+	#define LEN_STAT_COUNT 300
+	#define PTR_STAT_FINE 300
+	#define PTR_STAT_COUNT 300
+	#define STAT_MAX (300)
 	static unsigned long lit_stat_fine[LIT_STAT_FINE]={0};
 	static unsigned long lit_stat[LIT_STAT_COUNT]={0};
 	static unsigned long len_run_stat_fine[LEN_RUN_FINE]={0};
@@ -3633,8 +3633,7 @@ unsigned long count_n0_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     	kar+=MIN_MATCH-NLIT;
       bytes+=kar;
       bits+=n0_len_len(kar)+1;
-      kar=*q++;
-      bits+=n0_ptr_len(kar);
+      bits+=n0_ptr_len(*q++);
     }
   }
   *packed_bytes = bytes;
@@ -3723,17 +3722,16 @@ int n1_len_len(uint32 val)
 
 int n1_ptr_len(uint32 val)
 { /* bereken de code lengte voor val, 0 <= val <= 65536 */
-	if(val<256)
+	int len;
+	len=first_bit_set32(val)-1;
+	if(len<=0)
 	{
-		return 9;
+		len=1;
 	}
-	else
-	{
-		return 17;
-	}
+	return len+4;
 }
 
-#define ST_BIT_N0(bit)												\
+#define ST_BIT_N1(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
   LOG_bit(val);														\
@@ -3760,20 +3758,20 @@ void store_n1_val(uint32 val, packstruct *com)
 	{
 		if((val&mask)==0)
 		{
-			ST_BIT_N0(0);
+			ST_BIT_N1(0);
 		}
 		else
 		{
-			ST_BIT_N0(1);
+			ST_BIT_N1(1);
 		}
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N0(0);
+			ST_BIT_N1(0);
 		}
 		else
 		{
-			ST_BIT_N0(1);
+			ST_BIT_N1(1);
 		}
 	}while(mask!=0);
 }
@@ -3785,20 +3783,44 @@ void store_n1_len_val(uint32 val, packstruct *com)
 
 void store_n1_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
-	val++;
-	if(val<=256)
+	int len;
+	int mask; /* 4 bits */
+	len=first_bit_set32(val)-1;
+	if(len<0)
 	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) (val&0xff);
-		ST_BIT_N0(0);
+		len=0;
 	}
-	else
+	mask=8;
+	do
+	{ /* lengte van de pointer */
+		if((len&mask)==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+		mask>>=1;
+	}while(mask!=0);
+	if(len==0)
 	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
-		ST_BIT_N0(1);
-		*com->rbuf_current++ = (uint8) (val&0xff);
+		len=1;
 	}
+	mask=1<<len;
+	mask>>=1;
+	do
+	{ /* send the ptr bits */
+		if((val&mask)==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+		mask>>=1;
+	}while(mask!=0);
 }
 
 gup_result compress_n1(packstruct *com)
@@ -4012,7 +4034,7 @@ gup_result compress_n1(packstruct *com)
       
       if (kar < NLIT)
       { /*- store literal */
-      	ST_BIT_N0(0);
+      	ST_BIT_N1(0);
         	if(kar==-1)
         	{
         		kar=*r++;	
@@ -4024,7 +4046,7 @@ gup_result compress_n1(packstruct *com)
         		kar=*r++;	
      			LOG_LITERAL(kar);
      			*com->rbuf_current++=kar;
-      		ST_BIT_N0(0);
+      		ST_BIT_N1(0);
         		kar=*r++;	
         		r+=2;
         		q++; /* skip pointer */
@@ -4034,7 +4056,7 @@ gup_result compress_n1(packstruct *com)
       }
       else
       {
-			ST_BIT_N0(1);
+			ST_BIT_N1(1);
          kar += MIN_MATCH - NLIT;
          store_n1_ptr_val(*q++, com);
          store_n1_len_val(kar, com);
@@ -4091,8 +4113,7 @@ unsigned long count_n1_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
     	kar+=MIN_MATCH-NLIT;
       bytes+=kar;
       bits+=n1_len_len(kar)+1;
-      kar=*q++;
-      bits+=n1_ptr_len(kar);
+      bits+=n1_ptr_len(*q++);
     }
   }
   *packed_bytes = bytes;
@@ -4103,11 +4124,6 @@ void init_n1_fast_log(packstruct *com)
 {
   /*
    * fastlog tabel voor ni mode 1.
-   */
-  /*
-   * pointer lengte codering:
-   *  9: xxxxxxxx0             0 -   255 9 bits
-   * 16: xxxxxxxx1xxxxxxxx     0 - 65535 17 bits
    */
   uint8 *p = com->fast_log;
   uint32 i;
@@ -4144,9 +4160,9 @@ gup_result close_n1_stream(packstruct *com)
    com->bits_rest=(int16)(bits_comming&7);
    com->packed_size += bits_comming>>3;
 	{ /* schrijf n1 end of stream marker, een speciaal geformateerde ptr */
-		ST_BIT_N0(1); /* pointer comming */
+		ST_BIT_N1(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
-		ST_BIT_N0(1); /* deze combi kan niet voorkomen */
+		ST_BIT_N1(1); /* deze combi kan niet voorkomen */
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -4163,7 +4179,7 @@ gup_result close_n1_stream(packstruct *com)
 	{
 		int i;
 		printf("************************************ Statistics results ************************************\n");
-		printf("  i    Lit run log(lit run)       ptr   log(ptr)   len run log(len run)       len   log(len)\n");
+		printf("  i    Lit_run log(lit_run)       ptr   log(ptr)   len_run log(len_run)       len   log(len)\n");
 		for(i=0; i<STAT_MAX; i++)
 		{
 			printf("%4i", i);
