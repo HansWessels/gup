@@ -904,7 +904,25 @@ gup_result archive::encode(fileheader *header, int infile)
 	st.pack_str.brc_propagator = &rcs;
 
 	if ((result = tell(start)) == GUP_OK)
-		result = ::encode(&st.pack_str);
+	{
+		long filesize=lseek(infile, 0, SEEK_END);
+		if(filesize<0)
+		{
+			result = GUP_READ_ERROR;
+		}
+		else
+		{
+			if(lseek(infile, header->offset, SEEK_SET)<0)
+			{
+				result = GUP_READ_ERROR;
+			}
+			else
+			{
+				st.pack_str.origsize=filesize;
+				result = ::encode(&st.pack_str);
+			}
+		}
+	}
 
 	if (result == GUP_OK)
 	{

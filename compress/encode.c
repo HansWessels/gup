@@ -252,11 +252,13 @@
   #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
   #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
+  #define LOG_RUN(run) printf("Run = %lu\n", run);
 #else
   #define LOG_LITERAL(lit) /* */
   #define LOG_LITERAL_RUN(len) /* */
   #define LOG_PTR_LEN(len, ptr) /* */
   #define LOG_bit(bit) /* */
+  #define LOG_RUN(run) /* */
 #endif
 
 
@@ -377,6 +379,12 @@ void free_encode(packstruct *com)
   {
     com->gfree(com->bufbase, com->gf_propagator);
     com->bufbase=NULL;
+  }
+  if(com->inmem_output!=NULL)
+  {
+    com->gfree(com->inmem_output, com->gf_propagator);
+    com->inmem_output=NULL;
+    com->inmem_input=NULL;
   }
 }
 #endif
@@ -3716,6 +3724,7 @@ void store_n1_literal_val(uint32 val, packstruct *com);
 void store_n1_ptr_val(int32_t val, packstruct *com);
 void store_n1_counter(uint32 val, packstruct *com);
 void store_n1_run(uint32 val, packstruct *com);
+gup_result core_n1(packstruct *com);
 
 int n1_len_len(uint32 val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
@@ -3739,7 +3748,7 @@ int n1_ptr_len(uint32 val)
   LOG_bit(val);														\
   if(com->bits_in_bitbuf==0)										\
   { /* reserveer plek in bytestream */							\
-  	 com->command_byte_ptr=dst++;				\
+  	 com->command_byte_ptr=com->inmem_output_cur++;			\
   	 com->bitbuf=0;													\
   }																		\
   com->bits_in_bitbuf++;											\
@@ -3751,7 +3760,7 @@ int n1_ptr_len(uint32 val)
   }																		\
 }
 
-void store_n1_val(uint32 val, uint8 *dst)
+void store_n1_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
 	int bits_to_do=first_bit_set32(val)-1;
 	uint32 mask=1<<bits_to_do;
@@ -3778,12 +3787,12 @@ void store_n1_val(uint32 val, uint8 *dst)
 	}while(mask!=0);
 }
 
-void store_n1_len_val(uint32 val, uint8 *dst)
+void store_n1_len_val(uint32 val, packstruct *com)
 { /* waarde val >=3 */
 	store_n1_val(val-1, com);
 }
 
-void store_n1_ptr_val(int32_t val, uint8 *dst)
+void store_n1_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
 	int len;
 	int mask; /* 4 bits */
@@ -3826,7 +3835,7 @@ void store_n1_ptr_val(int32_t val, uint8 *dst)
 	}while(mask!=0);
 }
 
-void store_n1_counter(uint32 val, uint8 *dst)
+void store_n1_counter(uint32 val, packstruct *com)
 { /* 0 <= counter < 2^32 ... van 1 t/m 2^32-1 */
 	int len;
 	uint32 mask;
@@ -3836,6 +3845,7 @@ void store_n1_counter(uint32 val, uint8 *dst)
 		len=0;
 	}
 	mask=16;
+	do
 	{ /* lengte van de pointer */
 		if((len&mask)==0)
 		{
@@ -3867,7 +3877,7 @@ void store_n1_counter(uint32 val, uint8 *dst)
 	}while(mask!=0);
 }
 
-void store_n1_run(uint32 val, uint8 *dst)
+void store_n1_run(uint32 val, packstruct *com)
 { /* waarde 0<= val < 2^32 */
 	if(val==0)
 	{
@@ -3875,6 +3885,7 @@ void store_n1_run(uint32 val, uint8 *dst)
 	}
 	else if(val==1)
 	{
+		ST_BIT_N1(1);
 		ST_BIT_N1(0);
 		return;
 	}
@@ -3882,6 +3893,8 @@ void store_n1_run(uint32 val, uint8 *dst)
 	{
 		int bits_to_do=first_bit_set32(val)-1;
 		uint32 mask=1<<bits_to_do;
+		ST_BIT_N1(1);
+		ST_BIT_N1(1);
 		mask>>=1;
 		do
 		{
@@ -3908,27 +3921,28 @@ void store_n1_run(uint32 val, uint8 *dst)
 
 gup_result core_n1(packstruct *com)
 {
-	uint8 *dst; /* destination buffer, groot genoeg voor de hele file */
-	uint16 *src; /* source buffer met literal en ptr codes, groot genoeg voor de hele file, dat is, twee keer de file lengte */
 	uint16 *start_run;
-	unsigned long entries; /* aantal literals+lens+pointers */
+	uint16 *src;
+	uint32 entries;
 	unsigned long run;
 	int ptr;
 	{ /* eerst het aantal literal en ptr runs bepalen */
-		src=;
 		ptr=0; /* begin met literals */
 		run=0;
-		entries=
-		wile(entries-->0)
+		entries=com->inmem_input_cur-com->inmem_input; /* aantal literals+lens+pointers */
+		src=com->inmem_input;
+		src++;
+		entries--;
+		while(entries-->0)
 		{
-			if(ptr!=0)
-			{
+			if(ptr==0)
+			{ /* literals */
 				if(*src++>=NLIT)
 				{ /* pointer gevonden */
 					run++;
 					src++; /* skip pointer */
 					entries--;
-					ptr=0;
+					ptr=1;
 				}
 			}
 			else
@@ -3936,7 +3950,7 @@ gup_result core_n1(packstruct *com)
 				if(*src++<NLIT)
 				{ /* literal gevonden */
 					run++;
-					ptr=1;
+					ptr=0;
 				}
 				else
 				{
@@ -3945,28 +3959,43 @@ gup_result core_n1(packstruct *com)
 				}
 			}
 		}
-		store_n1_counter(run, dst);
+		store_n1_counter(run, com);
+		printf("Aantal runs = %lu\n", run);
 	}
 	ptr=0; /* begin met literals */
 	run=0;
-	entries=
-	src=
+	entries=com->inmem_input_cur-com->inmem_input; /* aantal literals+lens+pointers */
+	src=com->inmem_input;
 	start_run=src;
+	src++;
+	entries--;
+	unsigned long message_unary=0;
+	unsigned long message_binary=0;
 	while(entries-->0)
 	{
-		if(ptr!=0)
-		{
+		if(ptr==0)
+		{ /* literals */
 			if(*src++>=NLIT)
 			{ /* einde run, pointer gevonden */
-				store_n1_run(run, dst);
+				store_n1_run(run, com);
+				message_unary+=run+1;
+				if(run==0)
+				{
+					message_binary+=1;
+				}
+				else
+				{
+					message_binary+=2*first_bit_set32(run);
+				}
+				LOG_RUN(run);
 				do
 				{
-					*dst++=(uint8)*start_run++
+					*com->inmem_output_cur++=(uint8)*start_run++;
 					LOG_LITERAL(start_run[-1]);
 				} while(run-->0);
 				src++; /* skip pointer */
 				entries--;
-				ptr=0;
+				ptr=1;
 				run=0;
 			}
 			else
@@ -3978,13 +4007,24 @@ gup_result core_n1(packstruct *com)
 		{
 			if(*src++<NLIT)
 			{
+				store_n1_run(run, com);
+				message_unary+=run+1;
+				if(run==0)
+				{
+					message_binary+=1;
+				}
+				else
+				{
+					message_binary+=2*first_bit_set32(run);
+				}
+				LOG_RUN(run);
 				do
 				{
-         		store_n1_len_val(*start_run++, dst);
-	         	store_n1_ptr_val(*start_run++, dst);
-	         	LOG_PTR_LEN(start_run[-2], start_run[-1]+1);
+         		store_n1_len_val(*start_run++ +MIN_MATCH-NLIT, com);
+	         	store_n1_ptr_val(*start_run++, com);
+	         	LOG_PTR_LEN(MIN_MATCH-NLIT + start_run[-2], start_run[-1]+1);
 	         } while(run-->0);
-	         ptr=1;
+	         ptr=0;
 				run=0;
 			}
 			else
@@ -3996,25 +4036,44 @@ gup_result core_n1(packstruct *com)
 		}
 	}
 	/* schrijf laatste blok */
-	if(ptr!=0)
+	if(ptr==0)
 	{
-		store_n1_run(run, dst);
+		store_n1_run(run, com);
+				message_unary+=run+1;
+				if(run==0)
+				{
+					message_binary+=1;
+				}
+				else
+				{
+					message_binary+=2*first_bit_set32(run);
+				}
 		do
 		{
-			*dst++=(uint8)*start_run++
+			*com->inmem_output_cur++=(uint8)*start_run++;
 			LOG_LITERAL(start_run[-1]);
 		} while(run-->0);
 	}
 	else
 	{
-		store_n1_run(run, dst);
+		store_n1_run(run, com);
+				message_unary+=run+1;
+				if(run==0)
+				{
+					message_binary+=1;
+				}
+				else
+				{
+					message_binary+=2*first_bit_set32(run);
+				}
 		do
 		{
-     		store_n1_len_val(*start_run++, dst);
-        	store_n1_ptr_val(*start_run++, dst);
-        	LOG_PTR_LEN(start_run[-2], start_run[-1]+1);
+     		store_n1_len_val(*start_run++ +MIN_MATCH-NLIT, com);
+        	store_n1_ptr_val(*start_run++, com);
+        	LOG_PTR_LEN(MIN_MATCH-NLIT + start_run[-2], start_run[-1]+1);
       } while(run-->0);
 	}
+	printf("unary = %lu, binary = %lu, verschil = %li\n", message_unary, message_binary,  (long)(message_unary-message_binary));
 	if (com->bits_in_bitbuf>0)
 	{
 		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
@@ -4022,20 +4081,61 @@ gup_result core_n1(packstruct *com)
 		com->bits_in_bitbuf=0;
 	}
 	com->command_byte_ptr=NULL;
-	com->packed_size=dst-dst;
+	com->packed_size=com->inmem_output_cur-com->inmem_output;
+	com->bytes_packed=com->origsize;
+	printf("packed_size = %li\n", com->packed_size);
+	{
+		unsigned long bytes_to_do=com->packed_size;
+		uint8 *src=com->inmem_output_cur;
+		while(bytes_to_do>0)
+		{
+			unsigned long bytes_comming=65536;
+			gup_result res;
+			if(bytes_comming>bytes_to_do)
+			{
+				bytes_comming=bytes_to_do;
+			}
+			if((res=announce(bytes_comming, com))!=GUP_OK)
+			{
+				return res;
+			}
+			bytes_to_do-=bytes_comming;
+			while(bytes_comming-->0)
+			{
+				*com->rbuf_current++=*src++;
+			}	
+		}
+	}
+	return GUP_OK;
 }
 
 gup_result compress_n1(packstruct *com)
 {
 	/*
 	** eerst gecodeerde waarde met aantal runs (literal en pointer)
-	** dan de lengte van een literal run
+	** loop:
+	** lengte literal run
 	** literals
 	** lengte pointer run
 	** pointers
 	** loop
 	*/
-  int entries = (int) (com->charp - com->chars);
+  	int entries = (int) (com->charp - com->chars);
+	{
+		if(com->inmem_output==NULL)
+		{ /* malloc the inmem_output buffer */
+			printf("Origsize = %li \n", com->origsize);
+			uint8 *buf=com->gmalloc(8+sizeof(uint16)*com->origsize, com->gm_propagator);
+			if(buf==NULL)
+			{
+				return GUP_NOMEM;
+			}
+			com->inmem_output=buf;
+			com->inmem_output_cur=buf;
+			com->inmem_input=(void*)(buf+8);
+			com->inmem_input_cur=com->inmem_input;
+		}
+	}
 #ifdef STATISTICS
 	{
 		c_codetype *p = com->chars;
@@ -4175,7 +4275,6 @@ gup_result compress_n1(packstruct *com)
     }
   }
   { /* send the message to buffer... */
-    uint16 *src; /* source buffer met literal en ptr codes, groot genoeg voor de hele file, dat is, twee keer de file lengte */
     c_codetype *p = com->chars;
     pointer_type *q = com->pointers;
     uint8 *r = com->matchstring;
@@ -4186,7 +4285,7 @@ gup_result compress_n1(packstruct *com)
       { /*- store literal */
         	if(kar==-1)
         	{
-        		kar=*r++;	
+        		kar=*r++;
         		r+=3;
         		q++; /* skip pointer */
         	}
@@ -4194,18 +4293,17 @@ gup_result compress_n1(packstruct *com)
         	{
         		kar=*r++;	
      			LOG_LITERAL(kar);
-     			*src++=(uint16)kar;
+     			*com->inmem_input_cur++=(uint16)kar;
         		kar=*r++;	
         		r+=2;
         		q++; /* skip pointer */
         	}
-  			*src++=(uint16)kar;
+  			*com->inmem_input_cur++=(uint16)kar;
       }
       else
       {
-         kar += MIN_MATCH - NLIT;
-  			*src++=(uint16)kar;
-         *src++=(uint16)*q++;
+  			*com->inmem_input_cur++=(uint16)kar;
+         *com->inmem_input_cur++=(uint16)*q++;
          r+=4; /* skip literals */
       }
     }
@@ -4241,18 +4339,15 @@ void init_n1_fast_log(packstruct *com)
 
 gup_result close_n1_stream(packstruct *com)
 {
-	gup_result res=GUP_OK;
-	if (com->bits_in_bitbuf>0)
+	gup_result res;
+   res=core_n1(com);
+	if(com->inmem_output!=NULL)
 	{
-		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
-		*com->command_byte_ptr=(uint8)com->bitbuf;
-		com->bits_in_bitbuf=0;
+		com->gfree(com->inmem_output, com->gf_propagator);
+		com->inmem_output=NULL;
+		com->inmem_input=NULL;
 	}
-	com->command_byte_ptr=NULL;
-	if(com->bits_rest!=0)
-	{
-		com->packed_size++; /* corrigeer packed_size */
-	}
+
 #ifdef STATISTICS
 	{
 		int i;

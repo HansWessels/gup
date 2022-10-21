@@ -487,6 +487,11 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   long (*buf_read_crc)(long count, void *buf, void* brc_propagator); /* read routine for reading the original file */
   void* brc_propagator;
   gup_result (*close_packed_stream)(struct packstruct_t *com); /* output the last bits in bitbuf */
+  uint8 *inmem_output; /* buffer, origsize*2+8 bytes in size, after 8 bytes it shares space with the inmem_input buffer */
+  uint8 *inmem_output_cur; /* current position in inmem_ouput buffer */
+  uint16 *inmem_input; /* buffer for origsize 16 bit words */
+  uint16 *inmem_input_cur; /* current position in the inmem_input buffer */
+  long origsize; /* size of uncompressed file */
 } packstruct;
 #endif
 
