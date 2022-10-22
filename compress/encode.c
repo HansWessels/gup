@@ -249,13 +249,11 @@
 #if 0
   /* log literal en pointer len combi's */
   #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
-  #define LOG_LITERAL_RUN(len)  printf("Literal run: %u\n", len);
   #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
   #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
   #define LOG_RUN(run) printf("Run = %lu\n", run);
 #else
   #define LOG_LITERAL(lit) /* */
-  #define LOG_LITERAL_RUN(len) /* */
   #define LOG_PTR_LEN(len, ptr) /* */
   #define LOG_bit(bit) /* */
   #define LOG_RUN(run) /* */
@@ -3960,7 +3958,7 @@ gup_result core_n1(packstruct *com)
 			}
 		}
 		store_n1_counter(run, com);
-		printf("Aantal runs = %lu\n", run);
+		LOG_RUN(run);
 	}
 	ptr=0; /* begin met literals */
 	run=0;
@@ -3969,8 +3967,6 @@ gup_result core_n1(packstruct *com)
 	start_run=src;
 	src++;
 	entries--;
-	unsigned long message_unary=0;
-	unsigned long message_binary=0;
 	while(entries-->0)
 	{
 		if(ptr==0)
@@ -3978,15 +3974,6 @@ gup_result core_n1(packstruct *com)
 			if(*src++>=NLIT)
 			{ /* einde run, pointer gevonden */
 				store_n1_run(run, com);
-				message_unary+=run+1;
-				if(run==0)
-				{
-					message_binary+=1;
-				}
-				else
-				{
-					message_binary+=2*first_bit_set32(run);
-				}
 				LOG_RUN(run);
 				do
 				{
@@ -4008,20 +3995,12 @@ gup_result core_n1(packstruct *com)
 			if(*src++<NLIT)
 			{
 				store_n1_run(run, com);
-				message_unary+=run+1;
-				if(run==0)
-				{
-					message_binary+=1;
-				}
-				else
-				{
-					message_binary+=2*first_bit_set32(run);
-				}
 				LOG_RUN(run);
 				do
 				{
-         		store_n1_len_val(*start_run++ +MIN_MATCH-NLIT, com);
-	         	store_n1_ptr_val(*start_run++, com);
+		        	store_n1_ptr_val(start_run[1], com);
+     				store_n1_len_val(*start_run++ +MIN_MATCH-NLIT, com);
+     				start_run++;
 	         	LOG_PTR_LEN(MIN_MATCH-NLIT + start_run[-2], start_run[-1]+1);
 	         } while(run-->0);
 	         ptr=0;
@@ -4039,15 +4018,7 @@ gup_result core_n1(packstruct *com)
 	if(ptr==0)
 	{
 		store_n1_run(run, com);
-				message_unary+=run+1;
-				if(run==0)
-				{
-					message_binary+=1;
-				}
-				else
-				{
-					message_binary+=2*first_bit_set32(run);
-				}
+		LOG_RUN(run);
 		do
 		{
 			*com->inmem_output_cur++=(uint8)*start_run++;
@@ -4057,23 +4028,15 @@ gup_result core_n1(packstruct *com)
 	else
 	{
 		store_n1_run(run, com);
-				message_unary+=run+1;
-				if(run==0)
-				{
-					message_binary+=1;
-				}
-				else
-				{
-					message_binary+=2*first_bit_set32(run);
-				}
+		LOG_RUN(run);
 		do
 		{
+        	store_n1_ptr_val(start_run[1], com);
      		store_n1_len_val(*start_run++ +MIN_MATCH-NLIT, com);
-        	store_n1_ptr_val(*start_run++, com);
+     		start_run++;
         	LOG_PTR_LEN(MIN_MATCH-NLIT + start_run[-2], start_run[-1]+1);
       } while(run-->0);
 	}
-	printf("unary = %lu, binary = %lu, verschil = %li\n", message_unary, message_binary,  (long)(message_unary-message_binary));
 	if (com->bits_in_bitbuf>0)
 	{
 		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
@@ -4083,10 +4046,9 @@ gup_result core_n1(packstruct *com)
 	com->command_byte_ptr=NULL;
 	com->packed_size=com->inmem_output_cur-com->inmem_output;
 	com->bytes_packed=com->origsize;
-	printf("packed_size = %li\n", com->packed_size);
 	{
 		unsigned long bytes_to_do=com->packed_size;
-		uint8 *src=com->inmem_output_cur;
+		uint8 *src=com->inmem_output;
 		while(bytes_to_do>0)
 		{
 			unsigned long bytes_comming=65536;
@@ -4124,7 +4086,6 @@ gup_result compress_n1(packstruct *com)
 	{
 		if(com->inmem_output==NULL)
 		{ /* malloc the inmem_output buffer */
-			printf("Origsize = %li \n", com->origsize);
 			uint8 *buf=com->gmalloc(8+sizeof(uint16)*com->origsize, com->gm_propagator);
 			if(buf==NULL)
 			{
@@ -4292,7 +4253,6 @@ gup_result compress_n1(packstruct *com)
         	else if(kar==-2)
         	{
         		kar=*r++;	
-     			LOG_LITERAL(kar);
      			*com->inmem_input_cur++=(uint16)kar;
         		kar=*r++;	
         		r+=2;
