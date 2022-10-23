@@ -731,7 +731,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-    buf->append_string("{");
+    buf->append_string("{\n");
 
     for (size_t i = 0; i < datasize; i += 20)
     {
@@ -741,7 +741,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
         strcpy(dst, "  ");
         dstsize -= strlen(dst);
         dst += strlen(dst);
-        for (int j = 0; j < 20; j++)
+        for (int j = 0; j < 20 && i + j < datasize; j++)
         {
             snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
             dstsize -= strlen(dst);
