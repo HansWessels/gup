@@ -42,6 +42,168 @@
 
 #define DEBUG_DUMP_HEADERS 0
 
+
+static uint32_t hash_string(const char *s)
+{
+    uint32_t hash = 0;
+
+    for(; *s; ++s)
+    {
+        hash += *s;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
+// generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
+static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath)
+{
+	// calc a simple hash of the input string, sans Windows/DOS drive:
+	const char *drv = strchr(fpath, ':');
+	if (drv)
+		fpath = drv + 1;
+	
+	uint32_t h = hash_string(fpath);
+	
+	// convert string to variable-name-safe:
+	
+	// filter and restrict length to N (N = 40 by default) and a maximum directory tree depth of 4
+#define LENGTH_LIMIT  40
+#define DIRTREE_DEPTH_LIMIT  4
+
+	assert(dstsize > 20);
+	snprintf(dst, dstsize, "packed_%X04_", (unsigned int)h);
+
+	char *e = dst + dstsize - 1;
+	*e = 0;
+	char *d = e;
+	bool has_seen_underscore = true;
+    int dirtree_depth_level = 0;
+	size_t len = strlen(fpath);
+	
+	for (size_t i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > dst + 7 + 5; i--)
+	{
+		char c = fpath[i];
+		
+		if (c >= 'A' && c <= 'Z')
+			has_seen_underscore = false;
+		else if (c >= 'a' && c <= 'z')
+			has_seen_underscore = false;
+		else if (c >= '0' && c <= '9')
+			has_seen_underscore = false;
+		else 
+		{
+			if (c == '\\' || c == '/')
+			{
+				c = '_';
+				e = d + 1;
+				dirtree_depth_level++;
+				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
+					break;
+			}
+			else
+			{
+				c = '_';
+			}
+			
+			if (has_seen_underscore)
+				continue;
+			has_seen_underscore = true;
+		}
+		
+		*--d = c;
+	}
+	
+	if (d != dst + 7 + 5)
+		memmove(dst + 7 + 5, d, strlen(d) + 1);
+	assert(strlen(dst) < dstsize);
+	
+	return dst;
+}
+	
+
+// generate a decent filename part for the unambiguous input file path, i.e. we use the entire (relative?) path:
+static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath)
+{
+	// calc a simple hash of the input string, sans Windows/DOS drive:
+	const char *drv = strchr(fpath, ':');
+	if (drv)
+		fpath = drv + 1;
+	
+	uint32_t h = hash_string(fpath);
+	
+	// convert string to file-name-safe:
+	
+	assert(dstsize > 20);
+	snprintf(dst, dstsize, "%X04.", (unsigned int)h);
+	char *d0 = dst + strlen(dst);
+
+	char *e = dst + dstsize - 1;
+	*e = 0;
+	char *d = e;
+	bool has_seen_underscore = true;
+    int dirtree_depth_level = 0;
+	size_t len = strlen(fpath);
+	
+printf("mk_filename_part: input: %s (len = %d, stop = %d, checks: %d, %d, %d)\n", fpath, (int)len, (int)(len - LENGTH_LIMIT), len - 1 >= 0, len - 1 > len - LENGTH_LIMIT, d > d0);
+	
+	for (int i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > d0; i--)
+	{
+		char c = fpath[i];
+		
+		if (c >= 'A' && c <= 'Z')
+			has_seen_underscore = false;
+		else if (c >= 'a' && c <= 'z')
+			has_seen_underscore = false;
+		else if (c >= '0' && c <= '9')
+			has_seen_underscore = false;
+		else 
+		{
+			if (c == '\\' || c == '/')
+			{
+				c = '.';
+				e = d + 1;
+				dirtree_depth_level++;
+
+printf("mk_filename_part: step %d: %s --> %s\n", dirtree_depth_level, fpath, e);
+
+				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
+					break;
+			}
+			else if (c != '.')
+			{
+				c = '_';
+			}
+			
+			if (has_seen_underscore)
+				continue;
+			has_seen_underscore = true;
+		}
+		
+		*--d = c;
+
+printf("mk_filename_part: char: %s[%d] --> %s\n", fpath, (int)i, d);
+
+	}
+
+printf("mk_filename_part: move: %s + %s\n", dst, d);
+	
+	if (d != d0)
+		memmove(d0, d, strlen(d) + 1);
+	assert(strlen(dst) < dstsize);
+	
+printf("mk_filename_part: --> %s\n", dst);
+
+	return dst;
+}
+	
+
 /*****************************************************************************
  *                                                                           *
  * Constructor and destructor.                                               *
@@ -580,7 +742,11 @@ CRC:                     0x%08lx\n\
 printf("> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
 
     metafile_path += ".";
-    metafile_path += name_ptr;
+	
+	char filepart_name[80];
+	mk_filename_part(filepart_name, sizeof(filepart_name), name_ptr);
+	
+    metafile_path += filepart_name;
     metafile_path += ".meta.nfo";
 
 printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
@@ -590,6 +756,16 @@ printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_mai
     std::string msg(dst, buf->length());
     out << msg;
     //out.close();
+
+
+	// PLUS: append to the archive metafile. But only when we're completely done with the file, as gup code will invoke this method TWICE per file!
+    metafile_path = cur_main_hdr->archive_path;
+
+    metafile_path += ".meta.nfo";
+
+    std::ofstream out_arc(metafile_path, std::ios_base::app);
+    out_arc << msg;
+    //out_arc.close();
 
     delete[] name_ptr;
 
