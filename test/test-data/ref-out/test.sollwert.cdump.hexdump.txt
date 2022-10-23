@@ -4,14 +4,14 @@
     DUMP filename: test.cdump
     comment: 
     creation time:      <TIMESTAMP>
-    archive size:        38158
+    archive size:        38174
 */
 /*
     FILE index no.: 1
     FILE name: test/test-data/src
     FILE filename: test/test-data/src
     comment: 
-    creation time:                 
+    creation time:      <TIMESTAMP>
     filesize uncompressed:         4096
     filesize packed:                  0
     CRC:                     0x00000000
@@ -24,7 +24,7 @@ const uint8_t *data = {
     FILE name: test/test-data/src/lorem.txt
     FILE filename: test/test-data/src/lorem.txt
     comment: 
-    creation time:                 
+    creation time:      <TIMESTAMP>
     filesize uncompressed:         4415
     filesize packed:               2030
     CRC:                     0x5e03a73e
@@ -139,7 +139,7 @@ const uint8_t *data = {
     FILE name: test/test-data/src/emoji.png
     FILE filename: test/test-data/src/emoji.png
     comment: 
-    creation time:                 
+    creation time:      <TIMESTAMP>
     filesize uncompressed:         3891
     filesize packed:               3806
     CRC:                     0x6813da6c
@@ -343,7 +343,7 @@ const uint8_t *data = {
     FILE name: test/test-data/src/tennyson.txt
     FILE filename: test/test-data/src/tennyson.txt
     comment: 
-    creation time:                 
+    creation time:      <TIMESTAMP>
     filesize uncompressed:          225
     filesize packed:                133
     CRC:                     0x54e4afed
