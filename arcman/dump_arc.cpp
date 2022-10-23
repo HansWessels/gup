@@ -470,6 +470,8 @@ bindump_archive::~bindump_archive()
 
 dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
+    TRACE_ME();
+
     if (!comment)
         comment = "";
 
@@ -517,6 +519,8 @@ archive size: %12zu\n\
 
 dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *header)
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -594,11 +598,12 @@ printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_mai
 
 dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
-    dump_output_bufptr_t buf(new dump_output_buffer(datasize));
+    TRACE_ME();
+    dump_output_bufptr_t buf(new dump_output_buffer(datasize + 1));
 
     size_t dstsize = buf->get_remaining_usable_size();
-    assert(dstsize == datasize);
-    memcpy(buf->get_append_ref(), data, dstsize);
+    assert(dstsize == datasize + 1);
+    memcpy(buf->get_append_ref(), data, datasize);
 
     buf->set_appended_length(datasize);
 
@@ -607,6 +612,7 @@ dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data,
 
 dump_output_bufptr_t bindump_archive::generate_end()
 {
+    TRACE_ME();
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     // no sentinel bytes at all. nada. zilch. noppes. niente.
@@ -638,6 +644,8 @@ cdump_archive::~cdump_archive()
 
 dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
+    TRACE_ME();
+
     if (!comment)
         comment = "";
 
@@ -672,6 +680,8 @@ dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_pat
 
 dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *header)
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -728,6 +738,8 @@ dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *heade
 
 dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
+    TRACE_ME();
+
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
@@ -761,6 +773,8 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
 
 dump_output_bufptr_t cdump_archive::generate_end()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     char *dst = reinterpret_cast<char *>(buf->get_append_ref());
@@ -797,6 +811,8 @@ asmdump_archive::~asmdump_archive()
 
 dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
+    TRACE_ME();
+
     if (!comment)
         comment = "";
 
@@ -831,6 +847,8 @@ dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_p
 
 dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *header)
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -887,6 +905,8 @@ dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *hea
 
 dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
+    TRACE_ME();
+
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
@@ -921,6 +941,8 @@ dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data,
 
 dump_output_bufptr_t asmdump_archive::generate_end()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     char *dst = reinterpret_cast<char *>(buf->get_append_ref());
