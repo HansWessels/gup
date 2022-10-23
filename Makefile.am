@@ -65,7 +65,7 @@ testdump: testcdump testasmdump testbindump
 testcdump: gup
 	-rm test.cdump*
 	echo "=== testing DUMP MODES: C ==="
-	$(GUP_EXE) a test.cdump *.spec
+	$(GUP_EXE) a test.cdump test/test-data/src/ 
 	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump
 	if ! test -e test.sollwert.cdump.hexdump.txt ; then cp test.cdump.hexdump test.sollwert.cdump.hexdump.txt ; fi
 	diff -u test.cdump.hexdump test.sollwert.cdump.hexdump.txt
@@ -73,7 +73,7 @@ testcdump: gup
 testasmdump: gup
 	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
-	$(GUP_EXE) a test.asmdump *.spec
+	$(GUP_EXE) a test.asmdump test/test-data/src/
 	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump
 	if ! test -e test.sollwert.asmdump.hexdump.txt ; then cp test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt ; fi
 	diff -u test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt
@@ -81,7 +81,7 @@ testasmdump: gup
 testbindump: gup
 	-rm test.bindump*
 	echo "=== testing DUMP MODES: RAW BINARY ==="
-	$(GUP_EXE) a test.bindump *.spec
+	$(GUP_EXE) a test.bindump test/test-data/src/
 	od -A d -t x1 test.bindump | tee test.bindump.hexdump
 	if ! test -e test.sollwert.bindump.hexdump.txt ; then cp test.bindump.hexdump test.sollwert.bindump.hexdump.txt ; fi
 	diff -u test.bindump.hexdump test.sollwert.bindump.hexdump.txt

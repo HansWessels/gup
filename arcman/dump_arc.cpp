@@ -43,27 +43,27 @@
 #define DEBUG_DUMP_HEADERS 0
 
 /*****************************************************************************
- *																			 *
- * Constructor and destructor.										 		 *
- * 																			 *
+ *                                                                           *
+ * Constructor and destructor.                                               *
+ *                                                                           *
  *****************************************************************************/
 
 dump_archive::dump_archive() : cur_main_hdr(NULL)
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 dump_archive::~dump_archive()
 {
-	TRACE_ME();
-	
-	delete cur_main_hdr;
+    TRACE_ME();
+
+    delete cur_main_hdr;
 }
 
 /*****************************************************************************
- *																			 *
- * Functions for writing an archive.										 *
- * 																			 *
+ *                                                                           *
+ * Functions for writing an archive.                                         *
+ *                                                                           *
  *****************************************************************************/
 
 /*
@@ -73,75 +73,75 @@ dump_archive::~dump_archive()
  *
  * Parameters:
  *
- * mv		- 1 if the volume is part of a multiple volume archive and
- *				the volume is not the last volume of the archive.
+ * mv       - 1 if the volume is part of a multiple volume archive and
+ *              the volume is not the last volume of the archive.
  */
 
 gup_result dump_archive::write_end_of_volume(int mv)
 {
-	TRACE_ME();
+    TRACE_ME();
 
-	gup_result result;
-	long arc_len;
-	unsigned long bytes_left;
+    gup_result result;
+    long arc_len;
+    unsigned long bytes_left;
 
-	dump_output_bufptr_t buf = generate_end();
+    dump_output_bufptr_t buf = generate_end();
 
-	if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
-	{
-		uint8 *p = gup_io_get_current(file, &bytes_left);
-		
-		memcpy(p, buf->get_start_ref(), buf->length());
-		p += buf->length();
-		gup_io_set_current(file, p);
-	}
+    if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
+    {
+        uint8 *p = gup_io_get_current(file, &bytes_left);
 
-	if ((result = gup_io_flush_header(file)) != GUP_OK)
-		return result;
+        memcpy(p, buf->get_start_ref(), buf->length());
+        p += buf->length();
+        gup_io_set_current(file, p);
+    }
 
-	/*
-	 * Determine the length of the archive.
-	 */
+    if ((result = gup_io_flush_header(file)) != GUP_OK)
+        return result;
 
-	if ((result = tell(arc_len)) != GUP_OK)
-		return result;
+    /*
+     * Determine the length of the archive.
+     */
 
-	/*
-	 * Update the main header.
-	 */
+    if ((result = tell(arc_len)) != GUP_OK)
+        return result;
 
-	if (cur_main_hdr == NULL)
-		return GUP_INTERNAL;
+    /*
+     * Update the main header.
+     */
+
+    if (cur_main_hdr == NULL)
+        return GUP_INTERNAL;
 
 #if !DEBUG_DUMP_HEADERS
-	if ((result = seek(0, SEEK_SET)) != GUP_OK)
-		return result;
+    if ((result = seek(0, SEEK_SET)) != GUP_OK)
+        return result;
 #endif
 
-	/*
-	 * Set the length of the archive.
-	 */
+    /*
+     * Set the length of the archive.
+     */
 
-	cur_main_hdr->arc_output_size = arc_len;
+    cur_main_hdr->arc_output_size = arc_len;
 
-	{
-		uint16 old_mv_mode;
+    {
+        uint16 old_mv_mode;
 
-		/*
-		 * Trick to prevent write_main_header() from changing 'mv_bytes_left'
-		 * This should be changed !!!
-		 */
+        /*
+         * Trick to prevent write_main_header() from changing 'mv_bytes_left'
+         * This should be changed !!!
+         */
 
-		old_mv_mode = st.pack_str.mv_mode;
-		st.pack_str.mv_mode = 0;
+        old_mv_mode = st.pack_str.mv_mode;
+        st.pack_str.mv_mode = 0;
 
-		result = write_main_header(cur_main_hdr);
+        result = write_main_header(cur_main_hdr);
 
-		st.pack_str.mv_mode = old_mv_mode;
-	}
+        st.pack_str.mv_mode = old_mv_mode;
+    }
 
-	return result;
-//	return arj_archive::write_end_of_volume(mv);
+    return result;
+//  return arj_archive::write_end_of_volume(mv);
 }
 
 /*
@@ -149,226 +149,225 @@ gup_result dump_archive::write_end_of_volume(int mv)
  *
  * Write a main header to the archive.
  */
-
 gup_result dump_archive::write_main_header(const mainheader *header)
 {
-	TRACE_ME();
+    TRACE_ME();
 
-	gup_result result;
-	const char *src;
-	uint16 fspecpos = 0;
-	unsigned long total_hdr_size, bytes_left;
+    gup_result result;
+    const char *src;
+    uint16 fspecpos = 0;
+    unsigned long total_hdr_size, bytes_left;
 
-	if (!opened || !rw)
-		return GUP_INTERNAL;
+    if (!opened || !rw)
+        return GUP_INTERNAL;
 
-	src = cur_volume->name();
-	const char *comment = header->get_comment();
-	if (!comment)
-		comment = "";
+    // reset the file index counter
+    file_no = 1;
 
-	if (!cur_main_hdr)
-		cur_main_hdr = new dump_mainheader(src, comment);
+    src = cur_volume->name();
+    const char *comment = header->get_comment();
+    if (!comment)
+        comment = "";
 
-		//header->host_os;		/* Host os. */
-		//arj_conv_from_os_time(header->ctime);	/* Creation time. */
-	uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
-		//header->arc_size;	/* Archive size. */
-		fspecpos;		/* File spec position in file name. */
+    if (!cur_main_hdr)
+        cur_main_hdr = new dump_mainheader(src, comment);
 
-	dump_output_bufptr_t buf = generate_main_header(src, comment, t, cur_main_hdr->arc_output_size);
+        //header->host_os;      /* Host os. */
+        //arj_conv_from_os_time(header->ctime); /* Creation time. */
+    uint32_t t = arj_conv_from_os_time(gup_time()); /* Modification time (now). */
+        //header->arc_size; /* Archive size. */
+        fspecpos;       /* File spec position in file name. */
 
-	if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
-	{
-		uint8 *p = gup_io_get_current(file, &bytes_left);
-		
-		memcpy(p, buf->get_start_ref(), buf->length());
-		p += buf->length();
-		gup_io_set_current(file, p);
-	}
+    dump_output_bufptr_t buf = generate_main_header(src, comment, t, cur_main_hdr->arc_output_size);
 
-	return result;
-//	return arj_archive::write_main_header(header);
+    if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
+    {
+        uint8 *p = gup_io_get_current(file, &bytes_left);
+
+        memcpy(p, buf->get_start_ref(), buf->length());
+        p += buf->length();
+        gup_io_set_current(file, p);
+    }
+
+    return result;
+//  return arj_archive::write_main_header(header);
 }
 
 gup_result dump_archive::write_file_header(const fileheader *header)
 {
-	TRACE_ME();
+    TRACE_ME();
 
-	gup_result result;
-	char *name_ptr;
-	unsigned long total_hdr_size, bytes_left;
-   	const char *src;
-   	uint16 fspec_pos;
+    gup_result result;
+    char *name_ptr;
+    unsigned long total_hdr_size, bytes_left;
+    const char *src;
+    uint16 fspec_pos;
 
-	if (!opened || !rw)
-		return GUP_INTERNAL;
+    if (!opened || !rw)
+        return GUP_INTERNAL;
 
-	if (cur_main_hdr == NULL)
-		return GUP_INTERNAL;
+    if (cur_main_hdr == NULL)
+        return GUP_INTERNAL;
 
-	if ((result = tell(header_pos)) != GUP_OK)	/* Store current position for
-										   use by 'write_file_tailer'. */
-		return result;
+    if ((result = tell(header_pos)) != GUP_OK)  /* Store current position for
+                                           use by 'write_file_tailer'. */
+        return result;
 
-	dump_output_bufptr_t buf = generate_file_header(header);
-	TRACE_ME();
-	if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
-	{
-		uint8 *p = gup_io_get_current(file, &bytes_left);
-		
-		memcpy(p, buf->get_start_ref(), buf->length());
-		p += buf->length();
-		gup_io_set_current(file, p);
-	}
+    dump_output_bufptr_t buf = generate_file_header(header);
+    TRACE_ME();
+    if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
+    {
+        uint8 *p = gup_io_get_current(file, &bytes_left);
 
-	// now make sure we've written our stuff to disk, so we can be assured
-	// that any subsequent write/flush is actual packed data!
-	if ((result = gup_io_flush_header(file)) != GUP_OK)
-		return result;
+        memcpy(p, buf->get_start_ref(), buf->length());
+        p += buf->length();
+        gup_io_set_current(file, p);
+    }
 
-	if ((result = tell(cur_main_hdr->current_file_pack_start_offset)) != GUP_OK)
-		return result;
-	
-	return result;
+    // now make sure we've written our stuff to disk, so we can be assured
+    // that any subsequent write/flush is actual packed data!
+    if ((result = gup_io_flush_header(file)) != GUP_OK)
+        return result;
 
-	return GUP_OK;
-//	return arj_archive::write_file_header(header);
+    if (increment_file_no)
+    {
+        file_no++;
+        increment_file_no = false;
+    }
+
+    if ((result = tell(cur_main_hdr->current_file_pack_start_offset)) != GUP_OK)
+        return result;
+
+    return result;
+
+    return GUP_OK;
+//  return arj_archive::write_file_header(header);
 }
 
 gup_result dump_archive::write_file_trailer(const fileheader *header)
 {
-	TRACE_ME();
-	long current_pos;
-	gup_result result;
-	unsigned long bytes_left;
-	unsigned long binsize_read;
+    TRACE_ME();
+    long current_pos;
+    gup_result result;
+    unsigned long bytes_left;
+    unsigned long binsize_read;
 
-	if (cur_main_hdr == NULL)
-		return GUP_INTERNAL;
+    if (cur_main_hdr == NULL)
+        return GUP_INTERNAL;
 
-	// now make sure we've written our stuff to disk, so we can be assured
-	// that any subsequent write/flush is actual header rewriting!
-	// All flushed data to disk right now is packed data!
-	if ((result = gup_io_flush_packed_data(file)) != GUP_OK)
-		return result;
+    // now make sure we've written our stuff to disk, so we can be assured
+    // that any subsequent write/flush is actual header rewriting!
+    // All flushed data to disk right now is packed data!
+    if ((result = gup_io_flush_packed_data(file)) != GUP_OK)
+        return result;
 
-	if ((result = tell(current_pos)) != GUP_OK)
-		return result;
+    if ((result = tell(current_pos)) != GUP_OK)
+        return result;
 
-	unsigned long binsize = current_pos - cur_main_hdr->current_file_pack_start_offset;
-	
-	// go to start of binary packed chunk in file:
-	if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
-		return result;
+    unsigned long binsize = current_pos - cur_main_hdr->current_file_pack_start_offset;
 
-	uint8_t *binbuf = new uint8_t[binsize];
+    // go to start of binary packed chunk in file:
+    if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
+        return result;
 
-	if ((result = ::gup_io_reload(file, binbuf, binsize, &binsize_read)) != GUP_OK)
-		return result;
-		
-	if (binsize_read != binsize)
-	{
-		fprintf(stderr, "couldn't read/reload all packed bytes: %lu != %lu\n", binsize_read, binsize);
-		return GUP_INTERNAL;
-	}
+    uint8_t *binbuf = new uint8_t[binsize];
+
+    if ((result = ::gup_io_reload(file, binbuf, binsize, &binsize_read)) != GUP_OK)
+        return result;
+
+    if (binsize_read != binsize)
+    {
+        fprintf(stderr, "couldn't read/reload all packed bytes: %lu != %lu\n", binsize_read, binsize);
+        return GUP_INTERNAL;
+    }
 
 printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
 
-	// now we have the binary packed data in file/buffer.
-	// What must be done next is fetch that binary data, copy it into
-	// a temporary buffer and then rewind the output file to the start
-	// of the packed data zone and rewrite the output, now using the desired
-	// output encoding/format:
-#if 0 // only for testing
-	char buf[4096];
-	memset(buf, 'x', 4096);
-	if ((result = gup_io_write_announce(file, 4096)) == GUP_OK)
-	{
-		uint8 *p = gup_io_get_current(file, &bytes_left);
-		
-		memcpy(p, buf, 4096);
-		p += 4096;
-		gup_io_set_current(file, p);
-	}
-#endif
+    // now we have the binary packed data in file/buffer.
+    // What must be done next is fetch that binary data, copy it into
+    // a temporary buffer and then rewind the output file to the start
+    // of the packed data zone and rewrite the output, now using the desired
+    // output encoding/format:
 
 #if 0
-	if ((result = gup_io_write_announce(file, binsize_read)) == GUP_OK)
-	{
-		uint8 *p = gup_io_get_current(file, &bytes_left);
-		
-		memcpy(p, binbuf, binsize_read);
-		p += binsize_read;
-		gup_io_set_current(file, p);
-	}
+    if ((result = gup_io_write_announce(file, binsize_read)) == GUP_OK)
+    {
+        uint8 *p = gup_io_get_current(file, &bytes_left);
+
+        memcpy(p, binbuf, binsize_read);
+        p += binsize_read;
+        gup_io_set_current(file, p);
+    }
 #endif
 
-	dump_output_bufptr_t buf = generate_file_content(binbuf, binsize_read);
-	TRACE_ME();
+    dump_output_bufptr_t buf = generate_file_content(binbuf, binsize_read, header);
+    TRACE_ME();
 
-	unsigned long real_len;
-	write(buf->get_start_ref(), buf->length(), real_len);
+    // signal that the file index should be updated:
+    increment_file_no = true;
+    
+    unsigned long real_len;
+    write(buf->get_start_ref(), buf->length(), real_len);
 
-	if ((result = tell(current_pos)) != GUP_OK)
-		return result;
+    if ((result = tell(current_pos)) != GUP_OK)
+        return result;
 
 #if !DEBUG_DUMP_HEADERS
-	if ((result = seek(header_pos, SEEK_SET)) != GUP_OK)
-		return result;
+    if ((result = seek(header_pos, SEEK_SET)) != GUP_OK)
+        return result;
 #endif
 
-	{
-		uint16 old_mv_mode;
+    {
+        uint16 old_mv_mode;
 
-		/*
-		 * Trick to prevent write_file_header() from changing 'mv_bytes_left'
-		 * This should be changed !!!
-		 */
+        /*
+         * Trick to prevent write_file_header() from changing 'mv_bytes_left'
+         * This should be changed !!!
+         */
 
-		old_mv_mode = st.pack_str.mv_mode;
-		st.pack_str.mv_mode = 0;
+        old_mv_mode = st.pack_str.mv_mode;
+        st.pack_str.mv_mode = 0;
 
-		result = write_file_header(header);
+        result = write_file_header(header);
 
-		st.pack_str.mv_mode = old_mv_mode;
+        st.pack_str.mv_mode = old_mv_mode;
 
-		if (result != GUP_OK)
-			return result;
-	}
+        if (result != GUP_OK)
+            return result;
+    }
 
 #if !DEBUG_DUMP_HEADERS
-	return seek(current_pos, SEEK_SET);
+    return seek(current_pos, SEEK_SET);
 #endif
-	return GUP_OK;
-//	return arj_archive::write_file_trailer(header);
+    return GUP_OK;
+//  return arj_archive::write_file_trailer(header);
 }
 
 
 
 gup_result dump_archive::gup_io_flush_header(buf_fhandle_t *file)
 {
-	TRACE_ME();
-	return ::gup_io_flush(file);
+    TRACE_ME();
+    return ::gup_io_flush(file);
 }
 
 gup_result dump_archive::gup_io_flush_packed_data(buf_fhandle_t *file)
 {
-	TRACE_ME();
-	return ::gup_io_flush(file);
+    TRACE_ME();
+    return ::gup_io_flush(file);
 }
 
 /*****************************************************************************
- *																			 *
- * GUP I/O virtualization functions.														 *
- * 																			 *
+ *                                                                           *
+ * GUP I/O virtualization functions.                                                         *
+ *                                                                           *
  *****************************************************************************/
 
-// We're virtualizing the core gup I/O functions here, the idea being: 
+// We're virtualizing the core gup I/O functions here, the idea being:
 // when we want to output arbitrary encodings of the packed data (the *DUMP modes)
 // we can achieve such most easily when we keep everything else intact and
 // "just find a way to hook into the raw I/O and reroute and encode it the way
-// we want right now": that's what the {bin,asm,c}dump_archive classes are 
+// we want right now": that's what the {bin,asm,c}dump_archive classes are
 // going to accomplish for us, but they need a bit of a leg up before they *can*:
 // that's us, the *base class*, hooking into raw archive file I/O by providing
 // these conveniently same-name-as-the-C-functions-that-do-the-actual-work
@@ -376,68 +375,77 @@ gup_result dump_archive::gup_io_flush_packed_data(buf_fhandle_t *file)
 
 buf_fhandle_t *dump_archive::gup_io_open(const char *name, unsigned char *buf_start, unsigned long buf_size, int omode, gup_result *result)
 {
-	TRACE_ME();
-	return ::gup_io_open(name, buf_start, buf_size, omode, result);
+    TRACE_ME();
+    return ::gup_io_open(name, buf_start, buf_size, omode, result);
 }
 
 gup_result dump_archive::gup_io_close(buf_fhandle_t *file)
 {
-	TRACE_ME();
-	return ::gup_io_close(file);
+    TRACE_ME();
+    return ::gup_io_close(file);
 }
+
 // Seek to a position in the file.
 gup_result dump_archive::gup_io_seek(buf_fhandle_t *file, long offset, int seekmode, long *new_pos)
 {
-	TRACE_ME();
-	return ::gup_io_seek(file, offset, seekmode, new_pos);
+    TRACE_ME();
+    return ::gup_io_seek(file, offset, seekmode, new_pos);
 }
+
 // Return the current position in the file.
 gup_result dump_archive::gup_io_tell(buf_fhandle_t *file, long *fpos)
 {
-	TRACE_ME();
-	return ::gup_io_tell(file, fpos);
+    TRACE_ME();
+    return ::gup_io_tell(file, fpos);
 }
+
 // Write data to a file.
 gup_result dump_archive::gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long count, unsigned long *real_count)
 {
-	TRACE_ME();
-	return ::gup_io_write(file, buffer, count, real_count);
+    TRACE_ME();
+    return ::gup_io_write(file, buffer, count, real_count);
 }
+
 // Read data from a file.
 gup_result dump_archive::gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count, unsigned long *real_count)
 {
-	TRACE_ME();
-	return ::gup_io_read(file, buffer, count, real_count);
+    TRACE_ME();
+    return ::gup_io_read(file, buffer, count, real_count);
 }
+
 // Make sure there at least 'count' bytes free in the file buffer. If necessary the file buffer is flushed.
 gup_result dump_archive::gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
 {
-	TRACE_ME();
-	return ::gup_io_write_announce(file, count);
+    TRACE_ME();
+    return ::gup_io_write_announce(file, count);
 }
+
 // Fill the file buffer.
 gup_result dump_archive::gup_io_fill(buf_fhandle_t *file)
 {
-	TRACE_ME();
-	return ::gup_io_fill(file);
+    TRACE_ME();
+    return ::gup_io_fill(file);
 }
+
 // Get a pointer to the current position in the file buffer and return the number of bytes that can be written into the buffer or can be read from the buffer.
 uint8 *dump_archive::gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
 {
-	TRACE_ME();
-	return ::gup_io_get_current(file, bytes_left);
+    TRACE_ME();
+    return ::gup_io_get_current(file, bytes_left);
 }
+
 // Set the pointer in the file buffer to a new position.
 void dump_archive::gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
 {
-	TRACE_ME();
-	return ::gup_io_set_current(file, new_pos);
+    TRACE_ME();
+    return ::gup_io_set_current(file, new_pos);
 }
+
 // Set the current position in the file to the given value. Any bytes after this position that are in the buffer are discarded.
 void dump_archive::gup_io_set_position(buf_fhandle_t *file, long position)
 {
-	TRACE_ME();
-	return ::gup_io_set_position(file, position);
+    TRACE_ME();
+    return ::gup_io_set_position(file, position);
 }
 
 //===================================================================================
@@ -445,163 +453,165 @@ void dump_archive::gup_io_set_position(buf_fhandle_t *file, long position)
 //===================================================================================
 
 /*****************************************************************************
- *																			 *
- * Constructor and destructor.										 		 *
- * 																			 *
+ *                                                                           *
+ * Constructor and destructor.                                               *
+ *                                                                           *
  *****************************************************************************/
 
 bindump_archive::bindump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 bindump_archive::~bindump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
-	if (!comment)
-		comment = "";
+    if (!comment)
+        comment = "";
 
-	// ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
-	std::string metafile_path(archive_path);
-	
-	metafile_path += ".meta.nfo";
+    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+    std::string metafile_path(archive_path);
 
-	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+    metafile_path += ".meta.nfo";
 
-	char *filename;
-	const char *src;
-	uint16 fspecpos = 0;
-	unsigned long total_hdr_size, bytes_left;
+    dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
-	filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
+    char *filename;
+    const char *src;
+    uint16 fspecpos = 0;
+    unsigned long total_hdr_size, bytes_left;
 
-	//uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+    filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
 
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	DUMP name: %s\n\
-	DUMP filename: %s\n\
-	comment: %s\n\
-	creation time: %12u\n\
-	archive size: %12zu\n\
-*/\n\n", archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+    //uint32_t t = arj_conv_from_os_time(gup_time());   /* Modification time (now). */
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "\
+FILE index no.: %d\n\
+DUMP name: %s\n\
+DUMP filename: %s\n\
+comment: %s\n\
+creation time: %12u\n\
+archive size: %12zu\n\
+", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
 
-	delete[] filename;
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
+
+    delete[] filename;
 
     std::ofstream out(metafile_path);
-	 dst = reinterpret_cast<char *>(buf->get_start_ref());
+     dst = reinterpret_cast<char *>(buf->get_start_ref());
     std::string msg(dst, buf->length());
     out << msg;
     //out.close();
-    
+
     buf->clear();
-	
-	return buf;
+
+    return buf;
 }
 
 dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *header)
 {
-	char *name_ptr;
-	unsigned long total_hdr_size, bytes_left;
-   	const char *src;
-   	uint16 fspec_pos;
+    char *name_ptr;
+    unsigned long total_hdr_size, bytes_left;
+    const char *src;
+    uint16 fspec_pos;
 
-	src = header->get_filename();
-	const char *comment = header->get_comment();
-	if (!comment)
-		comment = "";
-	header->get_file_stat();
+    src = header->get_filename();
+    const char *comment = header->get_comment();
+    if (!comment)
+        comment = "";
+    header->get_file_stat();
 
-	name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+    name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
-		header->method;	/* Packing mode. */
-		header->file_type;	/* File type. */
+        header->method; /* Packing mode. */
+        header->file_type;  /* File type. */
 
-//		header->orig_time_stamp;	/* Time stamp. */
-		header->compsize;	/* Compressed size. */
-		header->origsize;	/* Original size. */
-		header->file_crc;	/* File CRC. */
-		fspec_pos;			/* File spec position in filename. */
-//		header->orig_file_mode;	/* File attributes. */
-//		header->host_data;	/* Host data. */
+//      header->orig_time_stamp;    /* Time stamp. */
+        header->compsize;   /* Compressed size. */
+        header->origsize;   /* Original size. */
+        header->file_crc;   /* File CRC. */
+        fspec_pos;          /* File spec position in filename. */
+//      header->orig_file_mode; /* File attributes. */
+//      header->host_data;  /* Host data. */
 
-			header->offset;	/* Extended file position. */
+            header->offset; /* Extended file position. */
 
-	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+    dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
 
 printf("> metafile: --> %s // %s\n", name_ptr, cur_main_hdr->archive_path.c_str());
-	
-	TRACE_ME();
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	FILE name: %s\n\
-	FILE filename: %s\n\
-	comment: %s\n\
-	creation time:                 \n\
-	filesize uncompressed: %12lu\n\
-	filesize packed:       %12lu\n\
-	CRC:                     0x%08lx\n\
-*/\n\n", src, name_ptr, comment,
-		(unsigned long)header->origsize,
-		(unsigned long)header->compsize,
-		(unsigned long)header->file_crc
+
+    TRACE_ME();
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "\
+FILE index no.: %d\n\
+FILE name: %s\n\
+FILE filename: %s\n\
+comment: %s\n\
+creation time:                 \n\
+filesize uncompressed: %12lu\n\
+filesize packed:       %12lu\n\
+CRC:                     0x%08lx\n\
+", file_no, src, name_ptr, comment,
+        (unsigned long)header->origsize,
+        (unsigned long)header->compsize,
+        (unsigned long)header->file_crc
 );
 
-	TRACE_ME();
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    TRACE_ME();
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
 
-	// ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
-	std::string metafile_path(cur_main_hdr->archive_path);
+    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+    std::string metafile_path(cur_main_hdr->archive_path);
 
 printf("> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
-	
-	metafile_path += ".";
-	metafile_path += name_ptr;
-	metafile_path += ".meta.nfo";
+
+    metafile_path += ".";
+    metafile_path += name_ptr;
+    metafile_path += ".meta.nfo";
 
 printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
 
     std::ofstream out(metafile_path);
-	 dst = reinterpret_cast<char *>(buf->get_start_ref());
+     dst = reinterpret_cast<char *>(buf->get_start_ref());
     std::string msg(dst, buf->length());
     out << msg;
     //out.close();
 
-  	delete[] name_ptr;
-    
+    delete[] name_ptr;
+
     buf->clear();
-  	
-  	return buf;
+
+    return buf;
 }
 
-dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize)
+dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
-	dump_output_bufptr_t buf(new dump_output_buffer(datasize));
+    dump_output_bufptr_t buf(new dump_output_buffer(datasize));
 
-	size_t dstsize = buf->get_remaining_usable_size();
-	assert(dstsize == datasize);
-	memcpy(buf->get_append_ref(), data, dstsize);
+    size_t dstsize = buf->get_remaining_usable_size();
+    assert(dstsize == datasize);
+    memcpy(buf->get_append_ref(), data, dstsize);
 
-	buf->set_appended_length(datasize);
+    buf->set_appended_length(datasize);
 
-	return buf;
+    return buf;
 }
 
 dump_output_bufptr_t bindump_archive::generate_end()
 {
-	dump_output_bufptr_t buf(new dump_output_buffer());
+    dump_output_bufptr_t buf(new dump_output_buffer());
 
-	// no sentinel bytes at all. nada. zilch. noppes. niente.	
-	
-	return buf;
+    // no sentinel bytes at all. nada. zilch. noppes. niente.
+
+    return buf;
 }
 
 
@@ -611,151 +621,157 @@ dump_output_bufptr_t bindump_archive::generate_end()
 //===================================================================================
 
 /*****************************************************************************
- *																			 *
- * Constructor and destructor.										 		 *
- * 																			 *
+ *                                                                           *
+ * Constructor and destructor.                                               *
+ *                                                                           *
  *****************************************************************************/
 
 cdump_archive::cdump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 cdump_archive::~cdump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
-	if (!comment)
-		comment = "";
+    if (!comment)
+        comment = "";
 
-	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+    dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
-	char *filename;
-	const char *src;
-	uint16 fspecpos = 0;
-	unsigned long total_hdr_size, bytes_left;
+    char *filename;
+    const char *src;
+    uint16 fspecpos = 0;
+    unsigned long total_hdr_size, bytes_left;
 
-	filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
+    filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
 
-	//uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+    //uint32_t t = arj_conv_from_os_time(gup_time());   /* Modification time (now). */
 
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	DUMP name: %s\n\
-	DUMP filename: %s\n\
-	comment: %s\n\
-	creation time: %12u\n\
-	archive size: %12zu\n\
-*/\n\n", archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+    FILE index no.: %d\n\
+    DUMP name: %s\n\
+    DUMP filename: %s\n\
+    comment: %s\n\
+    creation time: %12u\n\
+    archive size: %12zu\n\
+*/\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
 
-	delete[] filename;
+    delete[] filename;
 
-	return buf;
+    return buf;
 }
 
 dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *header)
 {
-	char *name_ptr;
-	unsigned long total_hdr_size, bytes_left;
-   	const char *src;
-   	uint16 fspec_pos;
+    char *name_ptr;
+    unsigned long total_hdr_size, bytes_left;
+    const char *src;
+    uint16 fspec_pos;
 
-	src = header->get_filename();
-	const char *comment = header->get_comment();
-	if (!comment)
-		comment = "";
-	header->get_file_stat();
+    src = header->get_filename();
+    const char *comment = header->get_comment();
+    if (!comment)
+        comment = "";
+    header->get_file_stat();
 
-	name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+    name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
-		header->method;	/* Packing mode. */
-		header->file_type;	/* File type. */
+        header->method; /* Packing mode. */
+        header->file_type;  /* File type. */
 
-//		header->orig_time_stamp;	/* Time stamp. */
-		header->compsize;	/* Compressed size. */
-		header->origsize;	/* Original size. */
-		header->file_crc;	/* File CRC. */
-		fspec_pos;			/* File spec position in filename. */
-//		header->orig_file_mode;	/* File attributes. */
-//		header->host_data;	/* Host data. */
+//      header->orig_time_stamp;    /* Time stamp. */
+        header->compsize;   /* Compressed size. */
+        header->origsize;   /* Original size. */
+        header->file_crc;   /* File CRC. */
+        fspec_pos;          /* File spec position in filename. */
+//      header->orig_file_mode; /* File attributes. */
+//      header->host_data;  /* Host data. */
 
-			header->offset;	/* Extended file position. */
+            header->offset; /* Extended file position. */
 
-	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+    dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
 
-	TRACE_ME();
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	FILE name: %s\n\
-	FILE filename: %s\n\
-	comment: %s\n\
-	creation time:                 \n\
-	filesize uncompressed: %12lu\n\
-	filesize packed:       %12lu\n\
-	CRC:                     0x%08lx\n\
-*/\n\n", src, name_ptr, comment,
-		(unsigned long)header->origsize,
-		(unsigned long)header->compsize,
-		(unsigned long)header->file_crc
+    TRACE_ME();
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+    FILE index no.: %d\n\
+    FILE name: %s\n\
+    FILE filename: %s\n\
+    comment: %s\n\
+    creation time:                 \n\
+    filesize uncompressed: %12lu\n\
+    filesize packed:       %12lu\n\
+    CRC:                     0x%08lx\n\
+*/\n", file_no, src, name_ptr, comment,
+        (unsigned long)header->origsize,
+        (unsigned long)header->compsize,
+        (unsigned long)header->file_crc
 );
 
-	TRACE_ME();
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    TRACE_ME();
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
 
-  	delete[] name_ptr;
-  	
-  	return buf;
+    delete[] name_ptr;
+
+    return buf;
 }
 
-dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
+dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
-	// reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
-	dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+    // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
+    dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-	for (size_t i = 0; i < datasize; i += 20)
-	{
-		char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t dstsize = buf->get_remaining_usable_size();
+    buf->append_string("{");
 
-		strcpy(dst, "\n{ ");
-		dstsize -= strlen(dst);
-		dst += strlen(dst);
-		for (int j = 0; j < 20; j++)
-		{
-			snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
-			dstsize -= strlen(dst);
-			dst += strlen(dst);
-		}
-		strcpy(dst, " },");
+    for (size_t i = 0; i < datasize; i += 20)
+    {
+        char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+        size_t dstsize = buf->get_remaining_usable_size();
 
-		dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t hdr_len = strlen(dst);	
-		buf->set_appended_length(hdr_len);
-	}
+        strcpy(dst, "  ");
+        dstsize -= strlen(dst);
+        dst += strlen(dst);
+        for (int j = 0; j < 20; j++)
+        {
+            snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
+            dstsize -= strlen(dst);
+            dst += strlen(dst);
+        }
+        strcpy(dst, "\n");
 
-	return buf;
+        dst = reinterpret_cast<char *>(buf->get_append_ref());
+        size_t hdr_len = strlen(dst);
+        buf->set_appended_length(hdr_len);
+    }
+
+    buf->append_string("}");
+
+    return buf;
 }
 
 dump_output_bufptr_t cdump_archive::generate_end()
 {
-	dump_output_bufptr_t buf(new dump_output_buffer());
-	
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
-	END OF DUMP\n\
+    dump_output_bufptr_t buf(new dump_output_buffer());
+
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
+    END OF DUMP\n\
 */\n\n");
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
-	
-	return buf;
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
+
+    return buf;
 }
 
 
@@ -764,151 +780,153 @@ dump_output_bufptr_t cdump_archive::generate_end()
 //===================================================================================
 
 /*****************************************************************************
- *																			 *
- * Constructor and destructor.										 		 *
- * 																			 *
+ *                                                                           *
+ * Constructor and destructor.                                               *
+ *                                                                           *
  *****************************************************************************/
 
 asmdump_archive::asmdump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 asmdump_archive::~asmdump_archive()
 {
-	TRACE_ME();
+    TRACE_ME();
 }
 
 dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
 {
-	if (!comment)
-		comment = "";
+    if (!comment)
+        comment = "";
 
-	dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+    dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
-	char *filename;
-	const char *src;
-	uint16 fspecpos = 0;
-	unsigned long total_hdr_size, bytes_left;
+    char *filename;
+    const char *src;
+    uint16 fspecpos = 0;
+    unsigned long total_hdr_size, bytes_left;
 
-	filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
+    filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
 
-	//uint32_t t = arj_conv_from_os_time(gup_time());	/* Modification time (now). */
+    //uint32_t t = arj_conv_from_os_time(gup_time());   /* Modification time (now). */
 
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	DUMP name: %s\n\
-	DUMP filename: %s\n\
-	comment: %s\n\
-	creation time: %12u\n\
-	archive size: %12zu\n\
-*/\n\n", archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
+    FILE index no.: %d\n\
+    DUMP name: %s\n\
+    DUMP filename: %s\n\
+    comment: %s\n\
+    creation time: %12u\n\
+    archive size: %12zu\n\
+*/\n\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
 
-	delete[] filename;
+    delete[] filename;
 
-	return buf;
+    return buf;
 }
 
 dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *header)
 {
-	char *name_ptr;
-	unsigned long total_hdr_size, bytes_left;
-   	const char *src;
-   	uint16 fspec_pos;
+    char *name_ptr;
+    unsigned long total_hdr_size, bytes_left;
+    const char *src;
+    uint16 fspec_pos;
 
-	src = header->get_filename();
-	const char *comment = header->get_comment();
-	if (!comment)
-		comment = "";
-	header->get_file_stat();
+    src = header->get_filename();
+    const char *comment = header->get_comment();
+    if (!comment)
+        comment = "";
+    header->get_file_stat();
 
-	name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+    name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
-		header->method;	/* Packing mode. */
-		header->file_type;	/* File type. */
+        header->method; /* Packing mode. */
+        header->file_type;  /* File type. */
 
-//		header->orig_time_stamp;	/* Time stamp. */
-		header->compsize;	/* Compressed size. */
-		header->origsize;	/* Original size. */
-		header->file_crc;	/* File CRC. */
-		fspec_pos;			/* File spec position in filename. */
-//		header->orig_file_mode;	/* File attributes. */
-//		header->host_data;	/* Host data. */
+//      header->orig_time_stamp;    /* Time stamp. */
+        header->compsize;   /* Compressed size. */
+        header->origsize;   /* Original size. */
+        header->file_crc;   /* File CRC. */
+        fspec_pos;          /* File spec position in filename. */
+//      header->orig_file_mode; /* File attributes. */
+//      header->host_data;  /* Host data. */
 
-			header->offset;	/* Extended file position. */
+            header->offset; /* Extended file position. */
 
-	dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+    dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
 
-	TRACE_ME();
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "/*\n\
-	FILE name: %s\n\
-	FILE filename: %s\n\
-	comment: %s\n\
-	creation time:                 \n\
-	filesize uncompressed: %12lu\n\
-	filesize packed:       %12lu\n\
-	CRC:                     0x%08lx\n\
-*/\n\n", src, name_ptr, comment,
-		(unsigned long)header->origsize,
-		(unsigned long)header->compsize,
-		(unsigned long)header->file_crc
+    TRACE_ME();
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "\n/*\n\
+    FILE index no.: %d\n\
+    FILE name: %s\n\
+    FILE filename: %s\n\
+    comment: %s\n\
+    creation time:                 \n\
+    filesize uncompressed: %12lu\n\
+    filesize packed:       %12lu\n\
+    CRC:                     0x%08lx\n\
+*/\n\n", file_no, src, name_ptr, comment,
+        (unsigned long)header->origsize,
+        (unsigned long)header->compsize,
+        (unsigned long)header->file_crc
 );
 
-	TRACE_ME();
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
+    TRACE_ME();
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
 
-  	delete[] name_ptr;
-  	
-  	return buf;
+    delete[] name_ptr;
+
+    return buf;
 }
 
-dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
+dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
 {
-	// reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
-	dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+    // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
+    dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-	for (size_t i = 0; i < datasize; i += 20)
-	{
-		char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t dstsize = buf->get_remaining_usable_size();
+    for (size_t i = 0; i < datasize; i += 20)
+    {
+        char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+        size_t dstsize = buf->get_remaining_usable_size();
 
-		strcpy(dst, "\n{ ");
-		dstsize -= strlen(dst);
-		dst += strlen(dst);
-		for (int j = 0; j < 20; j++)
-		{
-			snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
-			dstsize -= strlen(dst);
-			dst += strlen(dst);
-		}
-		strcpy(dst, " },");
+        strcpy(dst, "\n{ ");
+        dstsize -= strlen(dst);
+        dst += strlen(dst);
+        for (int j = 0; j < 20; j++)
+        {
+            snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
+            dstsize -= strlen(dst);
+            dst += strlen(dst);
+        }
+        strcpy(dst, " },");
 
-		dst = reinterpret_cast<char *>(buf->get_append_ref());
-		size_t hdr_len = strlen(dst);	
-		buf->set_appended_length(hdr_len);
-	}
+        dst = reinterpret_cast<char *>(buf->get_append_ref());
+        size_t hdr_len = strlen(dst);
+        buf->set_appended_length(hdr_len);
+    }
 
-	return buf;
+    return buf;
 }
 
 dump_output_bufptr_t asmdump_archive::generate_end()
 {
-	dump_output_bufptr_t buf(new dump_output_buffer());
-	
-	char *dst = reinterpret_cast<char *>(buf->get_append_ref());
-	snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
-	END OF DUMP\n\
+    dump_output_bufptr_t buf(new dump_output_buffer());
+
+    char *dst = reinterpret_cast<char *>(buf->get_append_ref());
+    snprintf(dst, buf->get_remaining_usable_size(), "\n\n/*\n\
+    END OF DUMP\n\
 */\n\n");
 
-	size_t hdr_len = strlen(dst);	
-	buf->set_appended_length(hdr_len);
-	
-	return buf;
+    size_t hdr_len = strlen(dst);
+    buf->set_appended_length(hdr_len);
+
+    return buf;
 }
 
 #endif // ENABLE_DUMP_OUTPUT_MODES
