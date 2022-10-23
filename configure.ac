@@ -4,7 +4,7 @@ AC_INIT([gup],[0.0.7])
 AC_CONFIG_SRCDIR([compress/crc.c])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
-AM_CONFIG_HEADER(include/config.h)
+AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIRS([m4])
 
 AC_ARG_ENABLE(assembly, [  --enable-assembly       enable optimized assembly functions], , enable_assembly=yes)
@@ -74,7 +74,7 @@ GUP_CHECK_TYPE(int32, HAVE_INT32)
 GUP_CHECK_TYPE(uint32, HAVE_UINT32)
 GUP_CHECK_TYPE(int64, HAVE_INT64)
 GUP_CHECK_TYPE(uint64, HAVE_UINT64)
-GUP_POSIX_199506_DEFINE
+#GUP_POSIX_199506_DEFINE
 
 dnl Checks for library functions.
 AC_FUNC_MMAP
