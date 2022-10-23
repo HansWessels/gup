@@ -497,9 +497,9 @@ FILE index no.: %d\n\
 DUMP name: %s\n\
 DUMP filename: %s\n\
 comment: %s\n\
-creation time: %12u\n\
+creation time: %12lu\n\
 archive size: %12zu\n\
-", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+", file_no, archive_path, filename, comment, (unsigned long)timestamp, arc_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -530,7 +530,8 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *hea
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+	
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -558,11 +559,12 @@ FILE index no.: %d\n\
 FILE name: %s\n\
 FILE filename: %s\n\
 comment: %s\n\
-creation time:                 \n\
+creation time:         %12lu\n\
 filesize uncompressed: %12lu\n\
 filesize packed:       %12lu\n\
 CRC:                     0x%08lx\n\
 ", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
@@ -666,9 +668,9 @@ dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_pat
     DUMP name: %s\n\
     DUMP filename: %s\n\
     comment: %s\n\
-    creation time: %12u\n\
+    creation time: %12lu\n\
     archive size: %12zu\n\
-*/\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+*/\n", file_no, archive_path, filename, comment, (unsigned long)timestamp, arc_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -691,7 +693,7 @@ dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *heade
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -717,11 +719,12 @@ dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *heade
     FILE name: %s\n\
     FILE filename: %s\n\
     comment: %s\n\
-    creation time:                 \n\
+    creation time:         %12lu\n\
     filesize uncompressed: %12lu\n\
     filesize packed:       %12lu\n\
     CRC:                     0x%08lx\n\
 */\n", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
@@ -833,9 +836,9 @@ dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_p
     DUMP name: %s\n\
     DUMP filename: %s\n\
     comment: %s\n\
-    creation time: %12u\n\
+    creation time: %12lu\n\
     archive size: %12zu\n\
-*/\n\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+*/\n\n", file_no, archive_path, filename, comment, (unsigned long)timestamp, arc_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -858,7 +861,8 @@ dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *hea
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -884,11 +888,12 @@ dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *hea
     FILE name: %s\n\
     FILE filename: %s\n\
     comment: %s\n\
-    creation time:                 \n\
+    creation time:         %12lu\n\
     filesize uncompressed: %12lu\n\
     filesize packed:       %12lu\n\
     CRC:                     0x%08lx\n\
 */\n\n", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
