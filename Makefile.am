@@ -74,7 +74,7 @@ testasmdump: gup
 	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump *.spec
-	cat test.asmdump | tee test.asmdump.hexdump
+	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump
 	if ! test -e test.sollwert.asmdump.hexdump.txt ; then cp test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt ; fi
 	diff -u test.asmdump.hexdump test.sollwert.asmdump.hexdump.txt
 
