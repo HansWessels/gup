@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{77A4E9B3-1138-47CB-90DB-CE51798552F4}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\archive.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\arc_util.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\arj_arc.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\arj_hdr.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\dump_arc.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\dump_hdr.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\gz_arc.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\gz_hdr.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\header.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\lha_arc.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\lha_hdr.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\unix_arj.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\unix_gz.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\unix_lha.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\unix_utl.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\w32_arj.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\w32_gz.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\w32_lha.cpp" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\arcman\w32_utl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\arcctl.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\archive.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\arc_util.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\arj_arc.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\arj_hdr.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\dump_arc.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\dump_hdr.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\gz_arc.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\gz_hdr.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\header.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\lha_arc.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\lha_hdr.h" />
+    <ClInclude Include="Q:\nyh\Atari\e\pc\gup\arcman\os.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
