@@ -78,7 +78,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 #define DIRTREE_DEPTH_LIMIT  4
 
 	assert(dstsize > 20);
-	snprintf(dst, dstsize, "packed_%X04_", (unsigned int)h);
+	snprintf(dst, dstsize, "packed_%04X_", (unsigned int)h);
 
 	char *e = dst + dstsize - 1;
 	*e = 0;
@@ -141,7 +141,7 @@ static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath
 	// convert string to file-name-safe:
 	
 	assert(dstsize > 20);
-	snprintf(dst, dstsize, "%X04.", (unsigned int)h);
+	snprintf(dst, dstsize, "%04X.", (unsigned int)h);
 	char *d0 = dst + strlen(dst);
 
 	char *e = dst + dstsize - 1;
@@ -150,8 +150,6 @@ static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath
 	bool has_seen_underscore = true;
     int dirtree_depth_level = 0;
 	size_t len = strlen(fpath);
-	
-printf("mk_filename_part: input: %s (len = %d, stop = %d, checks: %d, %d, %d)\n", fpath, (int)len, (int)(len - LENGTH_LIMIT), len - 1 >= 0, len - 1 > len - LENGTH_LIMIT, d > d0);
 	
 	for (int i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > d0; i--)
 	{
@@ -171,8 +169,6 @@ printf("mk_filename_part: input: %s (len = %d, stop = %d, checks: %d, %d, %d)\n"
 				e = d + 1;
 				dirtree_depth_level++;
 
-printf("mk_filename_part: step %d: %s --> %s\n", dirtree_depth_level, fpath, e);
-
 				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
 					break;
 			}
@@ -187,13 +183,8 @@ printf("mk_filename_part: step %d: %s --> %s\n", dirtree_depth_level, fpath, e);
 		}
 		
 		*--d = c;
-
-printf("mk_filename_part: char: %s[%d] --> %s\n", fpath, (int)i, d);
-
 	}
 
-printf("mk_filename_part: move: %s + %s\n", dst, d);
-	
 	if (d != d0)
 		memmove(d0, d, strlen(d) + 1);
 	assert(strlen(dst) < dstsize);
