@@ -875,7 +875,7 @@ testcdump: gup
 	-rm test.cdump*
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump *.spec
-	cat test.cdump | tee test.cdump.hexdump
+	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump
 	if ! test -e test.sollwert.cdump.hexdump.txt ; then cp test.cdump.hexdump test.sollwert.cdump.hexdump.txt ; fi
 	diff -u test.cdump.hexdump test.sollwert.cdump.hexdump.txt
 
@@ -904,10 +904,16 @@ clean:
 	-rm **/*.cdump **/*.asmdump **/*.bindump
 	-rm $(GUP_EXE)
 
+# only invoke this make target when you want to update/regenerate the test reference values & files:
+clean_test_sollwerte:
+	-rm -f test.sollwert.cdump.hexdump.txt
+	-rm -f test.sollwert.asmdump.hexdump.txt 
+	-rm -f test.sollwert.bindump.hexdump.txt
+
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

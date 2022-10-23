@@ -18045,7 +18045,7 @@ printf "%s\n" "$ac_cv_type_uint64" >&6; }
     fi
 
 
-GUP_POSIX_199506_DEFINE
+#GUP_POSIX_199506_DEFINE
 
 
 ac_func=
