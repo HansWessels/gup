@@ -247,16 +247,21 @@
 #endif
 
 #if 0
-  /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
-  #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
-  #define LOG_bit(bit) /* printf("bit = %i\n",bit); */
-  #define LOG_RUN(run) printf("Run = %lu\n", run);
+	/* log literal en pointer len combi's */
+	static unsigned long log_pos_counter=0;
+	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
+	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
+	#define LOG_BIT(bit) /* printf("bit = %i\n",bit); */
+  	#define LOG_RUN(run) printf("Run = %lu\n", run);
+	#define LOG_COUNTER_RESET log_pos_counter=0;
+	#define LOG_TEXT(string) printf(string);
 #else
-  #define LOG_LITERAL(lit) /* */
-  #define LOG_PTR_LEN(len, ptr) /* */
-  #define LOG_bit(bit) /* */
-  #define LOG_RUN(run) /* */
+	#define LOG_LITERAL(lit) /* */
+	#define LOG_PTR_LEN(len, ptr) /* */
+	#define LOG_BIT(bit) /* */
+	#define LOG_RUN(run) /* */
+ 	#define LOG_COUNTER_RESET
+	#define LOG_TEXT(string) /* */
 #endif
 
 
@@ -1519,7 +1524,7 @@ gup_result compress_chars(packstruct *com)
       //  Code die backmatch stringlengtes optimaliseert.
       //  Bij een backmatch zijn er twee opeenvolgende matches, waarbij 
       //  de laatste match een backmatch waarde groter dan nul heeft.
-      //  Deze laatste macth kunnen we groter laten worden tenkoste van de 
+      //  Deze laatste match kunnen we groter laten worden ten koste van de 
       //  grootte van de match die ervoor ligt...
       */
       int redo; /* geeft aan dat er een conversie heeft plaatsgevonden -> nog een iteratie */
@@ -3348,7 +3353,7 @@ int n0_ptr_len(uint32 val)
 #define ST_BIT_N0(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
-  LOG_bit(val);														\
+  LOG_BIT(val);														\
   if(com->bits_in_bitbuf==0)										\
   { /* reserveer plek in bytestream */							\
   	 com->command_byte_ptr=com->rbuf_current++;				\
@@ -3442,12 +3447,52 @@ gup_result compress_n0(packstruct *com)
         de laatste match een backmatch waarde groter dan nul heeft.
         Deze laatste macth kunnen we groter laten worden tenkoste van de 
         grootte van de match die ervoor ligt...
+        Waarschuwing, zodra je met matchlengtes hebt geschove kin je geen zeef34 code
+        meer toepassen. Dus eerst zeef34 conversies en daarna matchlen optimalisatie.
       */
-      {
+      { /* ronde 1, alleen zeef 34 */
         uint8* bp=com->backmatch;
         c_codetype *p = com->chars;
         pointer_type *q= com->pointers;
         *bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
+        int i = entries;
+        do
+        {
+          c_codetype kar = *p++;
+          if (kar > (NLIT-1))
+          {
+            uint8 len=*bp++;
+            if(len>0)
+            {
+              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
+              kar+=MIN_MATCH-NLIT;
+              if((kar_1-len)<3)
+              { /* conversie naar 1 of 2? */
+              	 if((kar_1-len)==2)
+              	 { /* conversie naar 2? */
+              	 	if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>18) /* groter aan lengte twee literals */
+              	 	{
+                 		bp[-1]=0;
+                 		p[-2]=-2;
+                 		p[-1]+=len;
+                 	}
+              	 }
+              	 else if((kar_1-len)==1)
+              	 { /* conversie naar 1 */
+                 	bp[-1]=0;
+                 	p[-2]=-1;
+                 	p[-1]+=len;
+                }
+              }
+            }
+            q++; /* next pointer */
+          }
+        } while (--i!=0);
+      }
+      { /* matchlen optimalisatie */
+        uint8* bp=com->backmatch;
+        c_codetype *p = com->chars;
+        pointer_type *q= com->pointers;
         int i = entries;
         do
         {
@@ -3481,26 +3526,13 @@ gup_result compress_n0(packstruct *com)
               }
               while(--len!=0);
               offset--;
-              if((kar_1-offset)<3)
-              { /* conversie naar 1 of 2? */
-              	 if((kar_1-offset)==2)
-              	 { /* conversie naar 2? */
-              	 	if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>=18) /* groter of gelijk aan lengte twee literals */
-              	 	{
-                 		bp[-1]-=offset;
-                 		p[-2]=-2;
-                 		p[-1]+=offset;
-                 	}
-              	 }
-              	 else if((kar_1-offset)==1)
-              	 { /* conversie naar 1 */
-                 	bp[-1]-=offset;
-                 	p[-2]=-1;
-                 	p[-1]+=offset;
-                }
-              }
             }
             q++; /* next pointer */
+          }
+          else if(kar<0)
+          { /* is al geconverteerd */
+          	q++; /* next pointer */
+          	bp++; /* next backmatch */
           }
         } while (--i!=0);
       }
@@ -3743,7 +3775,7 @@ int n1_ptr_len(uint32 val)
 #define ST_BIT_N1(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
-  LOG_bit(val);														\
+  LOG_BIT(val);														\
   if(com->bits_in_bitbuf==0)										\
   { /* reserveer plek in bytestream */							\
   	 com->command_byte_ptr=com->inmem_output_cur++;			\
@@ -4171,12 +4203,52 @@ gup_result compress_n1(packstruct *com)
         de laatste match een backmatch waarde groter dan nul heeft.
         Deze laatste macth kunnen we groter laten worden tenkoste van de 
         grootte van de match die ervoor ligt...
+        Waarschuwing, zodra je met matchlengtes hebt geschove kin je geen zeef34 code
+        meer toepassen. Dus eerst zeef34 conversies en daarna matchlen optimalisatie.
       */
-      {
+      { /* ronde 1, alleen zeef 34 */
         uint8* bp=com->backmatch;
         c_codetype *p = com->chars;
         pointer_type *q= com->pointers;
         *bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
+        int i = entries;
+        do
+        {
+          c_codetype kar = *p++;
+          if (kar > (NLIT-1))
+          {
+            uint8 len=*bp++;
+            if(len>0)
+            {
+              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
+              kar+=MIN_MATCH-NLIT;
+              if((kar_1-len)<3)
+              { /* conversie naar 1 of 2? */
+              	 if((kar_1-len)==2)
+              	 { /* conversie naar 2? */
+              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter aan lengte twee literals */
+              	 	{
+                 		bp[-1]=0;
+                 		p[-2]=-2;
+                 		p[-1]+=len;
+                 	}
+              	 }
+              	 else if((kar_1-len)==1)
+              	 { /* conversie naar 1 */
+                 	bp[-1]=0;
+                 	p[-2]=-1;
+                 	p[-1]+=len;
+                }
+              }
+            }
+            q++; /* next pointer */
+          }
+        } while (--i!=0);
+      }
+      { /* matchlen optimalisatie */
+        uint8* bp=com->backmatch;
+        c_codetype *p = com->chars;
+        pointer_type *q= com->pointers;
         int i = entries;
         do
         {
@@ -4210,26 +4282,13 @@ gup_result compress_n1(packstruct *com)
               }
               while(--len!=0);
               offset--;
-              if((kar_1-offset)<3)
-              { /* conversie naar 1 of 2? */
-              	 if((kar_1-offset)==2)
-              	 { /* conversie naar 2? */
-              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>=18) /* groter of gelijk aan lengte twee literals */
-              	 	{
-                 		bp[-1]-=offset;
-                 		p[-2]=-2;
-                 		p[-1]+=offset;
-                 	}
-              	 }
-              	 else if((kar_1-offset)==1)
-              	 { /* conversie naar 1 */
-                 	bp[-1]-=offset;
-                 	p[-2]=-1;
-                 	p[-1]+=offset;
-                }
-              }
             }
             q++; /* next pointer */
+          }
+          else if(kar<0)
+          { /* is al geconverteerd */
+          	q++; /* next pointer */
+          	bp++; /* next backmatch */
           }
         } while (--i!=0);
       }
@@ -4252,7 +4311,7 @@ gup_result compress_n1(packstruct *com)
         	}
         	else if(kar==-2)
         	{
-        		kar=*r++;	
+        		kar=*r++;
      			*com->inmem_input_cur++=(uint16)kar;
         		kar=*r++;	
         		r+=2;

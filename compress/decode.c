@@ -85,15 +85,20 @@
 
 #if 0
   /* log literal en pointer len combi's */
-  #define LOG_LITERAL(lit)  printf("Literal: %02X\n", lit);
-  #define LOG_RUN(len)  printf("Run: %lu\n", len);
-  #define LOG_PTR_LEN(len, ptr) printf("Len: %u, ptr: %u\n",len, ptr);
-  #define LOG_BIT(bit) printf("%i", bit);
+	static unsigned long log_pos_counter=0;
+	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
+	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
+	#define LOG_BIT(bit) /* printf("bit = %i\n",bit); */
+  	#define LOG_RUN(run) printf("Run = %lu\n", run);
+	#define LOG_COUNTER_RESET log_pos_counter=0;
+	#define LOG_TEXT(string) printf(string);
 #else
   #define LOG_LITERAL(lit) /* */
   #define LOG_RUN(len) /* */
   #define LOG_PTR_LEN(len, ptr) /* */
   #define LOG_BIT(bit) /* */
+  #define LOG_COUNTER_RESET /* */
+	#define LOG_TEXT(string) /* */
 #endif
 
 #define BITBUFSIZE    (sizeof(unsigned long) * 8)   /* aantal bits in bitbuffer */
@@ -1368,6 +1373,7 @@ gup_result decode_n1(decode_struct *com)
 	{
 		if(origsize<=0)
 		{ /* zou niet moeten gebeuren */
+			LOG_TEXT("Exit on origsize\n");
 			return GUP_OK; /* exit succes? */
 		}
 		DECODE_N1_RUN(run);
