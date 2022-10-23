@@ -26,10 +26,19 @@ class dump_mainheader : public arj_mainheader
 	~dump_mainheader();				                                       /* Destructor. */
 
 protected:
-	size_t arc_output_size;
+	size_t archive_output_size;
 	std::string archive_path;
 
 	long current_file_pack_start_offset;
+
+	std::string archive_comment;
+
+	std::string archive_volume_path;
+
+    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+    std::string archive_metafile_path;
+
+	ostime archive_ctime;					
 
 friend class dump_archive;	
 friend class bindump_archive;	

@@ -42,6 +42,91 @@
 
 #define DEBUG_DUMP_HEADERS 0
 
+static uint32_t hash_string(const char *s)
+{
+    uint32_t hash = 0;
+
+    for(; *s; ++s)
+    {
+        hash += *s;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
+// generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
+static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath)
+{
+	// calc a simple hash of the input string, sans Windows/DOS drive:
+	const char *drv = strchr(fpath, ':');
+	if (drv)
+		fpath = drv + 1;
+	
+	uint32_t h = hash_string(fpath);
+	
+	// convert string to variable-name-safe:
+	
+	// filter and restrict length to N (N = 40 by default) and a maximum directory tree depth of 4
+#define LENGTH_LIMIT  40
+#define DIRTREE_DEPTH_LIMIT  4
+
+	assert(dstsize > 20);
+	snprintf(dst, dstsize, "packed_%X04_", (unsigned int)h);
+
+	char *e = dst + dstsize - 1;
+	*e = 0;
+	char *d = e;
+	bool has_seen_underscore = true;
+    int dirtree_depth_level = 0;
+	size_t len = strlen(fpath);
+	
+	for (size_t i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > dst + 7 + 5; i--)
+	{
+		char c = fpath[i];
+		
+		if (c >= 'A' && c <= 'Z')
+			has_seen_underscore = false;
+		else if (c >= 'a' && c <= 'z')
+			has_seen_underscore = false;
+		else if (c >= '0' && c <= '9')
+			has_seen_underscore = false;
+		else 
+		{
+			if (c == '\\' || c == '/')
+			{
+				c = '_';
+				e = d + 1;
+				dirtree_depth_level++;
+				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
+					break;
+			}
+			else
+			{
+				c = '_';
+			}
+			
+			if (has_seen_underscore)
+				continue;
+			has_seen_underscore = true;
+		}
+		
+		*--d = c;
+	}
+	
+	if (d != dst + 7 + 5)
+		memmove(dst + 7 + 5, d, strlen(d) + 1);
+	assert(strlen(dst) < dstsize);
+	
+	return dst;
+}
+	
+
 /*****************************************************************************
  *                                                                           *
  * Constructor and destructor.                                               *
@@ -122,7 +207,7 @@ gup_result dump_archive::write_end_of_volume(int mv)
      * Set the length of the archive.
      */
 
-    cur_main_hdr->arc_output_size = arc_len;
+    cur_main_hdr->archive_output_size = arc_len;
 
     {
         uint16 old_mv_mode;
@@ -164,21 +249,24 @@ gup_result dump_archive::write_main_header(const mainheader *header)
     // reset the file index counter
     file_no = 1;
 
-    src = cur_volume->name();
+	assert(cur_volume->name());
+
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
 
     if (!cur_main_hdr)
-        cur_main_hdr = new dump_mainheader(src, comment);
+        cur_main_hdr = new dump_mainheader(cur_volume->name(), comment);
 
-        //header->host_os;      /* Host os. */
-        //arj_conv_from_os_time(header->ctime); /* Creation time. */
-    uint32_t t = arj_conv_from_os_time(gup_time()); /* Modification time (now). */
-        //header->arc_size; /* Archive size. */
-        fspecpos;       /* File spec position in file name. */
+	cur_main_hdr->archive_volume_path = cur_volume->name();
 
-    dump_output_bufptr_t buf = generate_main_header(src, comment, t, cur_main_hdr->arc_output_size);
+    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+    cur_main_hdr->archive_metafile_path = cur_main_hdr->archive_path;
+    cur_main_hdr->archive_metafile_path += ".meta.nfo";
+
+	cur_main_hdr->archive_ctime = gup_time(); /* Modification time (now). */
+	
+    dump_output_bufptr_t buf = generate_main_header();
 
     if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
     {
@@ -198,10 +286,6 @@ gup_result dump_archive::write_file_header(const fileheader *header)
     TRACE_ME();
 
     gup_result result;
-    char *name_ptr;
-    unsigned long total_hdr_size, bytes_left;
-    const char *src;
-    uint16 fspec_pos;
 
     if (!opened || !rw)
         return GUP_INTERNAL;
@@ -209,14 +293,50 @@ gup_result dump_archive::write_file_header(const fileheader *header)
     if (cur_main_hdr == NULL)
         return GUP_INTERNAL;
 
-    if ((result = tell(header_pos)) != GUP_OK)  /* Store current position for
-                                           use by 'write_file_tailer'. */
+    if ((result = tell(header_pos)) != GUP_OK)  /* Store current position for use by 'write_file_tailer'. */
         return result;
 
-    dump_output_bufptr_t buf = generate_file_header(header);
+    const char *src = header->get_filename();
+	file_path = src;
+    
+	const char *comment = header->get_comment();
+    if (!comment)
+        comment = "";
+	file_comment = comment;
+    
+	const osstat *file_stat = header->get_file_stat();
+
+    uint16 fspec_pos;
+    char *name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+	
+	char var_name[80];
+	mk_variable_name(var_name, sizeof(var_name), name_ptr);
+
+	output_var_name = var_name;
+	
+	delete[] name_ptr;
+	
+	file_pack_method = header->method; /* Packing mode. */
+    file_type = header->file_type;  /* File type. */
+
+	file_mode = file_stat->file_mode;
+	file_ctime = file_stat->ctime;
+	file_mtime = file_stat->mtime;
+	file_atime = file_stat->atime;
+
+	file_packed_length = header->compsize;   /* Compressed size. */
+    file_original_length = header->origsize;   /* Original size. */
+    file_crc = header->file_crc;   /* File CRC. */
+
+	file_data_offset = header->offset; /* Extended file position. */
+	
+	file_host_os = header->host_os;
+
+    dump_output_bufptr_t buf = generate_file_header();
     TRACE_ME();
     if ((result = gup_io_write_announce(file, buf->length())) == GUP_OK)
     {
+		unsigned long bytes_left;
         uint8 *p = gup_io_get_current(file, &bytes_left);
 
         memcpy(p, buf->get_start_ref(), buf->length());
@@ -266,6 +386,9 @@ gup_result dump_archive::write_file_trailer(const fileheader *header)
 
     unsigned long binsize = current_pos - cur_main_hdr->current_file_pack_start_offset;
 
+	assert(binsize == header->compsize);
+	file_packed_length = header->compsize;   /* Compressed size. */
+
     // go to start of binary packed chunk in file:
     if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
         return result;
@@ -281,12 +404,10 @@ gup_result dump_archive::write_file_trailer(const fileheader *header)
         return GUP_INTERNAL;
     }
 
-printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
-
     // now we have the binary packed data in file/buffer.
     // What must be done next is fetch that binary data, copy it into
     // a temporary buffer and then rewind the output file to the start
-    // of the packed data zone and rewrite the output, now using the desired
+    // of the packed data zone and rewrite the output, using the desired
     // output encoding/format:
 
 #if 0
@@ -300,7 +421,7 @@ printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, bin
     }
 #endif
 
-    dump_output_bufptr_t buf = generate_file_content(binbuf, binsize_read, header);
+    dump_output_bufptr_t buf = generate_file_content(binbuf, binsize_read);
     TRACE_ME();
 
     // signal that the file index should be updated:
@@ -468,43 +589,30 @@ bindump_archive::~bindump_archive()
     TRACE_ME();
 }
 
-dump_output_bufptr_t bindump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+dump_output_bufptr_t bindump_archive::generate_main_header()
 {
-    if (!comment)
-        comment = "";
-
-    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
-    std::string metafile_path(archive_path);
-
-    metafile_path += ".meta.nfo";
-
-    dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
+    dump_output_bufptr_t buf(new dump_output_buffer(1024 + cur_main_hdr->archive_path.length() * 2 + cur_main_hdr->archive_comment.length()));
 
     char *filename;
     const char *src;
     uint16 fspecpos = 0;
     unsigned long total_hdr_size, bytes_left;
 
-    filename = arj_conv_from_os_name(archive_path, fspecpos, PATHSYM_FLAG);
-
-    //uint32_t t = arj_conv_from_os_time(gup_time());   /* Modification time (now). */
-
     char *dst = reinterpret_cast<char *>(buf->get_append_ref());
     snprintf(dst, buf->get_remaining_usable_size(), "\
 FILE index no.: %d\n\
-DUMP name: %s\n\
 DUMP filename: %s\n\
 comment: %s\n\
 creation time: %12u\n\
 archive size: %12zu\n\
-", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+", file_no, cur_main_hdr->archive_path, cur_main_hdr->comment, (unsigned int)cur_main_hdr->archive_ctime, cur_main_hdr->archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
 
     delete[] filename;
 
-    std::ofstream out(metafile_path);
+    std::ofstream out(cur_main_hdr->archive_metafile_path);
      dst = reinterpret_cast<char *>(buf->get_start_ref());
     std::string msg(dst, buf->length());
     out << msg;
@@ -515,7 +623,7 @@ archive size: %12zu\n\
     return buf;
 }
 
-dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader *header)
+dump_output_bufptr_t bindump_archive::generate_file_header()
 {
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
@@ -592,7 +700,7 @@ printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_mai
     return buf;
 }
 
-dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
+dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
     dump_output_bufptr_t buf(new dump_output_buffer(datasize));
 
@@ -636,11 +744,8 @@ cdump_archive::~cdump_archive()
     TRACE_ME();
 }
 
-dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+dump_output_bufptr_t cdump_archive::generate_main_header()
 {
-    if (!comment)
-        comment = "";
-
     dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
     char *filename;
@@ -660,7 +765,7 @@ dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_pat
     comment: %s\n\
     creation time: %12u\n\
     archive size: %12zu\n\
-*/\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+*/\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -670,7 +775,7 @@ dump_output_bufptr_t cdump_archive::generate_main_header(const char *archive_pat
     return buf;
 }
 
-dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *header)
+dump_output_bufptr_t cdump_archive::generate_file_header()
 {
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
@@ -726,12 +831,16 @@ dump_output_bufptr_t cdump_archive::generate_file_header(const fileheader *heade
     return buf;
 }
 
-dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
+dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-    buf->append_string("const uint8_t *data = {\n");
+	// generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
+    char *fname = strdup(header->get_filename());
+	
+	
+    buf->append_string("const uint8_t *_data = {\n");
 
     for (size_t i = 0; i < datasize; i += 20)
     {
@@ -795,11 +904,8 @@ asmdump_archive::~asmdump_archive()
     TRACE_ME();
 }
 
-dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size)
+dump_output_bufptr_t asmdump_archive::generate_main_header()
 {
-    if (!comment)
-        comment = "";
-
     dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
     char *filename;
@@ -819,7 +925,7 @@ dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_p
     comment: %s\n\
     creation time: %12u\n\
     archive size: %12zu\n\
-*/\n\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, arc_output_size);
+*/\n\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -829,7 +935,7 @@ dump_output_bufptr_t asmdump_archive::generate_main_header(const char *archive_p
     return buf;
 }
 
-dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *header)
+dump_output_bufptr_t asmdump_archive::generate_file_header()
 {
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
@@ -885,7 +991,7 @@ dump_output_bufptr_t asmdump_archive::generate_file_header(const fileheader *hea
     return buf;
 }
 
-dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
+dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
