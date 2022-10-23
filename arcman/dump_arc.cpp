@@ -731,7 +731,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-    buf->append_string("{\n");
+    buf->append_string("const uint8_t *data = {\n");
 
     for (size_t i = 0; i < datasize; i += 20)
     {
@@ -754,7 +754,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
         buf->set_appended_length(hdr_len);
     }
 
-    buf->append_string("}");
+    buf->append_string("};\n\n");
 
     return buf;
 }
@@ -890,26 +890,31 @@ dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data,
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
+    buf->append_string("file_data:\n");
+
     for (size_t i = 0; i < datasize; i += 20)
     {
         char *dst = reinterpret_cast<char *>(buf->get_append_ref());
         size_t dstsize = buf->get_remaining_usable_size();
 
-        strcpy(dst, "\n{ ");
+        strcpy(dst, "    dc.b ");
         dstsize -= strlen(dst);
         dst += strlen(dst);
-        for (int j = 0; j < 20; j++)
+        for (int j = 0; j < 20 && i + j < datasize; j++)
         {
             snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
             dstsize -= strlen(dst);
             dst += strlen(dst);
         }
-        strcpy(dst, " },");
+		dst -= 2;
+        strcpy(dst, "\n");
 
         dst = reinterpret_cast<char *>(buf->get_append_ref());
         size_t hdr_len = strlen(dst);
         buf->set_appended_length(hdr_len);
     }
+
+    buf->append_string("\n; --------------------- end of packed file data ---------------------\n\n");
 
     return buf;
 }
