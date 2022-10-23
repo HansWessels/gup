@@ -4200,7 +4200,6 @@ gup_result compress_n1(packstruct *com)
   if (com->matchstring != NULL)
   {
     ARJ_Assert(com->backmatch!=NULL);
-    if(0)
     {
       /* 
         Code die backmatch stringlengtes optimaliseert.
