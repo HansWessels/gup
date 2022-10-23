@@ -731,7 +731,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
-    buf->append_string("{\n");
+    buf->append_string("const uint8_t *data = {\n");
 
     for (size_t i = 0; i < datasize; i += 20)
     {
@@ -754,7 +754,7 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
         buf->set_appended_length(hdr_len);
     }
 
-    buf->append_string("}");
+    buf->append_string("};\n");
 
     return buf;
 }
