@@ -1306,6 +1306,10 @@ gup_result encode_big(packstruct *com)
           }
         }
         com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
+        if (com->charp==com->chars)
+        {
+          ptrswap=0; /* als alle data is verwerkt kan er geen pointerswap meer zijn */
+        }
       }
       if (refill_count <= 0)
       {

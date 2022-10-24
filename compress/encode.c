@@ -3625,16 +3625,11 @@ gup_result compress_n0(packstruct *com)
     entries=(uint16)(com->charp-p);
     if (com->matchstring != NULL)
     {
-      long ptrctr = q - com->pointers;
-      long i = (com->charp - com->chars) - entries;
-      memmove(com->backmatch, com->backmatch+ptrctr, i);
-      com->msp -= 4 * (long)ptrctr;
-      com->bmp-=ptrctr;
+      com->msp = com->matchstring;
+      com->bmp = com->backmatch;
     }
-    com->charp = com->chars+entries;
-    com->ptrp = com->pointers+(com->ptrp-q);
-    memmove(com->chars, p, entries*sizeof(*p));
-    memmove(com->pointers, q, entries*sizeof(*q)); /* deze zou niet nodig moeten zijn */
+    com->charp = com->chars;
+    com->ptrp = com->pointers;
   }
   return GUP_OK;
 }
@@ -4115,10 +4110,6 @@ gup_result compress_n1(packstruct *com)
 	** loop
 	*/
   	int entries = (int) (com->charp - com->chars);
-  	if(entries==63745)
-  	{ /* cludge for evaluator bug */
-  		entries--;
-  	}
 	{
 		if(com->inmem_output==NULL)
 		{ /* malloc the inmem_output buffer */
@@ -4335,22 +4326,9 @@ gup_result compress_n1(packstruct *com)
     {
       com->msp = com->matchstring;
       com->bmp = com->backmatch;
-      if(entries==1)
-      {
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->bmp++=0;
-      }
     }
     com->charp = com->chars;
     com->ptrp = com->pointers;
-    if(entries==1)
-    {
-      *com->charp++=*p++;
-      *com->ptrp++= *q++;
-    }
   }
 
   return GUP_OK;

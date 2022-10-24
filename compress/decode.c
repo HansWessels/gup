@@ -1374,7 +1374,7 @@ gup_result decode_n1(decode_struct *com)
 		if(origsize<=0)
 		{ /* zou niet moeten gebeuren */
 			LOG_TEXT("Exit on origsize\n");
-			return GUP_OK; /* exit succes? */
+			break;
 		}
 		DECODE_N1_RUN(run);
 		LOG_RUN(run);
