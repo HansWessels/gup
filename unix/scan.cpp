@@ -201,6 +201,13 @@ gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 		if (dir)						  /* if there's something in front of wildcard */
 			*(wild - 1) = 0;
 	}
+	else
+	{
+		// trim trailing / off the dir path:
+		size_t dlen = strlen(arg);
+		if (dlen > 2 && strchr("/\\", arg[dlen - 1]))
+			arg[dlen - 1] = 0;
+	}
 
 	if (!dir || (*dir == 0))
 		dir = ".";
