@@ -306,7 +306,7 @@ osfont::Create             // creates a font
          {
             HFONT  font;   // the font being created
 
-            font = CreateFont
+            font = CreateFontA
                       (-vsize,                // character height
                        hsize,                 // average character width
                        0,                     // angle of escapement
