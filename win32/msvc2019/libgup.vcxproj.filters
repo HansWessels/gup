@@ -1451,10 +1451,24 @@
     <ClInclude Include="..\..\include\compiler_intrinsics.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\guplib\dump_arc.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\guplib\dump_hdr.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="../../test/test-data/src/emoji.png">
       <Filter>Misc Files\test\test-data\src</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\guplib\dump_arc.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\guplib\dump_hdr.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

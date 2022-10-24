@@ -217,6 +217,8 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\guplib\dump_arc.cpp" />
+    <ClCompile Include="..\..\guplib\dump_hdr.cpp" />
     <ClInclude Include="../../arcman/arc_util.cpp" />
     <ClInclude Include="../../arcman/archive.cpp" />
     <ClInclude Include="../../arcman/arj_arc.cpp" />
@@ -480,6 +482,8 @@
     <ClInclude Include="../../unix/arj.h" />
     <ClInclude Include="../../unix/scan.h" />
     <ClInclude Include="../../unix/utils.h" />
+    <ClInclude Include="..\..\guplib\dump_arc.h" />
+    <ClInclude Include="..\..\guplib\dump_hdr.h" />
     <ClInclude Include="..\..\include\compiler_intrinsics.h" />
     <ClInclude Include="config.h" />
     <Image Include="../../test/test-data/src/emoji.png" />
