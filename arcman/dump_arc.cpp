@@ -50,6 +50,14 @@ static uint32_t hash_string(const char *s)
     return hash;
 }
 
+static uint32_t folded_hash_string(const char* s)
+{
+    uint32_t h = hash_string(s);
+
+    h ^= h >> 16;
+    return h & 0xFFFF;
+}
+
 // generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
 static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath)
 {
@@ -58,7 +66,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 	if (drv)
 		fpath = drv + 1;
 	
-	uint32_t h = hash_string(fpath);
+	uint32_t h = folded_hash_string(fpath);
 	
 	// convert string to variable-name-safe:
 	
@@ -125,7 +133,7 @@ static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath
 	if (drv)
 		fpath = drv + 1;
 	
-	uint32_t h = hash_string(fpath);
+	uint32_t h = folded_hash_string(fpath);
 	
 	// convert string to file-name-safe:
 	
