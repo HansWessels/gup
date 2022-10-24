@@ -118,8 +118,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Custom</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -144,8 +144,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Custom</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN64;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN64;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -168,8 +168,8 @@
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -194,8 +194,8 @@
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;WIN64;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN64;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -246,78 +246,78 @@
     <ClCompile Include="../../arjbeta/s_header.c" />
     <ClCompile Include="../../arjbeta/scan.c" />
     <ClCompile Include="../../arjbeta/swapbit.c" />
-    <ClCompile Include="../../atari/cgl/application.cc" />
-    <ClCompile Include="../../atari/cgl/dialog.cc" />
-    <ClCompile Include="../../atari/cgl/event.cc" />
-    <ClCompile Include="../../atari/cgl/userdef.cc" />
-    <ClCompile Include="../../atari/cgl/util.cc" />
-    <ClCompile Include="../../atari/cgl/window.cc" />
-    <ClCompile Include="../../atari/shell/add.cpp" />
-    <ClCompile Include="../../atari/shell/alert.cc" />
-    <ClCompile Include="../../atari/shell/arj.cc" />
-    <ClCompile Include="../../atari/shell/arj_slid.cc" />
-    <ClCompile Include="../../atari/shell/atari.cpp" />
-    <ClCompile Include="../../atari/shell/dir.cc" />
-    <ClCompile Include="../../atari/shell/extract.cc" />
-    <ClCompile Include="../../atari/shell/main.cc" />
-    <ClCompile Include="../../atari/shell/message.cc" />
-    <ClCompile Include="../../atari/shell/popup.cc" />
-    <ClCompile Include="../../atari/shell/resource.cc" />
-    <ClCompile Include="../../atari/shell/slider.cc" />
-    <ClCompile Include="../../atari/shell/util.c" />
+    <ClInclude Include="../../atari/cgl/application.cc" />
+    <ClInclude Include="../../atari/cgl/dialog.cc" />
+    <ClInclude Include="../../atari/cgl/event.cc" />
+    <ClInclude Include="../../atari/cgl/userdef.cc" />
+    <ClInclude Include="../../atari/cgl/util.cc" />
+    <ClInclude Include="../../atari/cgl/window.cc" />
+    <ClInclude Include="../../atari/shell/add.cpp" />
+    <ClInclude Include="../../atari/shell/alert.cc" />
+    <ClInclude Include="../../atari/shell/arj.cc" />
+    <ClInclude Include="../../atari/shell/arj_slid.cc" />
+    <ClInclude Include="../../atari/shell/atari.cpp" />
+    <ClInclude Include="../../atari/shell/dir.cc" />
+    <ClInclude Include="../../atari/shell/extract.cc" />
+    <ClInclude Include="../../atari/shell/main.cc" />
+    <ClInclude Include="../../atari/shell/message.cc" />
+    <ClInclude Include="../../atari/shell/popup.cc" />
+    <ClInclude Include="../../atari/shell/resource.cc" />
+    <ClInclude Include="../../atari/shell/slider.cc" />
+    <ClInclude Include="../../atari/shell/util.c" />
     <ClCompile Include="../../compress/crc.c" />
     <ClCompile Include="../../compress/decode.c" />
     <ClCompile Include="../../compress/encode.c" />
     <ClCompile Include="../../compress/evaluatr.c" />
-    <ClCompile Include="../../compress/m68000.mot/opti.c" />
+    <ClCompile Include="..\..\compress\m68000.mot\mot_opti.c" />
     <ClCompile Include="../../compress/m68000/opti.c" />
     <ClCompile Include="../../compress/sld.c" />
     <ClCompile Include="../../compress/sld_indx.c" />
     <ClCompile Include="../../compress/sld_med.c" />
     <ClCompile Include="../../compress/sld_smll.c" />
     <ClCompile Include="../../compress/st_opti/st_opti.c" />
-    <ClCompile Include="../../guplib/arc_util.cpp" />
-    <ClCompile Include="../../guplib/archive.cpp" />
-    <ClCompile Include="../../guplib/arj_arc.cpp" />
-    <ClCompile Include="../../guplib/arj_hdr.cpp" />
-    <ClCompile Include="../../guplib/crc.c" />
-    <ClCompile Include="../../guplib/decode.c" />
-    <ClCompile Include="../../guplib/encode.c" />
-    <ClCompile Include="../../guplib/evaluatr.c" />
-    <ClCompile Include="../../guplib/gup_err.c" />
-    <ClCompile Include="../../guplib/gup_io.c" />
-    <ClCompile Include="../../guplib/gz_arc.cpp" />
-    <ClCompile Include="../../guplib/gz_hdr.cpp" />
-    <ClCompile Include="../../guplib/header.cpp" />
-    <ClCompile Include="../../guplib/lha_arc.cpp" />
-    <ClCompile Include="../../guplib/lha_hdr.cpp" />
-    <ClCompile Include="../../guplib/matchpat.c" />
-    <ClCompile Include="../../guplib/sld.c" />
-    <ClCompile Include="../../guplib/sld_indx.c" />
-    <ClCompile Include="../../guplib/sld_med.c" />
-    <ClCompile Include="../../guplib/sld_smll.c" />
-    <ClCompile Include="../../guplib/strlwr.c" />
-    <ClCompile Include="../../guplib/unix_arj.cpp" />
-    <ClCompile Include="../../guplib/unix_gz.cpp" />
-    <ClCompile Include="../../guplib/unix_lha.cpp" />
-    <ClCompile Include="../../guplib/unix_utl.cpp" />
-    <ClCompile Include="../../guplib/w32_arj.cpp" />
-    <ClCompile Include="../../guplib/w32_err.c" />
-    <ClCompile Include="../../guplib/w32_gz.cpp" />
-    <ClCompile Include="../../guplib/w32_lha.cpp" />
-    <ClCompile Include="../../guplib/w32_utl.cpp" />
+    <ClInclude Include="../../guplib/arc_util.cpp" />
+    <ClInclude Include="../../guplib/archive.cpp" />
+    <ClInclude Include="../../guplib/arj_arc.cpp" />
+    <ClInclude Include="../../guplib/arj_hdr.cpp" />
+    <ClInclude Include="../../guplib/crc.c" />
+    <ClInclude Include="../../guplib/decode.c" />
+    <ClInclude Include="../../guplib/encode.c" />
+    <ClInclude Include="../../guplib/evaluatr.c" />
+    <ClInclude Include="../../guplib/gup_err.c" />
+    <ClInclude Include="../../guplib/gup_io.c" />
+    <ClInclude Include="../../guplib/gz_arc.cpp" />
+    <ClInclude Include="../../guplib/gz_hdr.cpp" />
+    <ClInclude Include="../../guplib/header.cpp" />
+    <ClInclude Include="../../guplib/lha_arc.cpp" />
+    <ClInclude Include="../../guplib/lha_hdr.cpp" />
+    <ClInclude Include="../../guplib/matchpat.c" />
+    <ClInclude Include="../../guplib/sld.c" />
+    <ClInclude Include="../../guplib/sld_indx.c" />
+    <ClInclude Include="../../guplib/sld_med.c" />
+    <ClInclude Include="../../guplib/sld_smll.c" />
+    <ClInclude Include="../../guplib/strlwr.c" />
+    <ClInclude Include="../../guplib/unix_arj.cpp" />
+    <ClInclude Include="../../guplib/unix_gz.cpp" />
+    <ClInclude Include="../../guplib/unix_lha.cpp" />
+    <ClInclude Include="../../guplib/unix_utl.cpp" />
+    <ClInclude Include="../../guplib/w32_arj.cpp" />
+    <ClInclude Include="../../guplib/w32_err.c" />
+    <ClInclude Include="../../guplib/w32_gz.cpp" />
+    <ClInclude Include="../../guplib/w32_lha.cpp" />
+    <ClInclude Include="../../guplib/w32_utl.cpp" />
     <ClCompile Include="../../lib/gup_err.c" />
     <ClCompile Include="../../lib/gup_io.c" />
     <ClCompile Include="../../lib/matchpat.c" />
     <ClCompile Include="../../lib/strlwr.c" />
     <ClCompile Include="../../lib/w32_err.c" />
-    <ClCompile Include="../../ms-win/confctrl/pack.cc" />
+    <Text Include="../../ms-win/confctrl/pack.cc" />
     <ClCompile Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/basics/object/object.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/drawing/color/color.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/drawing/font/font.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp" />
-    <ClCompile Include="../../ms-win/osrtl/windows/hardware/mouse/mouse.cpp" />
+    <ClCompile Include="..\..\ms-win\osrtl\windows\hardware\mouse\hw_mouse.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/heap/heap/heap.cpp" />
     <ClCompile Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.cpp" />
@@ -342,7 +342,7 @@
     <ClCompile Include="../../ni_packer/ni_n0.c" />
     <ClCompile Include="../../ni_packer/ni_n1.c" />
     <ClCompile Include="../../ni_packer/unstore.c" />
-    <ClCompile Include="../../test/depack_t.c" />
+    <ClCompile Include="..\..\test\test_depack_t.c" />
     <ClCompile Include="../../unarjbta/environ.c" />
     <ClCompile Include="../../unarjbta/unarj.c" />
     <ClCompile Include="../../unix/compress.cpp" />
@@ -480,6 +480,8 @@
     <ClInclude Include="../../unix/arj.h" />
     <ClInclude Include="../../unix/scan.h" />
     <ClInclude Include="../../unix/utils.h" />
+    <ClInclude Include="..\..\include\compiler_intrinsics.h" />
+    <ClInclude Include="config.h" />
     <Image Include="../../test/test-data/src/emoji.png" />
     <Text Include="../../Makefile.am" />
     <Text Include="../../Makefile.in" />

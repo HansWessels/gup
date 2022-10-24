@@ -545,63 +545,63 @@
     <ClCompile Include="../../arjbeta/swapbit.c">
       <Filter>Source Files\arjbeta</Filter>
     </ClCompile>
-    <ClCompile Include="../../atari/cgl/application.cc">
+    <ClInclude Include="../../atari/cgl/application.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/cgl/dialog.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/dialog.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/cgl/event.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/event.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/cgl/userdef.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/userdef.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/cgl/util.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/util.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/cgl/window.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/window.cc">
       <Filter>Source Files\atari\cgl</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/add.cpp">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/add.cpp">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/alert.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/alert.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/arj.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/arj_slid.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj_slid.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/atari.cpp">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/atari.cpp">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/dir.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/dir.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/extract.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/extract.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/main.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/main.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/message.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/message.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/popup.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/popup.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/resource.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/resource.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/slider.cc">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/slider.cc">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
-    <ClCompile Include="../../atari/shell/util.c">
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/util.c">
       <Filter>Source Files\atari\shell</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClCompile Include="../../compress/crc.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
@@ -614,7 +614,7 @@
     <ClCompile Include="../../compress/evaluatr.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
-    <ClCompile Include="../../compress/m68000.mot/opti.c">
+    <ClCompile Include="..\..\compress\m68000.mot\mot_opti.c">
       <Filter>Source Files\compress\m68000.mot</Filter>
     </ClCompile>
     <ClCompile Include="../../compress/m68000/opti.c">
@@ -635,96 +635,96 @@
     <ClCompile Include="../../compress/st_opti/st_opti.c">
       <Filter>Source Files\compress\st_opti</Filter>
     </ClCompile>
-    <ClCompile Include="../../guplib/arc_util.cpp">
+    <ClInclude Include="../../guplib/arc_util.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/archive.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/archive.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/arj_arc.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/arj_arc.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/arj_hdr.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/arj_hdr.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/crc.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/crc.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/decode.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/decode.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/encode.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/encode.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/evaluatr.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/evaluatr.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/gup_err.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/gup_err.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/gup_io.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/gup_io.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/gz_arc.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/gz_arc.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/gz_hdr.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/gz_hdr.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/header.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/header.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/lha_arc.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/lha_arc.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/lha_hdr.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/lha_hdr.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/matchpat.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/matchpat.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/sld.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/sld.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/sld_indx.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/sld_indx.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/sld_med.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/sld_med.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/sld_smll.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/sld_smll.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/strlwr.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/strlwr.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/unix_arj.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/unix_arj.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/unix_gz.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/unix_gz.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/unix_lha.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/unix_lha.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/unix_utl.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/unix_utl.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/w32_arj.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/w32_arj.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/w32_err.c">
+    </ClInclude>
+    <ClInclude Include="../../guplib/w32_err.c">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/w32_gz.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/w32_gz.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/w32_lha.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/w32_lha.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
-    <ClCompile Include="../../guplib/w32_utl.cpp">
+    </ClInclude>
+    <ClInclude Include="../../guplib/w32_utl.cpp">
       <Filter>Source Files\guplib</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClCompile Include="../../lib/gup_err.c">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
@@ -740,9 +740,9 @@
     <ClCompile Include="../../lib/w32_err.c">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
-    <ClCompile Include="../../ms-win/confctrl/pack.cc">
+    <Text Include="../../ms-win/confctrl/pack.cc">
       <Filter>Source Files\ms-win\confctrl</Filter>
-    </ClCompile>
+    </Text>
     <ClCompile Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\basics\convert</Filter>
     </ClCompile>
@@ -758,7 +758,7 @@
     <ClCompile Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\error\errmsg</Filter>
     </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/hardware/mouse/mouse.cpp">
+    <ClCompile Include="..\..\ms-win\osrtl\windows\hardware\mouse\hw_mouse.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\hardware\mouse</Filter>
     </ClCompile>
     <ClCompile Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp">
@@ -833,7 +833,7 @@
     <ClCompile Include="../../ni_packer/unstore.c">
       <Filter>Source Files\ni_packer</Filter>
     </ClCompile>
-    <ClCompile Include="../../test/depack_t.c">
+    <ClCompile Include="..\..\test\test_depack_t.c">
       <Filter>Source Files\test</Filter>
     </ClCompile>
     <ClCompile Include="../../unarjbta/environ.c">
@@ -1445,6 +1445,12 @@
     <Text Include="../../win32/bcb5/README.txt">
       <Filter>Misc Files\win32\bcb5</Filter>
     </Text>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\compiler_intrinsics.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="../../test/test-data/src/emoji.png">
