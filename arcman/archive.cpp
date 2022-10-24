@@ -33,25 +33,6 @@
 
 #include "gup.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_IO_H
-#include <io.h>
-#endif
-
 #include "gup_err.h"
 #include "compress.h"
 #include "gup_io.h"

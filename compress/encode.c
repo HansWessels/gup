@@ -278,11 +278,6 @@
  */
 #undef PP_AFTER
 
-#include <stdlib.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdio.h>
-
 #include "gup.h"
 #include "compress.h"
 #include "evaluatr.h"

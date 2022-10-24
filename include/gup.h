@@ -23,10 +23,6 @@
 #ifndef __GUP_H__
 #define __GUP_H__
 
-#include "config.h"
-
-#define FALSE			0
-#define TRUE			1
 
 /*
  * OS id's.
@@ -55,6 +51,73 @@
 #define OS_XOSK			20				/* LHARC */
 
 #define MAX_OS			OS_XOSK
+
+
+
+#if defined(_MSC_VER)
+#include "../win32/msvc2019/config.h"
+#else
+#include "config.h"
+#endif
+
+#if defined(_MSC_VER)
+#include <crtdbg.h>
+#endif
+#if (OS == OS_WIN32)
+#include <windows.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_IO_H
+#include <io.h>
+#endif
+#ifdef HAVE_DIR_H
+#include <dir.h>
+#endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#ifdef HAVE_DIRECT_H
+#include <direct.h>
+#endif
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
+#if (OS == OS_UNIX)
+#include <grp.h>
+#include <pwd.h>
+#endif
+#include <stdint.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <time.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "compiler_intrinsics.h"
+
+
+
+// fixes for MSVC et al:
+#undef small
+#undef large
+
+
+
+#if !defined(FALSE) && !defined(TRUE)
+
+#define FALSE			0
+#define TRUE			1
+
+#endif
 
 /*
  * Macro preventing waring never used variable foo in function bar.

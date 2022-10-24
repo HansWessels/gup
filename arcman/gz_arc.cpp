@@ -14,22 +14,6 @@
 
 #include "gup.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
-#if (OS == OS_UNIX)
-#include <grp.h>
-#include <pwd.h>
-#endif
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "gup_err.h"
 #include "compress.h"

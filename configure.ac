@@ -55,7 +55,7 @@ m4_warn([obsolete],
 AC_CHECK_INCLUDES_DEFAULT
 AC_PROG_EGREP
 
-AC_CHECK_HEADERS(unistd.h rx.h regex.h io.h)
+AC_CHECK_HEADERS(unistd.h rx.h regex.h io.h dir.h dirent.h direct.h utime.h)
 GUP_INTS_H
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -79,7 +79,7 @@ GUP_CHECK_TYPE(uint64, HAVE_UINT64)
 dnl Checks for library functions.
 AC_FUNC_MMAP
 AC_REPLACE_FUNCS(strlwr)
-AC_CHECK_FUNCS(getpwnam_r getpwuid_r getgrnam_r getgrgid_r localtime_r lchown)
+AC_CHECK_FUNCS(getpwnam_r getpwuid_r getgrnam_r getgrgid_r localtime_r lchown mkdir _mkdir)
 
 dnl Define system type.
 AC_DEFINE_UNQUOTED(SYSTEM, "$target_alias")

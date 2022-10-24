@@ -14,18 +14,6 @@
 
 #include "gup.h"
 
-#include <string.h>
-#include <sys/types.h>
-
-#if (OS == OS_UNIX)
-#include <grp.h>
-#include <pwd.h>
-#endif
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "sysdep/arcman.h"
 #include "header.h"

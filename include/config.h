@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#error "SHOULD NOT be included when compiling in Microsoft Visual Studio"
+#endif
+
 /* include/config.h.  Generated from config.h.in by configure.  */
 /* include/config.h.in.  Generated from configure.ac by autoheader.  */
 #define PACKAGE "gup"
@@ -54,6 +58,8 @@
 /* __EXTENSIONS__. */
 /* #undef __EXTENSIONS__ */
 
+#define HAVE_DIRECT_H 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -74,6 +80,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+#undef HAVE_MKDIR 
+#define HAVE__MKDIR 1
 
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
