@@ -4201,7 +4201,7 @@ gup_result compress_n1(packstruct *com)
         Waarschuwing, zodra je met matchlengtes hebt geschove kin je geen zeef34 code
         meer toepassen. Dus eerst zeef34 conversies en daarna matchlen optimalisatie.
       */
-      { /* ronde 1, alleen zeef 34 */
+      { /* ronde 1, alleen zeef 34, twee maal achter elkaar zeven is een probeem, van achteren naar voren werken? Of voor naar achter met vlag */
         uint8* bp=com->backmatch;
         c_codetype *p = com->chars;
         pointer_type *q= com->pointers;
@@ -4212,10 +4212,21 @@ gup_result compress_n1(packstruct *com)
           c_codetype kar = *p++;
           if (kar > (NLIT-1))
           {
-            uint8 len=*bp++;
+            bp++; /* next backmatch */
+            q++; /* next pointer */
+          }
+        } while (--i!=0);
+        i = entries;
+        do
+        { /* nu staat alles achter aan, terug werken */
+          c_codetype kar = *--p;
+          if (kar > (NLIT-1))
+          {
+            uint8 len=*--bp;
+	         q--;
             if(len>0)
             {
-              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
+              c_codetype kar_1=p[-1]+MIN_MATCH-NLIT;
               kar+=MIN_MATCH-NLIT;
               if((kar_1-len)<3)
               { /* conversie naar 1 of 2? */
@@ -4223,20 +4234,24 @@ gup_result compress_n1(packstruct *com)
               	 { /* conversie naar 2? */
               	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter aan lengte twee literals */
               	 	{
-                 		bp[-1]=0;
-                 		p[-2]=-2;
-                 		p[-1]+=len;
+                 		bp[0]=0;
+                 		p[-1]=-2;
+                 		p[0]+=len;
                  	}
               	 }
               	 else if((kar_1-len)==1)
               	 { /* conversie naar 1 */
-                 	bp[-1]=0;
-                 	p[-2]=-1;
-                 	p[-1]+=len;
+                 	bp[0]=0;
+                 	p[-1]=-1;
+                 	p[0]+=len;
                 }
               }
             }
-            q++; /* next pointer */
+          }
+          else if(kar<0)
+          {
+          	q--;
+          	bp--;
           }
         } while (--i!=0);
       }
