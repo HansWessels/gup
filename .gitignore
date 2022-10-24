@@ -20,3 +20,8 @@ stamp-h1
 *~
 /test.arj
 /unix/gup
+
+.vs/
+*.user
+/win32/msvc2019/bin/
+/win32/msvc2019/obj/
