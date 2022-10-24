@@ -9,22 +9,6 @@
 
 #if ENABLE_DUMP_OUTPUT_MODES
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
-#include <fstream>
-#include <string>
-#include <iostream>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "gup_err.h"
 #include "compress.h"
@@ -39,6 +23,11 @@
 #include "crc.h"
 #include "os.h"
 #include "support.h"
+
+#include <fstream>
+#include <string>
+#include <iostream>
+
 
 #define DEBUG_DUMP_HEADERS 0
 
