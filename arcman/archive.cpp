@@ -298,12 +298,22 @@ archive::archive(void)
 	opened = 0;
 	rw = 0;
 	handle_valid = 0;
+	use_temp_files = 0;
 
 	/*
 	 * Set options to defaults.
 	 */
 
 	opt_repair = 0;
+	opt_no_write = 0;
+
+	// null anything else, so we don't get b0rked pointer references by the time we invoke close/destructor:
+
+	memset(&st, 0, sizeof(st));
+	file = nullptr;
+	// volumes.clear();
+	cur_volume = nullptr;
+	file_buffer = nullptr;
 }
 
 archive::~archive(void)
