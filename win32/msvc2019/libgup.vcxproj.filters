@@ -1,0 +1,1460 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03fd328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{42f0fc98-34f6-4567-b3cf-de13e74a89ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files">
+      <UniqueIdentifier>{b1798409-2031-413d-9df7-70b0202ddd98}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files\arcman">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\arcman\include">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\arcman\include\unix">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\arcman\include\win32">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\arjbeta">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0005}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\atari">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0007}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\atari\cgl">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0006}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\atari\cgl\include">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\atari\shell">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\compress">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0010}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\compress\m68000">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0011}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\compress\m68000.mot">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\compress\st_opti">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0013}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\guplib">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0014}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0015}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\sysdep">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0016}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0018}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\global">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0017}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0019}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\basics">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0021}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\basics\constant">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0022}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\basics\convert">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0023}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\basics\object">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0024}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\basics\type">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0025}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\drawing">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\drawing\color">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0027}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\drawing\font">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\error">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0029}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\error\errmsg">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\error\rescode">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0031}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\hardware">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0032}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\hardware\mouse">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0033}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\hardware\screen">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0034}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\heap">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0035}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\heap\heap">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0036}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\heap\heapadm">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0037}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\heap\heapblck">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0038}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\heap\safeheap">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0039}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\scrnobj">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0040}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\scrnobj\mouse">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0041}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\sound">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0042}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\sound\sound">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0043}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0044}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\startup\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0045}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\tasking">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0046}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\tasking\mutex">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0047}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\tasking\mutexid">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0048}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\tasking\physmux">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0049}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\text">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0050}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\text\char">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0051}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\text\number">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0052}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\text\string">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0053}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0054}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window\admin">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window\safewin">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0056}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window\window">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0057}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window\winfont">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0058}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\osrtl\windows\window\winpaint">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\shell">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0061}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\shell\windows">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\shell\windows\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0063}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ms-win\shell\windows\startup\entry">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0062}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\unarjbta">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0064}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\unix">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0065}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\arcman">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0066}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\arcman\doc">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\arjbeta">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0068}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\compress">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0069}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\compress\m68000">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0070}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\compress\m68000.mot">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0071}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\compress\st_opti">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0072}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\doc">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0073}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\doc\specs">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0074}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\guplib">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0075}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\include">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\include\sysdep">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0077}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\lib">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0078}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\ni_packer">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\ni_packer\atari_st">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0079}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\spec">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0081}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\test">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0084}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\test\test-data">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0083}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\test\test-data\ref-out">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0082}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\test\test-data\src">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0085}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\unix">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\win32">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0088}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\win32\bcb5">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0092}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test\test-data">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0091}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test\test-data\src">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0090}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\arcman">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0093}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\arjbeta">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0094}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\atari">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0096}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\atari\cgl">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0095}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\atari\shell">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0097}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compress">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0098}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compress\m68000">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0099}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compress\m68000.mot">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compress\st_opti">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0101}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\guplib">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0102}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0103}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0105}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\confctrl">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0104}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0109}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0108}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\basics">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0107}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\basics\convert">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0106}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\basics\object">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\drawing">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0112}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\drawing\color">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0111}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\drawing\font">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0113}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\error">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0115}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\error\errmsg">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0114}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\hardware">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0117}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\hardware\mouse">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0116}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\hardware\screen">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0118}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\heap">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0120}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\heap\heap">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0119}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\heap\heapadm">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\heap\heapblck">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0122}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\scrnobj">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0124}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\scrnobj\mouse">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0123}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\sound">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0126}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\sound\sound">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\startup\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0127}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\tasking">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\tasking\mutex">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0129}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\tasking\physmux">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0131}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\text">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0133}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\text\char">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0132}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\text\number">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0134}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\text\string">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\window">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\window\admin">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0136}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\window\safewin">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0138}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\window\window">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\osrtl\windows\window\winfont">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0140}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\shell">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0144}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\shell\windows">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0143}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\shell\windows\startup">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0142}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ms-win\shell\windows\startup\entry">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0141}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ni_packer">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0145}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\test">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0146}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\unarjbta">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0147}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\unix">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0148}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../../arcman/arc_util.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/archive.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arj_arc.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arj_hdr.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/dump_arc.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/dump_hdr.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/gz_arc.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/gz_hdr.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/header.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/lha_arc.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/lha_hdr.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/unix_arj.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/unix_gz.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/unix_lha.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/unix_utl.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/w32_arj.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/w32_gz.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/w32_lha.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/w32_utl.cpp">
+      <Filter>Source Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/arj_hdr.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/arj_outp.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/arjbeta.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/file_buf.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/filter.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/gz_hdr.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/lha_hdr.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/s_header.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/scan.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/swapbit.c">
+      <Filter>Source Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/application.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/dialog.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/event.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/userdef.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/util.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/window.cc">
+      <Filter>Source Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/add.cpp">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/alert.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj_slid.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/atari.cpp">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/dir.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/extract.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/main.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/message.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/popup.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/resource.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/slider.cc">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/util.c">
+      <Filter>Source Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/crc.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/decode.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/encode.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/evaluatr.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/m68000.mot/opti.c">
+      <Filter>Source Files\compress\m68000.mot</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/m68000/opti.c">
+      <Filter>Source Files\compress\m68000</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/sld.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/sld_indx.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/sld_med.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/sld_smll.c">
+      <Filter>Source Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/st_opti/st_opti.c">
+      <Filter>Source Files\compress\st_opti</Filter>
+    </ClInclude>
+    <ClCompile Include="../../guplib/arc_util.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/archive.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/arj_arc.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/arj_hdr.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/crc.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/decode.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/encode.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/evaluatr.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/gup_err.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/gup_io.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/gz_arc.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/gz_hdr.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/header.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/lha_arc.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/lha_hdr.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/matchpat.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/sld.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/sld_indx.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/sld_med.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/sld_smll.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/strlwr.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/unix_arj.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/unix_gz.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/unix_lha.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/unix_utl.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/w32_arj.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/w32_err.c">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/w32_gz.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/w32_lha.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClCompile Include="../../guplib/w32_utl.cpp">
+      <Filter>Source Files\guplib</Filter>
+    </ClCompile>
+    <ClInclude Include="../../lib/gup_err.c">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../lib/gup_io.c">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../lib/matchpat.c">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../lib/strlwr.c">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../lib/w32_err.c">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/confctrl/pack.cc">
+      <Filter>Source Files\ms-win\confctrl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\basics\convert</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/object/object.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\basics\object</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/color/color.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\drawing\color</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/font/font.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\drawing\font</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\error\errmsg</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/mouse/mouse.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\hardware\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\hardware\screen</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heap/heap.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\heap\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\heap\heapadm</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapblck/heapblck.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\heap\heapblck</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/scrnobj/mouse/mouse.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\scrnobj\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/sound/sound/sound.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\sound\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/startup/startup/startup.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\startup\startup</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/mutex/mutex.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\tasking\mutex</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/physmux/physmux.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\tasking\physmux</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/char/char.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\text\char</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/number/number.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\text\number</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/string/string.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\text\string</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/admin/admin.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\window\admin</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/safewin/safewin.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\window\safewin</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/window/window.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\window\window</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/winfont/winfont.cpp">
+      <Filter>Source Files\ms-win\osrtl\windows\window\winfont</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/shell/windows/startup/entry/entry.cpp">
+      <Filter>Source Files\ms-win\shell\windows\startup\entry</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/arj_crc.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/arj_m4.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/arj_m7.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/depack_t.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/ni_n0.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/ni_n1.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ni_packer/unstore.c">
+      <Filter>Source Files\ni_packer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../test/depack_t.c">
+      <Filter>Source Files\test</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unarjbta/environ.c">
+      <Filter>Source Files\unarjbta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unarjbta/unarj.c">
+      <Filter>Source Files\unarjbta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/compress.cpp">
+      <Filter>Source Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/decomp.cpp">
+      <Filter>Source Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/main.cpp">
+      <Filter>Source Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/scan.cpp">
+      <Filter>Source Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/utils.cpp">
+      <Filter>Source Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../acconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arc_util.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arcctl.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/archive.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arj_arc.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/arj_hdr.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/dump_arc.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/dump_hdr.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/gz_arc.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/gz_hdr.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/header.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/include/unix/arcman.h">
+      <Filter>Header Files\arcman\include\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/include/win32/arcman.h">
+      <Filter>Header Files\arcman\include\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/lha_arc.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/lha_hdr.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arcman/os.h">
+      <Filter>Header Files\arcman</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/arj_hdr.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/arj_outp.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/file_buf.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/gz_hdr.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/lha_hdr.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/port.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../arjbeta/scan.h">
+      <Filter>Header Files\arjbeta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cgl_appl.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cgl_dial.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cgl_evnt.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cgl_util.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cgl_wind.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/include/cglscode.h">
+      <Filter>Header Files\atari\cgl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/cgl/internal.h">
+      <Filter>Header Files\atari\cgl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/add.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/alert.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arj_slid.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/arjshell.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/dir.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/main.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/message.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/os_dep.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/popup.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/resource.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/sh_opts.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/slider.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/util.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../atari/shell/version.h">
+      <Filter>Header Files\atari\shell</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/decode.h">
+      <Filter>Header Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/encode.h">
+      <Filter>Header Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/evaluatr.h">
+      <Filter>Header Files\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/m68000.mot/opti.h">
+      <Filter>Header Files\compress\m68000.mot</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/m68000/opti.h">
+      <Filter>Header Files\compress\m68000</Filter>
+    </ClInclude>
+    <ClInclude Include="../../compress/st_opti/opti.h">
+      <Filter>Header Files\compress\st_opti</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/arc_util.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/arcctl.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/archive.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/arj_arc.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/arj_hdr.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/decode.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/encode.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/evaluatr.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/gz_arc.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/gz_hdr.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/header.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/lha_arc.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/lha_hdr.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../guplib/os.h">
+      <Filter>Header Files\guplib</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/arcman.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/arjbeta.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/compr_io.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/compress.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/config.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/configbc.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/configst.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/crc.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/gup.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/gup_err.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/gup_io.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/gup_io_porting.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/options.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/support.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/sysdep/arcman.h">
+      <Filter>Header Files\include\sysdep</Filter>
+    </ClInclude>
+    <ClInclude Include="../../include/w32_err.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/global/settings.h">
+      <Filter>Header Files\ms-win\global</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/osrtl.h">
+      <Filter>Header Files\ms-win\osrtl</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/basics.h">
+      <Filter>Header Files\ms-win\osrtl\windows\basics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/constant/constant.h">
+      <Filter>Header Files\ms-win\osrtl\windows\basics\constant</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/convert/convert.h">
+      <Filter>Header Files\ms-win\osrtl\windows\basics\convert</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/object/object.h">
+      <Filter>Header Files\ms-win\osrtl\windows\basics\object</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/type/type.h">
+      <Filter>Header Files\ms-win\osrtl\windows\basics\type</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/color/color.h">
+      <Filter>Header Files\ms-win\osrtl\windows\drawing\color</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/drawing.h">
+      <Filter>Header Files\ms-win\osrtl\windows\drawing</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/font/font.h">
+      <Filter>Header Files\ms-win\osrtl\windows\drawing\font</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.h">
+      <Filter>Header Files\ms-win\osrtl\windows\error\errmsg</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/error/error.h">
+      <Filter>Header Files\ms-win\osrtl\windows\error</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/error/rescode/rescode.h">
+      <Filter>Header Files\ms-win\osrtl\windows\error\rescode</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/hardware.h">
+      <Filter>Header Files\ms-win\osrtl\windows\hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/mouse/mouse.h">
+      <Filter>Header Files\ms-win\osrtl\windows\hardware\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/screen/screen.h">
+      <Filter>Header Files\ms-win\osrtl\windows\hardware\screen</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heap.h">
+      <Filter>Header Files\ms-win\osrtl\windows\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heap/heap.h">
+      <Filter>Header Files\ms-win\osrtl\windows\heap\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.h">
+      <Filter>Header Files\ms-win\osrtl\windows\heap\heapadm</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapblck/heapblck.h">
+      <Filter>Header Files\ms-win\osrtl\windows\heap\heapblck</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/safeheap/safeheap.h">
+      <Filter>Header Files\ms-win\osrtl\windows\heap\safeheap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/osrtl.h">
+      <Filter>Header Files\ms-win\osrtl\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/scrnobj/mouse/mouse.h">
+      <Filter>Header Files\ms-win\osrtl\windows\scrnobj\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/scrnobj/scrnobj.h">
+      <Filter>Header Files\ms-win\osrtl\windows\scrnobj</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/settings.h">
+      <Filter>Header Files\ms-win\osrtl\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/sound/sound.h">
+      <Filter>Header Files\ms-win\osrtl\windows\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/sound/sound/sound.h">
+      <Filter>Header Files\ms-win\osrtl\windows\sound\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/startup/startup.h">
+      <Filter>Header Files\ms-win\osrtl\windows\startup</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/startup/startup/startup.h">
+      <Filter>Header Files\ms-win\osrtl\windows\startup\startup</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/mutex/mutex.h">
+      <Filter>Header Files\ms-win\osrtl\windows\tasking\mutex</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/mutexid/mutexid.h">
+      <Filter>Header Files\ms-win\osrtl\windows\tasking\mutexid</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/physmux/physmux.h">
+      <Filter>Header Files\ms-win\osrtl\windows\tasking\physmux</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/tasking.h">
+      <Filter>Header Files\ms-win\osrtl\windows\tasking</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/char/char.h">
+      <Filter>Header Files\ms-win\osrtl\windows\text\char</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/number/number.h">
+      <Filter>Header Files\ms-win\osrtl\windows\text\number</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/string/string.h">
+      <Filter>Header Files\ms-win\osrtl\windows\text\string</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/text.h">
+      <Filter>Header Files\ms-win\osrtl\windows\text</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/admin/admin.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window\admin</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/safewin/safewin.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window\safewin</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/window.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/window/window.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window\window</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/winfont/winfont.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window\winfont</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/winpaint/winpaint.h">
+      <Filter>Header Files\ms-win\osrtl\windows\window\winpaint</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/shell/windows/settings.h">
+      <Filter>Header Files\ms-win\shell\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="../../ms-win/shell/windows/startup/entry/entry.h">
+      <Filter>Header Files\ms-win\shell\windows\startup\entry</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unarjbta/unarj.h">
+      <Filter>Header Files\unarjbta</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/arj.h">
+      <Filter>Header Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/scan.h">
+      <Filter>Header Files\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="../../unix/utils.h">
+      <Filter>Header Files\unix</Filter>
+    </ClInclude>
+    <Text Include="../../Makefile.am">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../Makefile.in">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../arcman/Makefile.am">
+      <Filter>Misc Files\arcman</Filter>
+    </Text>
+    <Text Include="../../arcman/Makefile.in">
+      <Filter>Misc Files\arcman</Filter>
+    </Text>
+    <Text Include="../../arcman/doc/arcman.txt">
+      <Filter>Misc Files\arcman\doc</Filter>
+    </Text>
+    <Text Include="../../arjbeta/swab_bit.txt">
+      <Filter>Misc Files\arjbeta</Filter>
+    </Text>
+    <Text Include="../../compress/Makefile.am">
+      <Filter>Misc Files\compress</Filter>
+    </Text>
+    <Text Include="../../compress/Makefile.in">
+      <Filter>Misc Files\compress</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/crc16bit.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/crc_opti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/enc_opti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/sld_opti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/sldfopti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/sldmopti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000.mot/sldsopti.s">
+      <Filter>Misc Files\compress\m68000.mot</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/crc16bit.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/crc_opti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/enc_opti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/sld_opti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/sldfopti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/sldmopti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/m68000/sldsopti.s">
+      <Filter>Misc Files\compress\m68000</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/backmtch.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/chaoscrc.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/crc16bit.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/encodest.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/sld.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/sld_med.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/sld_smll.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../compress/st_opti/sldf.s">
+      <Filter>Misc Files\compress\st_opti</Filter>
+    </Text>
+    <Text Include="../../configure.ac">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../doc/archive.txt">
+      <Filter>Misc Files\doc</Filter>
+    </Text>
+    <Text Include="../../doc/headers.txt">
+      <Filter>Misc Files\doc</Filter>
+    </Text>
+    <Text Include="../../doc/specs/module.txt">
+      <Filter>Misc Files\doc\specs</Filter>
+    </Text>
+    <Text Include="../../doc/specs/platform.txt">
+      <Filter>Misc Files\doc\specs</Filter>
+    </Text>
+    <Text Include="../../gup.spec.in">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../guplib/Makefile.am">
+      <Filter>Misc Files\guplib</Filter>
+    </Text>
+    <Text Include="../../guplib/Makefile.in">
+      <Filter>Misc Files\guplib</Filter>
+    </Text>
+    <Text Include="../../include/Makefile.am">
+      <Filter>Misc Files\include</Filter>
+    </Text>
+    <Text Include="../../include/Makefile.in">
+      <Filter>Misc Files\include</Filter>
+    </Text>
+    <Text Include="../../include/config.h.in">
+      <Filter>Misc Files\include</Filter>
+    </Text>
+    <Text Include="../../include/stamp-h.in">
+      <Filter>Misc Files\include</Filter>
+    </Text>
+    <Text Include="../../include/sysdep/Makefile.am">
+      <Filter>Misc Files\include\sysdep</Filter>
+    </Text>
+    <Text Include="../../include/sysdep/Makefile.in">
+      <Filter>Misc Files\include\sysdep</Filter>
+    </Text>
+    <Text Include="../../lib/Makefile.am">
+      <Filter>Misc Files\lib</Filter>
+    </Text>
+    <Text Include="../../lib/Makefile.in">
+      <Filter>Misc Files\lib</Filter>
+    </Text>
+    <Text Include="../../ltmain.sh">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../mk_autoconf.sh">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../ni_packer/atari_st/arj_crc.s">
+      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    </Text>
+    <Text Include="../../ni_packer/atari_st/arj_m4.s">
+      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    </Text>
+    <Text Include="../../ni_packer/atari_st/arj_m7.s">
+      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    </Text>
+    <Text Include="../../ni_packer/atari_st/ni_n0.s">
+      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    </Text>
+    <Text Include="../../ni_packer/atari_st/unstore.s">
+      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    </Text>
+    <Text Include="../../spec/archive.txt">
+      <Filter>Misc Files\spec</Filter>
+    </Text>
+    <Text Include="../../spec/headers.txt">
+      <Filter>Misc Files\spec</Filter>
+    </Text>
+    <Text Include="../../sync_to_Q_network_drive.sh">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../sync_to_me.sh">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../test/test-data/ref-out/test.sollwert.asmdump.hexdump.txt">
+      <Filter>Misc Files\test\test-data\ref-out</Filter>
+    </Text>
+    <Text Include="../../test/test-data/ref-out/test.sollwert.bindump.hexdump.txt">
+      <Filter>Misc Files\test\test-data\ref-out</Filter>
+    </Text>
+    <Text Include="../../test/test-data/ref-out/test.sollwert.cdump.hexdump.txt">
+      <Filter>Misc Files\test\test-data\ref-out</Filter>
+    </Text>
+    <Text Include="../../test/test-data/src/lorem.txt">
+      <Filter>Misc Files\test\test-data\src</Filter>
+    </Text>
+    <Text Include="../../test/test-data/src/tennyson.txt">
+      <Filter>Misc Files\test\test-data\src</Filter>
+    </Text>
+    <Text Include="../../test_check_archive_size.sh">
+      <Filter>Misc Files</Filter>
+    </Text>
+    <Text Include="../../unix/Makefile.am">
+      <Filter>Misc Files\unix</Filter>
+    </Text>
+    <Text Include="../../unix/Makefile.in">
+      <Filter>Misc Files\unix</Filter>
+    </Text>
+    <Text Include="../../win32/bcb5/README.txt">
+      <Filter>Misc Files\win32\bcb5</Filter>
+    </Text>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\compiler_intrinsics.h">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="../../test/test-data/src/emoji.png">
+      <Filter>Misc Files\test\test-data\src</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
