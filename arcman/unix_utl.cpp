@@ -18,18 +18,10 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <time.h>
-#include <utime.h>
-
 #include "gup.h"
+
+#if (OS == OS_UNIX)
+
 #include "gup_err.h"
 #include "sysdep/arcman.h"
 #include "header.h"
@@ -720,3 +712,5 @@ gup_result gup_readlink(const char *filename, char **linkname)
 		size *= 2;
 	}
 }
+
+#endif // OS

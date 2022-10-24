@@ -16,14 +16,7 @@
 
 #include "gup.h"
 
-#include <dir.h>
-#include <errno.h>
-#include <io.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <windows.h>
+#if (OS == OS_WIN32)
 
 #include "arc_util.h"
 #include "gup_err.h"
@@ -48,7 +41,7 @@
 
 char *get_name(const char *path)
 {
-	register char *ptr;
+	char *ptr;
 
 	if ((ptr = strrchr((char *) path, PATH_CHAR)) == NULL)
 		return (char *) path;
@@ -93,7 +86,7 @@ void copy_filename(char *dest, const char *src)
 
 gup_result copy_file(const char *src, const char *dest)
 {
-	if (CopyFile(src, dest, FALSE) == FALSE)
+	if (CopyFileA(src, dest, FALSE) == FALSE)
 		return gup_conv_win32_err(GetLastError());
 	else
 		return GUP_OK;
@@ -114,7 +107,7 @@ gup_result copy_file(const char *src, const char *dest)
 
 gup_result move_file(const char *src, const char *dest)
 {
-	if (DeleteFile(dest) == FALSE)
+	if (DeleteFileA(dest) == FALSE)
 	{
 		DWORD error;
 
@@ -122,7 +115,7 @@ gup_result move_file(const char *src, const char *dest)
 			return gup_conv_win32_err(error);
 	}
 
-	if (MoveFile(src, dest) == FALSE)
+	if (MoveFileA(src, dest) == FALSE)
 		return gup_conv_win32_err(GetLastError());
 
 	return GUP_OK;
@@ -350,9 +343,9 @@ ftype gup_file_type(const osstat *stat)
 gup_result gup_stat(const char *name, osstat *st)
 {
 	HANDLE handle;
-	WIN32_FIND_DATA data;
+	WIN32_FIND_DATAA data;
 
-	if ((handle = FindFirstFile(name, &data)) == INVALID_HANDLE_VALUE)
+	if ((handle = FindFirstFileA(name, &data)) == INVALID_HANDLE_VALUE)
 		return gup_conv_win32_err(GetLastError());
 
 	FindClose(handle);
@@ -441,13 +434,13 @@ gup_result gup_set_stat(const char *filename, const osstat *st)
 
 	if (!(st->file_mode.mode & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		if ((handle = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_WRITE,
+		if ((handle = CreateFileA(filename, GENERIC_WRITE, FILE_SHARE_WRITE,
 								 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 								 NULL)) != INVALID_HANDLE_VALUE)
 		{
 			BOOL result;
 
-			if ((result = SetFileAttributes(filename, (st->file_mode.mode & 0x7F))) == TRUE)
+			if ((result = SetFileAttributesA(filename, (st->file_mode.mode & 0x7F))) == TRUE)
 				result = SetFileTime(handle, &st->ctime.time, &st->atime.time,
 									 &st->mtime.time);
 			CloseHandle(handle);
@@ -522,10 +515,19 @@ gup_result gup_mkdir(const char *dirname, osmode mode)
 {
 	(void) mode;
 
+#if defined(HAVE_MKDIR) 
 	if (mkdir(dirname) == -1)
 		return gup_conv_err(errno);
 	else
 		return GUP_OK;
+#elif defined(HAVE__MKDIR)
+	if (mkdir(dirname) == -1)
+		return gup_conv_err(errno);
+	else
+		return GUP_OK;
+#else
+#error "b0rk b0rk b0rk"
+#endif
 }
 
 /*
@@ -591,3 +593,5 @@ gup_result gup_readlink(const char *filename, char **linkname)
 
 	return GUP_INTERNAL;
 }
+
+#endif // OS

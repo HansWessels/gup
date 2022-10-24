@@ -15,9 +15,10 @@
  * First version. Library contains only strlwr.c.
  */
 
-#include <ctype.h>
-
+#include "gup.h"
 #include "support.h"
+
+#if !defined(HAVE_STRLWR)
 
 /*
  * char *strlwr(char *string)
@@ -37,3 +38,5 @@ char *strlwr(char *string)
 
 	return string;
 }
+
+#endif
