@@ -3441,46 +3441,125 @@ gup_result compress_n0(packstruct *com)
         Waarschuwing, zodra je met matchlengtes hebt geschove kin je geen zeef34 code
         meer toepassen. Dus eerst zeef34 conversies en daarna matchlen optimalisatie.
       */
-      { /* ronde 1, alleen zeef 34 */
-        uint8* bp=com->backmatch;
-        c_codetype *p = com->chars;
-        pointer_type *q= com->pointers;
-        *bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
-        int i = entries;
-        do
-        {
-          c_codetype kar = *p++;
-          if (kar > (NLIT-1))
-          {
-            uint8 len=*bp++;
-            if(len>0)
-            {
-              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
-              kar+=MIN_MATCH-NLIT;
-              if((kar_1-len)<3)
-              { /* conversie naar 1 of 2? */
-              	 if((kar_1-len)==2)
-              	 { /* conversie naar 2? */
-              	 	if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>18) /* groter aan lengte twee literals */
-              	 	{
-                 		bp[-1]=0;
-                 		p[-2]=-2;
-                 		p[-1]+=len;
-                 	}
-              	 }
-              	 else if((kar_1-len)==1)
-              	 { /* conversie naar 1 */
-                 	bp[-1]=0;
-                 	p[-2]=-1;
-                 	p[-1]+=len;
-                }
-              }
-            }
-            q++; /* next pointer */
-          }
-        } while (--i!=0);
+      { /* ronde 1, alleen zeef 34, twee maal achter elkaar zeven is een probeem, van achteren naar voren werken? Of voor naar achter met vlag */
+			uint8* bp=com->backmatch;
+			c_codetype *p = com->chars;
+			pointer_type *q= com->pointers;
+			*bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
+			int i = entries;
+			do
+			{
+				c_codetype kar = *p++;
+				if (kar > (NLIT-1))
+				{
+					bp++; /* next backmatch */
+					q++; /* next pointer */
+				}
+			} while (--i!=0);
+			i = entries;
+			do
+			{ /* nu staat alles achter aan, terug werken */
+				c_codetype kar = *--p;
+				if (kar > (NLIT-1))
+				{
+					uint8 len=*--bp;
+					q--;
+					if(len>0)
+					{
+						c_codetype kar_1=p[-1]+MIN_MATCH-NLIT-len;
+						if(kar_1<3)
+						{ /* conversie naar 1 of 2? */
+							if(kar_1==2)
+							{ /* conversie naar 2? */
+								if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>18) /* pointer lengte is of 9 of 17, de len(3) = 2 dus bij een lange ptr altijd raak, bij een korte nooit raak */
+								{ /* conversie naar 2 mogelijk */
+									if(bp[-1]>0)
+									{ /* extra conversie? */
+										c_codetype kar_2=p[-2]+MIN_MATCH-NLIT-bp[-1];
+										if(kar_2>2)
+										{ /* geen extra conversie */
+											p[0]+=len;
+											bp[0]=0;
+											p[-1]=-2;
+										}
+										else
+										{ /* deze of volgende conversie nemen? */
+											if(kar_2==2)
+											{ /* conversie twee */
+												if(n0_ptr_len(q[-2])>n0_ptr_len(q[-1]))
+												{ /* neem de langste pointer */
+													p[-1]+=bp[-1];
+													bp[-1]=0;
+													p[-2]=-2;
+												}
+												else
+												{ /* originele conversie houden */
+													p[0]+=len;
+													bp[0]=0;
+													p[-1]=-2;
+												}
+											}
+											else
+											{ /* conversie een */
+												p[-1]+=bp[-1];
+												bp[-1]=0;
+												p[-2]=-1;
+											}
+										}
+									}
+									else
+									{ /* geen extra conversie */
+										p[0]+=len;
+										bp[0]=0;
+										p[-1]=-2;
+									}
+								}
+							}
+							else
+							{ /* conversie naar 1 */
+								if(bp[-1]>0) 
+								{ /* extra conversie? */
+									c_codetype kar_2=p[-2]+MIN_MATCH-NLIT-bp[-1];
+									if(kar_2==1)
+									{
+										if(n0_ptr_len(q[-2])>n0_ptr_len(q[-1]))
+										{ /* neem de langste pointer */
+											p[-1]+=bp[-1];
+											bp[-1]=0;
+											p[-2]=-1;
+										}
+										else
+										{ /* geen extra conversie */
+											p[0]+=len;
+											bp[0]=0;
+											p[-1]=-1;
+										}
+									}
+									else
+									{ /* geen extra conversie */
+										p[0]+=len;
+										bp[0]=0;
+										p[-1]=-1;
+									}
+								}
+								else
+								{
+									p[0]+=len;
+									bp[0]=0;
+									p[-1]=-1;
+								}
+							}
+						}
+					}
+				}
+				else if(kar<0)
+				{
+					q--;
+					bp--;
+				}
+			} while (--i!=0);
       }
-      { /* matchlen optimalisatie */
+      { /* ronde 2, matchlen optimalisatie */
         uint8* bp=com->backmatch;
         c_codetype *p = com->chars;
         pointer_type *q= com->pointers;
@@ -3616,16 +3695,11 @@ gup_result compress_n0(packstruct *com)
     entries=(uint16)(com->charp-p);
     if (com->matchstring != NULL)
     {
-      long ptrctr = q - com->pointers;
-      long i = (com->charp - com->chars) - entries;
-      memmove(com->backmatch, com->backmatch+ptrctr, i);
-      com->msp -= 4 * (long)ptrctr;
-      com->bmp-=ptrctr;
+      com->msp = com->matchstring;
+      com->bmp = com->backmatch;
     }
-    com->charp = com->chars+entries;
-    com->ptrp = com->pointers+(com->ptrp-q);
-    memmove(com->chars, p, entries*sizeof(*p));
-    memmove(com->pointers, q, entries*sizeof(*q)); /* deze zou niet nodig moeten zijn */
+    com->charp = com->chars;
+    com->ptrp = com->pointers;
   }
   return GUP_OK;
 }
@@ -3734,7 +3808,7 @@ gup_result close_n0_stream(packstruct *com)
 
 #endif
 
-#ifndef N1T_USE_STD_compress_n1
+#ifndef NOT_USE_STD_compress_n1
 
 int n1_lit_len(uint32 val);
 int n1_len_len(uint32 val);
@@ -4106,10 +4180,6 @@ gup_result compress_n1(packstruct *com)
 	** loop
 	*/
   	int entries = (int) (com->charp - com->chars);
-  	if(entries==63745)
-  	{ /* cludge for evaluator bug */
-  		entries--;
-  	}
 	{
 		if(com->inmem_output==NULL)
 		{ /* malloc the inmem_output buffer */
@@ -4201,44 +4271,123 @@ gup_result compress_n1(packstruct *com)
         Waarschuwing, zodra je met matchlengtes hebt geschove kin je geen zeef34 code
         meer toepassen. Dus eerst zeef34 conversies en daarna matchlen optimalisatie.
       */
-      { /* ronde 1, alleen zeef 34 */
-        uint8* bp=com->backmatch;
-        c_codetype *p = com->chars;
-        pointer_type *q= com->pointers;
-        *bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
-        int i = entries;
-        do
-        {
-          c_codetype kar = *p++;
-          if (kar > (NLIT-1))
-          {
-            uint8 len=*bp++;
-            if(len>0)
-            {
-              c_codetype kar_1=p[-2]+MIN_MATCH-NLIT;
-              kar+=MIN_MATCH-NLIT;
-              if((kar_1-len)<3)
-              { /* conversie naar 1 of 2? */
-              	 if((kar_1-len)==2)
-              	 { /* conversie naar 2? */
-              	 	if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter aan lengte twee literals */
-              	 	{
-                 		bp[-1]=0;
-                 		p[-2]=-2;
-                 		p[-1]+=len;
-                 	}
-              	 }
-              	 else if((kar_1-len)==1)
-              	 { /* conversie naar 1 */
-                 	bp[-1]=0;
-                 	p[-2]=-1;
-                 	p[-1]+=len;
-                }
-              }
-            }
-            q++; /* next pointer */
-          }
-        } while (--i!=0);
+      { /* ronde 1, alleen zeef 34, twee maal achter elkaar zeven is een probeem, van achteren naar voren werken? Of voor naar achter met vlag */
+			uint8* bp=com->backmatch;
+			c_codetype *p = com->chars;
+			pointer_type *q= com->pointers;
+			*bp=0; /* een backmatch naar een vorig blok is niet mogelijk */
+			int i = entries;
+			do
+			{
+				c_codetype kar = *p++;
+				if (kar > (NLIT-1))
+				{
+					bp++; /* next backmatch */
+					q++; /* next pointer */
+				}
+			} while (--i!=0);
+			i = entries;
+			do
+			{ /* nu staat alles achter aan, terug werken */
+				c_codetype kar = *--p;
+				if (kar > (NLIT-1))
+				{
+					uint8 len=*--bp;
+					q--;
+					if(len>0)
+					{
+						c_codetype kar_1=p[-1]+MIN_MATCH-NLIT-len;
+						if(kar_1<3)
+						{ /* conversie naar 1 of 2? */
+							if(kar_1==2)
+							{ /* conversie naar 2? */
+								if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter dan lengte twee literals */
+								{ /* conversie naar 2 mogelijk */
+									if(bp[-1]>0)
+									{ /* extra conversie? */
+										c_codetype kar_2=p[-2]+MIN_MATCH-NLIT-bp[-1];
+										if(kar_2>2)
+										{ /* geen extra conversie */
+											p[0]+=len;
+											bp[0]=0;
+											p[-1]=-2;
+										}
+										else
+										{ /* deze of volgende conversie nemen? */
+											if(kar_2==2)
+											{ /* conversie twee */
+												if(n1_ptr_len(q[-2])>n1_ptr_len(q[-1]))
+												{ /* neem de langste pointer */
+													p[-1]+=bp[-1];
+													bp[-1]=0;
+													p[-2]=-2;
+												}
+												else
+												{ /* originele conversie houden */
+													p[0]+=len;
+													bp[0]=0;
+													p[-1]=-2;
+												}
+											}
+											else
+											{ /* conversie een */
+												p[-1]+=bp[-1];
+												bp[-1]=0;
+												p[-2]=-1;
+											}
+										}
+									}
+									else
+									{ /* geen extra conversie */
+										p[0]+=len;
+										bp[0]=0;
+										p[-1]=-2;
+									}
+								}
+							}
+							else
+							{ /* conversie naar 1 */
+								if(bp[-1]>0) 
+								{ /* extra conversie? */
+									c_codetype kar_2=p[-2]+MIN_MATCH-NLIT-bp[-1];
+									if(kar_2==1)
+									{
+										if(n1_ptr_len(q[-2])>n1_ptr_len(q[-1]))
+										{ /* neem de langste pointer */
+											p[-1]+=bp[-1];
+											bp[-1]=0;
+											p[-2]=-1;
+										}
+										else
+										{ /* geen extra conversie */
+											p[0]+=len;
+											bp[0]=0;
+											p[-1]=-1;
+										}
+									}
+									else
+									{ /* geen extra conversie */
+										p[0]+=len;
+										bp[0]=0;
+										p[-1]=-1;
+									}
+								}
+								else
+								{
+									p[0]+=len;
+									bp[0]=0;
+									p[-1]=-1;
+								}
+							}
+						}
+					}
+				}
+				else if(kar<0)
+				{
+					q--;
+					bp--;
+				}
+			} while (--i!=0);
       }
       { /* ronde 2, matchlen optimalisatie */
         uint8* bp=com->backmatch;
@@ -4326,22 +4475,9 @@ gup_result compress_n1(packstruct *com)
     {
       com->msp = com->matchstring;
       com->bmp = com->backmatch;
-      if(entries==1)
-      {
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->msp++=*r++;
-        *com->bmp++=0;
-      }
     }
     com->charp = com->chars;
     com->ptrp = com->pointers;
-    if(entries==1)
-    {
-      *com->charp++=*p++;
-      *com->ptrp++= *q++;
-    }
   }
 
   return GUP_OK;
