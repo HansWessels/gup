@@ -743,75 +743,75 @@
     <Text Include="../../ms-win/confctrl/pack.cc">
       <Filter>Source Files\ms-win\confctrl</Filter>
     </Text>
-    <ClCompile Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp">
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\basics\convert</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/basics/object/object.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/basics/object/object.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\basics\object</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/drawing/color/color.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/color/color.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\drawing\color</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/drawing/font/font.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/drawing/font/font.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\drawing\font</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\error\errmsg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\ms-win\osrtl\windows\hardware\mouse\hw_mouse.cpp">
+    </ClInclude>
+    <ClInclude Include="..\..\ms-win\osrtl\windows\hardware\mouse\hw_mouse.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\hardware\mouse</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\hardware\screen</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/heap/heap/heap.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heap/heap.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\heap\heap</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\heap\heapadm</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/heap/heapblck/heapblck.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapblck/heapblck.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\heap\heapblck</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/scrnobj/mouse/mouse.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/scrnobj/mouse/mouse.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\scrnobj\mouse</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/sound/sound/sound.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/sound/sound/sound.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\sound\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/startup/startup/startup.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/startup/startup/startup.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\startup\startup</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/tasking/mutex/mutex.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/mutex/mutex.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\tasking\mutex</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/tasking/physmux/physmux.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/tasking/physmux/physmux.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\tasking\physmux</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/text/char/char.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/char/char.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\text\char</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/text/number/number.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/number/number.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\text\number</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/text/string/string.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/text/string/string.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\text\string</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/window/admin/admin.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/admin/admin.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\window\admin</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/window/safewin/safewin.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/safewin/safewin.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\window\safewin</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/window/window/window.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/window/window.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\window\window</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/osrtl/windows/window/winfont/winfont.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/osrtl/windows/window/winfont/winfont.cpp">
       <Filter>Source Files\ms-win\osrtl\windows\window\winfont</Filter>
-    </ClCompile>
-    <ClCompile Include="../../ms-win/shell/windows/startup/entry/entry.cpp">
+    </ClInclude>
+    <ClInclude Include="../../ms-win/shell/windows/startup/entry/entry.cpp">
       <Filter>Source Files\ms-win\shell\windows\startup\entry</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClCompile Include="../../ni_packer/arj_crc.c">
       <Filter>Source Files\ni_packer</Filter>
     </ClCompile>
