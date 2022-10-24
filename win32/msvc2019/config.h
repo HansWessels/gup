@@ -74,22 +74,22 @@ typedef uint64_t	uint64;
 #define HAVE_DIRECT_H 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-//#define HAVE_DLFCN_H 1
+/* #undef HAVE_DLFCN_H */
 
 /* Define to 1 if you have the `getgrgid_r' function. */
-//#define HAVE_GETGRGID_R 1
+/* #undef HAVE_GETGRGID_R */
 
 /* Define to 1 if you have the `getgrnam_r' function. */
-//#define HAVE_GETGRNAM_R 1
+/* #undef HAVE_GETGRNAM_R */
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getpwnam_r' function. */
-//#define HAVE_GETPWNAM_R 1
+/* #undef HAVE_GETPWNAM_R */
 
 /* Define to 1 if you have the `getpwuid_r' function. */
-//#define HAVE_GETPWUID_R 1
+/* #undef HAVE_GETPWUID_R */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -101,16 +101,16 @@ typedef uint64_t	uint64;
 #define HAVE_IO_H 1
 
 /* Define to 1 if you have the `lchown' function. */
-//#define HAVE_LCHOWN 1
+/* #undef HAVE_LCHOWN */
 
 /* Define to 1 if you have the `localtime_r' function. */
-//#define HAVE_LOCALTIME_R 1
+/* #undef HAVE_LOCALTIME_R */
 
 /* Define to 1 if you have a working `mmap' system call. */
-//#define HAVE_MMAP 1
+/* #undef HAVE_MMAP */
 
 /* Define to 1 if you have the <regex.h> header file. */
-//#define HAVE_REGEX_H 1
+/* #undef HAVE_REGEX_H */
 
 /* Define to 1 if you have the <rx.h> header file. */
 /* #undef HAVE_RX_H */
@@ -173,7 +173,11 @@ typedef uint64_t	uint64;
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 8
+#if defined(_WIN64) || defined(WIN64)
+#define SIZEOF_LONG 4			// 64 bit build
+#else
+#define SIZEOF_LONG 4			// 32 bit build
+#endif
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
