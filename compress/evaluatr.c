@@ -116,11 +116,6 @@
 #endif
 
 
-#include <stdlib.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdio.h>
-
 #include "gup.h"
 #include "encode.h"
 #include "evaluatr.h"
@@ -146,19 +141,15 @@
 #endif
 
 #ifndef NDEBUG
-FILE* redir = stderr;
-#define ARJ_Assert(expr)   \
-  ((void)((expr)||(fprintf(redir,  \
-  "\nAssertion failed: %s, file %s, line %d\n",\
-   #expr, __FILE__, __LINE__ ),\
-   ((int (*)(void))abort)())))
+#undef ARJ_Assert
+#define ARJ_Assert(expr)   __ARJ_Assert(expr)
 
 #define ARJ_Assert_ZEEF34()     \
   if (((com->msp - com->matchstring) < 0)\
       || ((com->msp - com->matchstring) >= ((com->hufbufsize+4UL)*4))\
       || (com->ptrp-com->pointers)!=((com->msp-com->matchstring)/4))\
   {\
-    fprintf(redir, \
+    fprintf(assert_redir_fptr, \
     "\nAssertion ZEEF34 failed: file %s, line %d\n"\
     "com->pointers = %8p, com->ptrp = %8p, com->ptrp - com->pointers = %8ld\n"\
     "com->msp = %8p, com->matchstring = %8p, com->msp - com->matchstring = %8ld, .../4 = %8ld\n",\

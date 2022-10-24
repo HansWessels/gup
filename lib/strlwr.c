@@ -40,3 +40,32 @@ char *strlwr(char *string)
 }
 
 #endif
+
+
+
+
+FILE* assert_redir_fptr = NULL;
+
+int report_assertion_failure(const char* msg, ...)
+{
+	va_list parm;
+
+	va_start(parm, msg);
+
+	if (!assert_redir_fptr)
+		assert_redir_fptr = stderr;
+
+	vfprintf(assert_redir_fptr, msg, parm);
+
+	va_end(parm);
+
+#if defined(_WIN32)
+	// invoke debugger:
+	DebugBreak();
+#endif
+
+	abort();
+
+	return 0;
+}
+

@@ -229,6 +229,39 @@ typedef long long int64;
 
 #define ENABLE_DUMP_OUTPUT_MODES  1
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern FILE* assert_redir_fptr;
+int report_assertion_failure(const char* msg, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#if !defined(__PRETTY_FUNCTION__) && defined(_MSC_VER)
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+#define __ARJ_Assert(expr)										\
+  ((void)((expr) || report_assertion_failure(					\
+  "\nAssertion failed: %s, file %s, line %d, function %s\n",	\
+   #expr, __FILE__, __LINE__, __PRETTY_FUNCTION__)))
+
+
+#ifndef NDEBUG
+
+#define ARJ_Assert(expr)   __ARJ_Assert(expr)
+
+#else
+
+#define ARJ_Assert(expr)
+
+#endif
+
+
 #if 0
 
 #define TRACE_ME()				\
