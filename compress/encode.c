@@ -4411,7 +4411,7 @@ gup_result compress_n1(packstruct *com)
 						{ /* conversie naar 1 of 2? */
 							if(kar_1==2)
 							{ /* conversie naar 2? */
-								if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter dan lengte twee literals, moet afhankelijk gemaakt worden van de lenget van de pointer run */
+								if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter dan lengte twee literals, moet afhankelijk gemaakt worden van de lengte van de pointer run */
 								{ /* conversie naar 2 mogelijk */
 									if(bp[-1]>0)
 									{ /* extra conversie? */
