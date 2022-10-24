@@ -3480,7 +3480,7 @@ gup_result compress_n0(packstruct *com)
 						{ /* conversie naar 1 of 2? */
 							if(kar_1==2)
 							{ /* conversie naar 2? */
-								if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>18) /* groter dan lengte twee literals */
+								if((n0_ptr_len(q[-1])+n0_len_len(3)+1)>18) /* pointer lengte is of 9 of 17, de len(3) = 2 dus bij een lange ptr altijd raak, bij een korte nooit raak */
 								{ /* conversie naar 2 mogelijk */
 									if(bp[-1]>0)
 									{ /* extra conversie? */
