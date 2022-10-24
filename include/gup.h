@@ -89,6 +89,9 @@
 #include <grp.h>
 #include <pwd.h>
 #endif
+#if defined(HAVE_TOS_H) || (OS == OS_ATARI)
+#include <tos.h>
+#endif
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -101,6 +104,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <ctype.h>
 
 #include "compiler_intrinsics.h"
 

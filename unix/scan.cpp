@@ -3,6 +3,11 @@
 
 #include "gup.h"
 
+// load the thirdparty/dirent impleementation instead when the system doesn't provide dirent.h
+#if !defined(HAVE_DIRENT_H)
+#include "../thirdparty/dirent/include/dirent.h"
+#endif
+
 #include "arj.h"
 #include "gup_err.h"
 #include "options.h"
@@ -153,7 +158,7 @@ int is_regexp(char *expr)
  * *dir contains also *wild. to seperate *(wild-1) = 0
  */
 
-void split_arg(char *arg, char **dir, char **wild)
+void split_arg(char *arg, const char **dir, char **wild)
 {
 	char *h;
 
@@ -184,7 +189,8 @@ void split_arg(char *arg, char **dir, char **wild)
 gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 {
 	DSTACK new_dir;
-	char *dir, *wild;
+	const char* dir;
+	char* wild;
 	gup_result ret;
 	osstat stat;
 

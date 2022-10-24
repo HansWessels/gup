@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{00811970-815B-4F64-BC9D-219078100F5B}</ProjectGuid>
-    <RootNamespace>gup</RootNamespace>
+    <ProjectGuid>{00811970-815B-4F64-BC9D-219078102F5B}</ProjectGuid>
+    <RootNamespace>ni_packer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -217,134 +217,13 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="../../arcman/arc_util.cpp" />
-    <ClCompile Include="../../arcman/archive.cpp" />
-    <ClCompile Include="../../arcman/arj_arc.cpp" />
-    <ClCompile Include="../../arcman/arj_hdr.cpp" />
-    <ClCompile Include="../../arcman/dump_arc.cpp" />
-    <ClCompile Include="../../arcman/dump_hdr.cpp" />
-    <ClCompile Include="../../arcman/gz_arc.cpp" />
-    <ClCompile Include="../../arcman/gz_hdr.cpp" />
-    <ClCompile Include="../../arcman/header.cpp" />
-    <ClCompile Include="../../arcman/lha_arc.cpp" />
-    <ClCompile Include="../../arcman/lha_hdr.cpp" />
-    <ClCompile Include="../../arcman/unix_arj.cpp" />
-    <ClCompile Include="../../arcman/unix_gz.cpp" />
-    <ClCompile Include="../../arcman/unix_lha.cpp" />
-    <ClCompile Include="../../arcman/unix_utl.cpp" />
-    <ClCompile Include="../../arcman/w32_arj.cpp" />
-    <ClCompile Include="../../arcman/w32_gz.cpp" />
-    <ClCompile Include="../../arcman/w32_lha.cpp" />
-    <ClCompile Include="../../arcman/w32_utl.cpp" />
-    <ClInclude Include="../../arjbeta/arj_hdr.c" />
-    <ClInclude Include="../../arjbeta/arj_outp.c" />
-    <ClInclude Include="../../arjbeta/arjbeta.c" />
-    <ClInclude Include="../../arjbeta/file_buf.c" />
-    <ClInclude Include="../../arjbeta/filter.c" />
-    <ClInclude Include="../../arjbeta/gz_hdr.c" />
-    <ClInclude Include="../../arjbeta/lha_hdr.c" />
-    <ClInclude Include="../../arjbeta/s_header.c" />
-    <ClInclude Include="../../arjbeta/scan.c" />
-    <ClInclude Include="../../arjbeta/swapbit.c" />
-    <ClInclude Include="../../atari/cgl/application.cc" />
-    <ClInclude Include="../../atari/cgl/dialog.cc" />
-    <ClInclude Include="../../atari/cgl/event.cc" />
-    <ClInclude Include="../../atari/cgl/userdef.cc" />
-    <ClInclude Include="../../atari/cgl/util.cc" />
-    <ClInclude Include="../../atari/cgl/window.cc" />
-    <ClInclude Include="../../atari/shell/add.cpp" />
-    <ClInclude Include="../../atari/shell/alert.cc" />
-    <ClInclude Include="../../atari/shell/arj.cc" />
-    <ClInclude Include="../../atari/shell/arj_slid.cc" />
-    <ClInclude Include="../../atari/shell/atari.cpp" />
-    <ClInclude Include="../../atari/shell/dir.cc" />
-    <ClInclude Include="../../atari/shell/extract.cc" />
-    <ClInclude Include="../../atari/shell/main.cc" />
-    <ClInclude Include="../../atari/shell/message.cc" />
-    <ClInclude Include="../../atari/shell/popup.cc" />
-    <ClInclude Include="../../atari/shell/resource.cc" />
-    <ClInclude Include="../../atari/shell/slider.cc" />
-    <ClInclude Include="../../atari/shell/util.c" />
-    <ClCompile Include="../../compress/crc.c" />
-    <ClCompile Include="../../compress/decode.c" />
-    <ClCompile Include="../../compress/encode.c" />
-    <ClCompile Include="../../compress/evaluatr.c" />
-    <ClCompile Include="..\..\compress\m68000.mot\mot_opti.c" />
-    <ClCompile Include="../../compress/m68000/opti.c" />
-    <ClCompile Include="../../compress/sld.c" />
-    <ClCompile Include="../../compress/sld_indx.c" />
-    <ClCompile Include="../../compress/sld_med.c" />
-    <ClCompile Include="../../compress/sld_smll.c" />
-    <ClCompile Include="../../compress/st_opti/st_opti.c" />
-    <ClInclude Include="../../guplib/arc_util.cpp" />
-    <ClInclude Include="../../guplib/archive.cpp" />
-    <ClInclude Include="../../guplib/arj_arc.cpp" />
-    <ClInclude Include="../../guplib/arj_hdr.cpp" />
-    <ClInclude Include="../../guplib/crc.c" />
-    <ClInclude Include="../../guplib/decode.c" />
-    <ClInclude Include="../../guplib/encode.c" />
-    <ClInclude Include="../../guplib/evaluatr.c" />
-    <ClInclude Include="../../guplib/gup_err.c" />
-    <ClInclude Include="../../guplib/gup_io.c" />
-    <ClInclude Include="../../guplib/gz_arc.cpp" />
-    <ClInclude Include="../../guplib/gz_hdr.cpp" />
-    <ClInclude Include="../../guplib/header.cpp" />
-    <ClInclude Include="../../guplib/lha_arc.cpp" />
-    <ClInclude Include="../../guplib/lha_hdr.cpp" />
-    <ClInclude Include="../../guplib/matchpat.c" />
-    <ClInclude Include="../../guplib/sld.c" />
-    <ClInclude Include="../../guplib/sld_indx.c" />
-    <ClInclude Include="../../guplib/sld_med.c" />
-    <ClInclude Include="../../guplib/sld_smll.c" />
-    <ClInclude Include="../../guplib/strlwr.c" />
-    <ClInclude Include="../../guplib/unix_arj.cpp" />
-    <ClInclude Include="../../guplib/unix_gz.cpp" />
-    <ClInclude Include="../../guplib/unix_lha.cpp" />
-    <ClInclude Include="../../guplib/unix_utl.cpp" />
-    <ClInclude Include="../../guplib/w32_arj.cpp" />
-    <ClInclude Include="../../guplib/w32_err.c" />
-    <ClInclude Include="../../guplib/w32_gz.cpp" />
-    <ClInclude Include="../../guplib/w32_lha.cpp" />
-    <ClInclude Include="../../guplib/w32_utl.cpp" />
-    <ClCompile Include="../../lib/gup_err.c" />
-    <ClCompile Include="../../lib/gup_io.c" />
-    <ClCompile Include="../../lib/matchpat.c" />
-    <ClCompile Include="../../lib/strlwr.c" />
-    <ClCompile Include="../../lib/w32_err.c" />
-    <Text Include="../../ms-win/confctrl/pack.cc" />
-    <ClInclude Include="../../ms-win/osrtl/windows/basics/convert/convert.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/basics/object/object.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/drawing/color/color.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/drawing/font/font.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/error/errmsg/errmsg.cpp" />
-    <ClInclude Include="..\..\ms-win\osrtl\windows\hardware\mouse\hw_mouse.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/hardware/screen/screen.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/heap/heap/heap.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapadm/heapadm.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/heap/heapblck/heapblck.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/scrnobj/mouse/mouse.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/sound/sound/sound.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/startup/startup/startup.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/tasking/mutex/mutex.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/tasking/physmux/physmux.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/text/char/char.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/text/number/number.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/text/string/string.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/window/admin/admin.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/window/safewin/safewin.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/window/window/window.cpp" />
-    <ClInclude Include="../../ms-win/osrtl/windows/window/winfont/winfont.cpp" />
-    <ClInclude Include="../../ms-win/shell/windows/startup/entry/entry.cpp" />
-    <ClInclude Include="../../ni_packer/arj_crc.c" />
-    <ClInclude Include="../../ni_packer/arj_m4.c" />
-    <ClInclude Include="../../ni_packer/arj_m7.c" />
-    <ClInclude Include="../../ni_packer/depack_t.c" />
-    <ClInclude Include="../../ni_packer/ni_n0.c" />
-    <ClInclude Include="../../ni_packer/ni_n1.c" />
-    <ClInclude Include="../../ni_packer/unstore.c" />
-    <ClInclude Include="..\..\test\test_depack_t.c" />
-    <ClInclude Include="../../unarjbta/environ.c" />
-    <ClInclude Include="../../unarjbta/unarj.c" />
+    <ClCompile Include="../../ni_packer/arj_crc.c" />
+    <ClCompile Include="../../ni_packer/arj_m4.c" />
+    <ClCompile Include="../../ni_packer/arj_m7.c" />
+    <ClCompile Include="../../ni_packer/depack_t.c" />
+    <ClCompile Include="../../ni_packer/ni_n0.c" />
+    <ClCompile Include="../../ni_packer/ni_n1.c" />
+    <ClCompile Include="../../ni_packer/unstore.c" />
     <ClCompile Include="../../unix/compress.cpp" />
     <ClCompile Include="../../unix/decomp.cpp" />
     <ClCompile Include="../../unix/main.cpp" />
@@ -549,6 +428,11 @@
     <Text Include="../../unix/Makefile.am" />
     <Text Include="../../unix/Makefile.in" />
     <Text Include="../../win32/bcb5/README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="libgup.vcxproj">
+      <Project>{00811970-815b-4f64-bc9d-219078101f5b}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)\common-project-ultimate-override.props" Label="SolutionWideSettingsOverride" />

@@ -210,8 +210,6 @@ Note: Archived files are no longer sorted alphabetically.
 
 */
 
-#include <time.h>
-#include <string.h>
 #include "gup.h"
 #include "encode.h"
 #include "port.h"
