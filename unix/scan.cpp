@@ -3,17 +3,6 @@
 
 #include "gup.h"
 
-#include <errno.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arj.h"
 #include "gup_err.h"
 #include "options.h"
