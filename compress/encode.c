@@ -251,7 +251,7 @@
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
 	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
-	#define LOG_BIT(bit) /* printf("bit = %i\n",bit); */
+	#define LOG_BIT(bit)  printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
 	#define LOG_COUNTER_RESET log_pos_counter=0;
 	#define LOG_TEXT(string) printf(string);
@@ -3830,22 +3830,6 @@ void store_n1_counter(uint32 val, packstruct *com);
 void store_n1_run(uint32 val, packstruct *com);
 gup_result core_n1(packstruct *com);
 
-int n1_len_len(uint32 val)
-{ /* bereken de code lengte voor val, 2 <= val <= 2^32 */
-	return 2*(first_bit_set32(val-1)-1);
-}
-
-int n1_ptr_len(uint32 val)
-{ /* bereken de code lengte voor val, 0 <= val <= 65536 */
-	int len;
-	len=first_bit_set32(val)-1;
-	if(len<=0)
-	{
-		len=1;
-	}
-	return len+4;
-}
-
 #define ST_BIT_N1(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
@@ -3864,36 +3848,27 @@ int n1_ptr_len(uint32 val)
   }																		\
 }
 
-void store_n1_val(uint32 val, packstruct *com)
-{ /* waarde val >=2 */
-	int bits_to_do=first_bit_set32(val)-1;
-	uint32 mask=1<<bits_to_do;
-	mask>>=1;
-	do
-	{
-		if((val&mask)==0)
-		{
-			ST_BIT_N1(0);
-		}
-		else
-		{
-			ST_BIT_N1(1);
-		}
-		mask>>=1;
-		if(mask==0)
-		{
-			ST_BIT_N1(0);
-		}
-		else
-		{
-			ST_BIT_N1(1);
-		}
-	}while(mask!=0);
+
+int n1_len_len(uint32 val)
+{ /* bereken de code lengte voor val, 2 <= val <= 2^32 */
+	return 2*(first_bit_set32(val-1)-1);
 }
 
 void store_n1_len_val(uint32 val, packstruct *com)
 { /* waarde val >=3 */
 	store_n1_val(val-1, com);
+}
+
+#if 0
+int n1_ptr_len(uint32 val)
+{ /* bereken de code lengte voor val, 0 <= val <= 65536 */
+	int len;
+	len=first_bit_set32(val)-1;
+	if(len<=0)
+	{
+		len=1;
+	}
+	return len+4;
 }
 
 void store_n1_ptr_val(int32_t val, packstruct *com)
@@ -3936,6 +3911,132 @@ void store_n1_ptr_val(int32_t val, packstruct *com)
 			ST_BIT_N1(1);
 		}
 		mask>>=1;
+	}while(mask!=0);
+}
+#else
+int n1_ptr_len(uint32 val)
+{ /* bereken de code lengte voor val, 0 <= val <= 65536 */
+	if(val<16)
+	{
+		return 6;
+	}
+	else if(val<256)
+	{
+		return 9;
+	}
+	else
+	{
+		int len;
+		len=first_bit_set32(val)-1;
+		return len+4;
+	}
+}
+
+void store_n1_ptr_val(int32_t val, packstruct *com)
+{ /* waarde val >=0 <=65535 */
+	if(val<16)
+	{ /* 6 bit waarde */
+		int mask;
+		ST_BIT_N1(0);
+		ST_BIT_N1(0);
+		val=~val;
+		mask=1<<3;
+		do
+		{
+			if((val&mask)==0)
+			{
+				ST_BIT_N1(0);
+			}
+			else
+			{
+				ST_BIT_N1(1);
+			}
+			mask>>=1;
+		} while(mask>0);
+	}
+	else if(val<256)
+	{ /* 9 bit waarde */
+		int mask;
+		ST_BIT_N1(0);
+		ST_BIT_N1(1);
+		val=~val;
+		mask=1<<6;
+		do
+		{
+			if((val&mask)==0)
+			{
+				ST_BIT_N1(0);
+			}
+			else
+			{
+				ST_BIT_N1(1);
+			}
+			mask>>=1;
+		} while(mask>0);
+	}
+	else
+	{ /* val >=256, 3 bit pointer lengte waarde */
+		int len;
+		int mask;
+		ST_BIT_N1(1);
+		len=first_bit_set32(val)-9;
+		mask=1<<2;
+		do
+		{ /* lengte van de pointer */
+			if((len&mask)==0)
+			{
+				ST_BIT_N1(0);
+			}
+			else
+			{
+				ST_BIT_N1(1);
+			}
+			mask>>=1;
+		}while(mask!=0);
+		val=~val;
+		{
+			mask=1<<(len+7);
+			do
+			{
+				if((val&mask)==0)
+				{
+					ST_BIT_N1(0);
+				}
+				else
+				{
+					ST_BIT_N1(1);
+				}
+				mask>>=1;
+			} while(mask>0);
+		}
+	}
+}
+#endif
+
+void store_n1_val(uint32 val, packstruct *com)
+{ /* waarde val >=2 */
+	int bits_to_do=first_bit_set32(val)-1;
+	uint32 mask=1<<bits_to_do;
+	mask>>=1;
+	do
+	{
+		if((val&mask)==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
+		mask>>=1;
+		if(mask==0)
+		{
+			ST_BIT_N1(0);
+		}
+		else
+		{
+			ST_BIT_N1(1);
+		}
 	}while(mask!=0);
 }
 
@@ -4310,7 +4411,7 @@ gup_result compress_n1(packstruct *com)
 						{ /* conversie naar 1 of 2? */
 							if(kar_1==2)
 							{ /* conversie naar 2? */
-								if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter dan lengte twee literals */
+								if((n1_ptr_len(q[-1])+n1_len_len(3)+1)>18) /* groter dan lengte twee literals, moet afhankelijk gemaakt worden van de lenget van de pointer run */
 								{ /* conversie naar 2 mogelijk */
 									if(bp[-1]>0)
 									{ /* extra conversie? */
