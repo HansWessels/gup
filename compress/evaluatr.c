@@ -954,7 +954,7 @@ gup_result encode_big(packstruct *com)
               STORE_LITERAL();
               STORE_MATCH_NB(swapptr0, swapmatch0, swaphist0);
               match0 = 0;
-              match1 =0;
+              match1 = 0;
               ptrswap = 0;
               ARJ_Assert(current_pos_start<=current_pos);
               break;
@@ -1042,6 +1042,15 @@ gup_result encode_big(packstruct *com)
               match3 = -1;
               match4 = -1;
               match5 = -1;
+
+              hist2 = 0;
+              hist3 = 0;
+              hist4 = 0;
+              hist5 = 0;
+              ptr2 = 0;
+              ptr3 = 0;
+              ptr4 = 0;
+              ptr5 = 0;
             }
             else
             {
