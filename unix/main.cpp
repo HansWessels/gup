@@ -693,6 +693,11 @@ int main(int argc, char *argv[])
 			{
 				opts.mode = GNU_ARJ_MODE_7;
 			}
+			if (opts.type == AT_UNKNOWN)
+			{
+				printf("%s: assuming default output mode: ARJ\n", opts.programname);
+				opts.type = AT_ARJ;
+			}
 			break;
 		case AT_LHA:
 			if (default_mode)
@@ -715,7 +720,7 @@ int main(int argc, char *argv[])
 				printf("%s: DUMP MODE is only supported for ARJ style compression settings.\n", opts.programname);
 				return GUP_INVAL;
 			}
-			opts.type = arc_type;
+ 			opts.type = arc_type;
 			break;
 		}
 		ARJ_Assert(opts.type != AT_UNKNOWN);
