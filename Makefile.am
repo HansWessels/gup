@@ -50,7 +50,11 @@ gup:
 	cd unix
 	make
 
-test: gup
+ni_packer:
+	cd ni_packer
+	make
+
+test: gup ni_packer
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
@@ -111,4 +115,4 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_packer
