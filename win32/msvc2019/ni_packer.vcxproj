@@ -21,30 +21,30 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{00811970-815B-4F64-BC9D-219078102F5B}</ProjectGuid>
     <RootNamespace>ni_packer</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
@@ -224,11 +224,6 @@
     <ClCompile Include="../../ni_packer/ni_n0.c" />
     <ClCompile Include="../../ni_packer/ni_n1.c" />
     <ClCompile Include="../../ni_packer/unstore.c" />
-    <ClCompile Include="../../unix/compress.cpp" />
-    <ClCompile Include="../../unix/decomp.cpp" />
-    <ClCompile Include="../../unix/main.cpp" />
-    <ClCompile Include="../../unix/scan.cpp" />
-    <ClCompile Include="../../unix/utils.cpp" />
     <ClInclude Include="../../acconfig.h" />
     <ClInclude Include="../../arcman/arc_util.h" />
     <ClInclude Include="../../arcman/arcctl.h" />
@@ -428,11 +423,6 @@
     <Text Include="../../unix/Makefile.am" />
     <Text Include="../../unix/Makefile.in" />
     <Text Include="../../win32/bcb5/README.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="libgup.vcxproj">
-      <Project>{00811970-815b-4f64-bc9d-219078101f5b}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)\common-project-ultimate-override.props" Label="SolutionWideSettingsOverride" />

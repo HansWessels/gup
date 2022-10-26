@@ -291,9 +291,6 @@
     <Filter Include="Source Files\ni_packer">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0145}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\unix">
-      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0148}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="../../ni_packer/arj_crc.c">
@@ -316,21 +313,6 @@
     </ClCompile>
     <ClCompile Include="../../ni_packer/unstore.c">
       <Filter>Source Files\ni_packer</Filter>
-    </ClCompile>
-    <ClCompile Include="../../unix/compress.cpp">
-      <Filter>Source Files\unix</Filter>
-    </ClCompile>
-    <ClCompile Include="../../unix/decomp.cpp">
-      <Filter>Source Files\unix</Filter>
-    </ClCompile>
-    <ClCompile Include="../../unix/main.cpp">
-      <Filter>Source Files\unix</Filter>
-    </ClCompile>
-    <ClCompile Include="../../unix/scan.cpp">
-      <Filter>Source Files\unix</Filter>
-    </ClCompile>
-    <ClCompile Include="../../unix/utils.cpp">
-      <Filter>Source Files\unix</Filter>
     </ClCompile>
     <ClInclude Include="../../acconfig.h">
       <Filter>Header Files</Filter>
