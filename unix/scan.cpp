@@ -3,15 +3,9 @@
 
 #include "gup.h"
 
-#include <errno.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
+// load the thirdparty/dirent impleementation instead when the system doesn't provide dirent.h
+#if !defined(HAVE_DIRENT_H)
+#include "../thirdparty/dirent/include/dirent.h"
 #endif
 
 #include "arj.h"
@@ -164,7 +158,7 @@ int is_regexp(char *expr)
  * *dir contains also *wild. to seperate *(wild-1) = 0
  */
 
-void split_arg(char *arg, char **dir, char **wild)
+void split_arg(char *arg, const char **dir, char **wild)
 {
 	char *h;
 
@@ -195,7 +189,8 @@ void split_arg(char *arg, char **dir, char **wild)
 gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 {
 	DSTACK new_dir;
-	char *dir, *wild;
+	const char* dir;
+	char* wild;
 	gup_result ret;
 	osstat stat;
 
@@ -205,6 +200,13 @@ gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 	{
 		if (dir)						  /* if there's something in front of wildcard */
 			*(wild - 1) = 0;
+	}
+	else
+	{
+		// trim trailing / off the dir path:
+		size_t dlen = strlen(arg);
+		if (dlen > 2 && strchr("/\\", arg[dlen - 1]))
+			arg[dlen - 1] = 0;
 	}
 
 	if (!dir || (*dir == 0))

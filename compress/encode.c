@@ -278,11 +278,6 @@
  */
 #undef PP_AFTER
 
-#include <stdlib.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdio.h>
-
 #include "gup.h"
 #include "compress.h"
 #include "evaluatr.h"
@@ -365,14 +360,10 @@ void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffma
 #endif
 
 #ifndef NDEBUG
-FILE* redir = stderr;
-#define ARJ_Assert(expr)   \
-  ((void)((expr)||(fprintf(redir, \
-  "\nAssertion failed: %s, file %s, line %d\n",\
-   #expr, __FILE__, __LINE__ ),\
-   ((int (*)(void))abort)())))
+#undef ARJ_Assert
+#define ARJ_Assert(expr)   __ARJ_Assert(expr)
 #else
-#define ARJ_Assert( expr )
+#define ARJ_Assert(expr)
 #endif
 
 #ifndef NOT_USE_STD_free_encode
@@ -963,11 +954,11 @@ gup_result compress_chars(packstruct *com)
         c_codetype tmp = *cp++;
         if(tmp<0)
         {
-          fprintf(redir, "te klein!");
+          fprintf(assert_redir_fptr, "te klein!");
         }
         if(tmp>(NLIT-MIN_MATCH+com->max_match))
         {
-          fprintf(redir, "te groot!");
+          fprintf(assert_redir_fptr, "te groot!");
         }
         ARJ_Assert(tmp>=0);
         ARJ_Assert(tmp<=(NLIT-MIN_MATCH+com->max_match));
@@ -1125,7 +1116,7 @@ gup_result compress_chars(packstruct *com)
             {
               dentries = lentries;
               #if 0
-                fprintf(redir, "%X", count);
+                fprintf(assert_redir_fptr, "%X", count);
               #endif
               break;
             }
@@ -1137,7 +1128,7 @@ gup_result compress_chars(packstruct *com)
               dentries = lentries;
             }
             #if 0
-              fprintf(redir, "%X", count);
+              fprintf(assert_redir_fptr, "%X", count);
             #endif
             break;
           }
@@ -1502,11 +1493,11 @@ gup_result compress_chars(packstruct *com)
             ARJ_Assert(tmp<=(c_codetype)(NLIT-MIN_MATCH+com->max_match));
             if(tmp<-4)
             {
-              fprintf(redir, "te klein!");
+              fprintf(assert_redir_fptr, "te klein!");
             }
             if(tmp>(int)(NLIT-MIN_MATCH+com->max_match))
             {
-              fprintf(redir, "te groot!");
+              fprintf(assert_redir_fptr, "te groot!");
             }
           }
         }
@@ -1629,11 +1620,11 @@ gup_result compress_chars(packstruct *com)
                 ARJ_Assert(tmp<=(c_codetype)(NLIT-MIN_MATCH+com->max_match));
                 if(tmp<-4)
                 {
-                  fprintf(redir, "te klein!");
+                  fprintf(assert_redir_fptr, "te klein!");
                 }
                 if(tmp>(int)(NLIT-MIN_MATCH+com->max_match))
                 {
-                  fprintf(redir, "te groot!");
+                  fprintf(assert_redir_fptr, "te groot!");
                 }
               }
             }
@@ -1896,7 +1887,7 @@ gup_result compress_chars(packstruct *com)
   if(com->special_header!=NORMAL_HEADER)
   { /* minimale header, alles literal */
     #if 0
-    fprintf(redir, "!");
+    fprintf(assert_redir_fptr, "!");
     #endif
     {
       uint16 xentries=entries;
@@ -3061,11 +3052,11 @@ gup_result compress_m4(packstruct *com)
                 ARJ_Assert(tmp<=(NLIT-MIN_MATCH+com->max_match))
                 if(tmp<0)
                 {
-                  fprintf(redir, "te klein!");
+                  fprintf(assert_redir_fptr, "te klein!");
                 }
                 if(tmp>(NLIT-MIN_MATCH+com->max_match))
                 {
-                  fprintf(redir, "te groot!");
+                  fprintf(assert_redir_fptr, "te groot!");
                 }
               }
             }

@@ -21,13 +21,8 @@
 #ifdef INDEX_STRUCT
 
 #ifndef NDEBUG
-#include <stdlib.h>
-#include <stdio.h>
-#define ARJ_Assert(expr)   \
-  ((void)((expr)||(fprintf( stderr, \
-  "\nAssertion failed: %s, file %s, line %d\n",\
-   #expr, __FILE__, __LINE__ ),\
-   ((int (*)(void))abort)())))
+#undef ARJ_Assert
+#define ARJ_Assert(expr)   __ARJ_Assert(expr)
 #else
 #define ARJ_Assert( expr )
 #endif

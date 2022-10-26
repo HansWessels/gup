@@ -4,8 +4,6 @@
  */
 
 
-#include <time.h>
-#include <tos.h>
 #include "gup.h"
 #include "arjbeta.h"
 #include "compr_io.h"

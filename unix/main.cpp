@@ -192,7 +192,7 @@ static void usage(const char *n)
 
 /* parses the option string o (starts with '-')
  */
-void setoption(char *o)
+static void setoption(const char *o)
 {
 	o++;
 	switch (tolower(o[0]))
@@ -482,7 +482,7 @@ void setoption(char *o)
  * - code could be added to parse options starting with '/' did
  *   not do that considering UN*X / in pathnames etc.
  */
-int parse(int argc, char *argv[])
+static int parse(int argc, char *argv[])
 {
 	char *env;
 	int i;
@@ -623,6 +623,8 @@ int main(int argc, char *argv[])
 
 		/* set default options */
 
+		default_mode = TRUE;
+
 		memset(&opts, 0, sizeof(opts));
 		opts.recursive = 1;
 		opts.jm = 1;
@@ -666,7 +668,7 @@ int main(int argc, char *argv[])
 		if ((opts.arj_name = (char *) malloc(strlen(argv[files]) + 4)) ==
 			NULL)
 		{
-			error = 1;
+			error = GUP_INTERNAL;
 			break;
 		}
 
@@ -674,7 +676,7 @@ int main(int argc, char *argv[])
 
 		if ((opts.args = args2f(argv + files + 1)) == NULL)
 		{
-			error = 1;
+			error = GUP_INTERNAL;
 			break;
 		}
 
@@ -682,7 +684,8 @@ int main(int argc, char *argv[])
 		 * Handle archive type specific options.
 		 */
 
-		switch (get_arc_type(opts.arj_name))
+		archive_type arc_type = get_arc_type(opts.arj_name);
+		switch (arc_type)
 		{
 		case AT_ARJ:
 		case AT_UNKNOWN:
@@ -706,8 +709,16 @@ int main(int argc, char *argv[])
 		case AT_ASMDUMP:
 			if (default_mode)
 				opts.mode = GNU_ARJ_MODE_7;     // GNU_ARJ_MODE_8? or something...
+
+			if (opts.type != AT_ARJ && opts.type != AT_UNKNOWN)
+			{
+				printf("%s: DUMP MODE is only supported for ARJ style compression settings.\n", opts.programname);
+				return GUP_INVAL;
+			}
+			opts.type = arc_type;
 			break;
 		}
+		ARJ_Assert(opts.type != AT_UNKNOWN);
 
 		/*
 		 * Execute command.
@@ -732,7 +743,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			printf("%s: Not implemented\n", opts.programname);
-			return GUP_OK;
+			return GUP_INVAL;
 		}
 
 		return error;

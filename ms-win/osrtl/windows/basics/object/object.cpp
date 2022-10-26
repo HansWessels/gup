@@ -90,7 +90,7 @@ osobject::~osobject   // closes down an <osobject>
                        L"Debug error",
                        MB_SYSTEMMODAL | MB_ICONHAND);
          #else
-            MessageBox(static_cast<HWND>(OSNULL),
+            MessageBoxA(static_cast<HWND>(OSNULL),
                        "Cannot kill the name of an <osobject>.",
                        "Debug error",
                        MB_SYSTEMMODAL | MB_ICONHAND);

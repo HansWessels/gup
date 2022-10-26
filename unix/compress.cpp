@@ -278,7 +278,7 @@ int compress(OPTIONS *opts)
 			opts->type = AT_ARJ;
 	}
 	
-	printf("#d: output type AT: %d\n", __LINE__, opts->type);
+	printf("#%d: output type AT: %d\n", __LINE__, opts->type);
 
 	archive = new_archive((archive_type) opts->type);
 	if (archive == NULL)

@@ -14,9 +14,7 @@
 
 #include "gup.h"
 
-#include <string.h>
-#include <sys/types.h>
-#include <windows.h>
+#if (OS == OS_WIN32)
 
 #include "sysdep/arcman.h"
 #include "header.h"
@@ -391,3 +389,5 @@ void lha_conv_from_os_name(const char *os_name, int host_os, int hdr_level,
 			lha_path = NULL;
 	}
 }
+
+#endif // OS

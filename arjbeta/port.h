@@ -2,11 +2,6 @@
 #ifndef __PORTARJ__
 #define __PORTARJ__
 
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include "gup.h"
 #ifdef __ATARI__
 #ifdef __PUREC__

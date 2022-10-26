@@ -17,8 +17,6 @@
 
 #include "gup.h"
 
-#include <time.h>              // need config.h before time.h (via gup.h)
-
 #include "arc_util.h"
 
 /*****************************************************************************

@@ -28,8 +28,7 @@
 
 #define NLIT 256
 
-uint32 crc32(const uint8 * str, long len, uint32 crc,
-             const uint32 * crc_table)
+uint32 crc32(const uint8 * str, long len, uint32 crc, const uint32 * crc_table)
 {
   do
   {

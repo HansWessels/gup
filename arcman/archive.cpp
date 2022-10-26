@@ -33,25 +33,6 @@
 
 #include "gup.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_IO_H
-#include <io.h>
-#endif
-
 #include "gup_err.h"
 #include "compress.h"
 #include "gup_io.h"
@@ -317,12 +298,22 @@ archive::archive(void)
 	opened = 0;
 	rw = 0;
 	handle_valid = 0;
+	use_temp_files = 0;
 
 	/*
 	 * Set options to defaults.
 	 */
 
 	opt_repair = 0;
+	opt_no_write = 0;
+
+	// null anything else, so we don't get b0rked pointer references by the time we invoke close/destructor:
+
+	memset(&st, 0, sizeof(st));
+	file = nullptr;
+	// volumes.clear();
+	cur_volume = nullptr;
+	file_buffer = nullptr;
 }
 
 archive::~archive(void)
