@@ -88,7 +88,7 @@
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
 	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
-	#define LOG_BIT(bit) /* printf("bit = %i\n",bit); */
+	#define LOG_BIT(bit) printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
 	#define LOG_COUNTER_RESET log_pos_counter=0;
 	#define LOG_TEXT(string) printf(string);
@@ -1271,9 +1271,10 @@ gup_result decode_n0(decode_struct *com)
 	LOG_BIT(bit);										\
 }
 
+#if 0
 #define DECODE_N1_PTR(ptr)							\
 { /* get value -1 - -65536 */						\
-	int len=0;											\
+	int len;												\
 	int bit;												\
 	int i=4;												\
 	do														\
@@ -1292,7 +1293,42 @@ gup_result decode_n0(decode_struct *com)
 		GET_N1_BIT(bit);								\
 		ptr+=ptr+bit;									\
 	} while(len-->0);									\
-}															\
+}
+#else
+#define DECODE_N1_PTR(ptr)							\
+{ /* get value -1 - -65536 */						\
+	int bit;												\
+	int len;												\
+	GET_N1_BIT(bit);									\
+	if(bit==0)											\
+	{ /* korte waarde */								\
+		ptr=-1;											\
+		ptr<<=8;											\
+		ptr+=*com->rbuf_current++;					\
+	}														\
+	else													\
+	{ /* ptrlen 3 */									\
+		int i=3;											\
+		len=0;											\
+		do													\
+		{													\
+			GET_N1_BIT(bit);							\
+			len+=len+bit;								\
+		} while(--i!=0);								\
+		ptr=-1;											\
+		ptr<<=9;											\
+		ptr+=*com->rbuf_current++;					\
+		if(len>0)										\
+		{													\
+			do												\
+			{												\
+				GET_N1_BIT(bit);						\
+				ptr+=ptr+bit;							\
+			} while(--len>0);							\
+		}													\
+	}														\
+}
+#endif
 
 #define DECODE_N1_LEN(val)							\
 { /* get value 2 - 2^32-1 */						\
