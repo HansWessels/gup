@@ -1271,10 +1271,10 @@ gup_result decode_n0(decode_struct *com)
 	LOG_BIT(bit);										\
 }
 
-#if 0
+#if 01
 #define DECODE_N1_PTR(ptr)							\
-{ /* get value -1 - -65536 */						\
-	int len;												\
+{ /* n1 ptr(4) get value -1 - -65536 */		\
+	int len=0;											\
 	int bit;												\
 	int i=4;												\
 	do														\
@@ -1296,7 +1296,7 @@ gup_result decode_n0(decode_struct *com)
 }
 #else
 #define DECODE_N1_PTR(ptr)							\
-{ /* get value -1 - -65536 */						\
+{ /* n1 9|ptr(3) get value -1 - -65536 */		\
 	int bit;												\
 	int len;												\
 	GET_N1_BIT(bit);									\

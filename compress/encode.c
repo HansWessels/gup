@@ -3859,7 +3859,8 @@ void store_n1_len_val(uint32 val, packstruct *com)
 	store_n1_val(val-1, com);
 }
 
-#if 0
+#if 01
+/* n1 ptr(4) get value -1 - -65536 */
 int n1_ptr_len(uint32 val)
 { /* bereken de code lengte voor val, 0 <= val <= 65536 */
 	int len;
@@ -3880,7 +3881,7 @@ void store_n1_ptr_val(int32_t val, packstruct *com)
 	{
 		len=0;
 	}
-	mask=8;
+	mask=1<<3;
 	do
 	{ /* lengte van de pointer */
 		if((len&mask)==0)
@@ -3914,6 +3915,7 @@ void store_n1_ptr_val(int32_t val, packstruct *com)
 	}while(mask!=0);
 }
 #else
+/* n1 9|ptr(3) get value -1 - -65536 */
 int n1_ptr_len(uint32 val)
 { /* bereken de code lengte voor val, 0 <= val <= 65536 */
 	if(val<16)

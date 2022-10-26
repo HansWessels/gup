@@ -36,52 +36,112 @@ typedef int32_t int32;
 	} while(bit!=0);									\
 }
 
+#define DECODE_N1_PTR(ptr)							\
+{ /* n1 ptr(4) get value -1 - -65536 */		\
+	int len;												\
+	int bit;												\
+	int i=4;												\
+	do														\
+	{														\
+		GET_N1_BIT(bit);								\
+		len+=len+bit;									\
+	} while(--i!=0);									\
+	ptr=-1;												\
+	if(len>0)											\
+	{														\
+		ptr+=ptr;										\
+		len--;											\
+	}														\
+	do														\
+	{														\
+		GET_N1_BIT(bit);								\
+		ptr+=ptr+bit;									\
+	} while(len-->0);									\
+}
+
+#define DECODE_N1_COUNTER(val)					\
+{ /* get value 0 - 2^32-1 */						\
+	int bit;												\
+	int i;												\
+	int len=0;											\
+	for(i=0; i<5; i++)								\
+	{														\
+		GET_N1_BIT(bit);								\
+		len+=len+bit;									\
+	}														\
+	if(len==0)											\
+	{														\
+		GET_N1_BIT(bit);								\
+		val=bit;											\
+	}														\
+	else 													\
+	{														\
+		val=1;											\
+		do													\
+		{													\
+			GET_N1_BIT(bit);							\
+			val+=val+bit;								\
+		} while(--len>0);								\
+	}														\
+}
+
+#define DECODE_N1_RUN(val)							\
+{ /* get value 0 - 2^32-1 */						\
+	int bit;												\
+	GET_N1_BIT(bit);									\
+	if(bit==0)											\
+	{														\
+		val=0;											\
+	}														\
+	else													\
+	{														\
+		val=1;											\
+		GET_N1_BIT(bit);								\
+		if(bit==1)										\
+		{													\
+			DECODE_N1_LEN(val);						\
+		}													\
+	}														\
+}
+		
 
 void decode_n1(uint8_t *dst, uint8_t *data)
 {
+	uint8* dstend;
 	uint8 bitbuf=0;
 	int bits_in_bitbuf=0;
-	*dst++=*data++;
-	for(;;)
+	unsigned long loop;
+	int ptrs=0;
+	unsigned long run;
+	DECODE_N1_COUNTER(loop);
+	do
 	{
-		int bit;
-		GET_N1_BIT(bit);
-		if(bit==0)
-		{ /* literal */
-			*dst++=*data++;
-		}
-		else
-		{ /* ptr len */
-			int32 ptr;
-			uint8* src;
-			uint8 c;
-			int len;
-			ptr=-1;
-			ptr<<=8;
-			c=*data++;
-			GET_N1_BIT(bit);
-			if(bit==0)
-			{
-				ptr|=c;
-			}
-			else
-			{ /* 16 bit pointer */
-				if(c==0)
-				{
-					return; /* end of stream */
-				}
-				ptr|=~c;
-				ptr<<=8;
-				ptr|=*data++;
-			}
-			DECODE_N1_LEN(len);
-			len++;
-			src=dst+ptr;
+		DECODE_N1_RUN(run);
+		if(ptrs==0)
+		{ /* literal run */
 			do
 			{
-  				*dst++=*src++;
-			} while(--len!=0);
+				*dst++=*data++;
+			} while(run-->0);
+			ptrs=1;
 		}
-	}
+		else
+		{ /* ptr len run */
+			do
+			{
+				int32 ptr;
+				uint8* src;
+				int len;
+				DECODE_N1_PTR(ptr);
+				DECODE_N1_LEN(len);
+				len++;
+				src=dst+ptr;
+				do
+				{
+  					*dst++=*src++;
+				} while(--len!=0);
+			} while(run-->0);
+			ptrs=0;
+		}
+	} while(loop-->0);
 }
-
