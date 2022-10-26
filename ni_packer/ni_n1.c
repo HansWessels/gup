@@ -38,7 +38,7 @@ typedef int32_t int32;
 
 #define DECODE_N1_PTR(ptr)							\
 { /* n1 ptr(4) get value -1 - -65536 */		\
-	int len;												\
+	int len = 0;											\
 	int bit;												\
 	int i=4;												\
 	do														\
