@@ -23,5 +23,9 @@ stamp-h1
 
 .vs/
 *.user
+/win32/msvc2017/bin/
+/win32/msvc2017/obj/
 /win32/msvc2019/bin/
 /win32/msvc2019/obj/
+/win32/msvc2022/bin/
+/win32/msvc2022/obj/
