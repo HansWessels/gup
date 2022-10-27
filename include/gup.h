@@ -55,7 +55,7 @@
 
 
 #if defined(_MSC_VER)
-#include "../win32/msvc2019/config.h"
+#include "../win32/msvc20xx-common/config.h"
 #else
 #include "config.h"
 #endif
