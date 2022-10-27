@@ -29,13 +29,6 @@
 
 #include "gup.h"
 
-#include <string.h>
-#include <sys/types.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "sysdep/arcman.h"
 #include "header.h"
 #include "arj_hdr.h"

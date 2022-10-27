@@ -105,11 +105,6 @@
     float              y,        // -: y position of the mouse
     ospainter const &  p)        // I: window painter
    {
-#if 0
-      HDC           dc   = static_cast<HDC>(p);
-      char const *  text = "Mg@f$/}- ,j&%éÇÆÅÄÂ‡Ÿ™§";
-#endif
-
       // Make sure the window is black.
       oswindow::Paint(left, right, top, bottom, time, x, y, p);
 

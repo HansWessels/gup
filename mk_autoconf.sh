@@ -7,6 +7,7 @@ make superclean
 rm config.*
 autoconf
 automake --add-missing
+autoheader
 
 ./configure
 

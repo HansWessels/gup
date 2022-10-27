@@ -100,7 +100,7 @@ SelectMouseCursor         // selects a mouse cursor
       {
          HCURSOR  newcursor;   // new mouse cursor
 
-         newcursor = LoadCursor(systemcursor
+         newcursor = LoadCursorA(systemcursor
                                       ? static_cast<HINSTANCE>(OSNULL)
                                       : ProgramInstance(),
                                 cursorid);

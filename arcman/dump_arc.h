@@ -81,10 +81,9 @@ public:
     {
         assert(str);
         size_t len = strlen(str);
-        assert(alloc_size > used_length);  // still some space left to fill? no? then barf!
-        assert(used_length + len <= alloc_size);
+        assert(len < get_remaining_usable_size());  // still some space left to fill? no? then barf!
         memmove(get_append_ref(), str, len);
-        used_length += len;
+		set_appended_length(len);
     }
 
     void set_total_used_length(size_t len) 

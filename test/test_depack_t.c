@@ -15,12 +15,12 @@
 
 #define ARJ_HEADER_ID 		0xEA60U
 
-unsigned char get_byte(unsigned char *p)
+static unsigned char get_byte(unsigned char *p)
 {
 	return p[0];
 }
 
-unsigned int get_word(unsigned char *p)
+static unsigned int get_word(unsigned char *p)
 {
 	unsigned int res;
 	res=p[1];
@@ -29,7 +29,7 @@ unsigned int get_word(unsigned char *p)
 	return res;
 }
 
-unsigned long get_long(unsigned char *p)
+static unsigned long get_long(unsigned char *p)
 {
 	unsigned long res;
 	res=p[3];

@@ -12,11 +12,10 @@
  *
  */
 
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
 #include "gup.h"
+
+#if (OS == OS_UNIX)
+
 #include "sysdep/arcman.h"
 #include "header.h"
 #include "support.h"
@@ -84,3 +83,5 @@ char *gzip_conv_from_os_name(const char *os_name)
 
 	return gzip_name;
 }
+
+#endif // OS

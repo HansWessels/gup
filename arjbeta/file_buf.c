@@ -10,11 +10,6 @@
  * 
  */
 
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <tos.h>
 #include "gup.h"
 #include "gup_err.h"
 #include "compr_io.h"

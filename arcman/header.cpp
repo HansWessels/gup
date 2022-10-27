@@ -28,21 +28,6 @@
 
 #include "gup.h"
 
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-
-#if (OS == OS_UNIX)
-#include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
-#endif
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "gup_err.h"
 #include "compress.h"
 #include "sysdep/arcman.h"

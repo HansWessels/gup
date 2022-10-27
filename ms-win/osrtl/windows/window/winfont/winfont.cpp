@@ -521,7 +521,7 @@ const
 
          if (result == OSRESULT_OK)
          {
-            if (!GetTextExtentPoint(dc, t, static_cast<int>(length),
+            if (!GetTextExtentPointA(dc, t, static_cast<int>(length),
                                                                  &psize))
                result = OSINTERNAL_WRITE;
 

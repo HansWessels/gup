@@ -17465,6 +17465,36 @@ then :
   printf "%s\n" "#define HAVE_IO_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "dir.h" "ac_cv_header_dir_h" "$ac_includes_default"
+if test "x$ac_cv_header_dir_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_DIR_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "dirent.h" "ac_cv_header_dirent_h" "$ac_includes_default"
+if test "x$ac_cv_header_dirent_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_DIRENT_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "direct.h" "ac_cv_header_direct_h" "$ac_includes_default"
+if test "x$ac_cv_header_direct_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_DIRECT_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "utime.h" "ac_cv_header_utime_h" "$ac_includes_default"
+if test "x$ac_cv_header_utime_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_UTIME_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "tos.h" "ac_cv_header_tos_h" "$ac_includes_default"
+if test "x$ac_cv_header_tos_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_TOS_H 1" >>confdefs.h
+
+fi
 
 
     ac_fn_c_check_header_compile "$LINENO" "ints.h" "ac_cv_header_ints_h" "$ac_includes_default"
@@ -18283,6 +18313,18 @@ ac_fn_c_check_func "$LINENO" "lchown" "ac_cv_func_lchown"
 if test "x$ac_cv_func_lchown" = xyes
 then :
   printf "%s\n" "#define HAVE_LCHOWN 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "mkdir" "ac_cv_func_mkdir"
+if test "x$ac_cv_func_mkdir" = xyes
+then :
+  printf "%s\n" "#define HAVE_MKDIR 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "_mkdir" "ac_cv_func__mkdir"
+if test "x$ac_cv_func__mkdir" = xyes
+then :
+  printf "%s\n" "#define HAVE__MKDIR 1" >>confdefs.h
 
 fi
 

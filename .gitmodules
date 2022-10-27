@@ -1,3 +1,6 @@
 [submodule "test/calgary-corpus"]
 	path = test/calgary-corpus
 	url = git@github.com:HansWessels/calgary.git
+[submodule "thirdparty/dirent"]
+	path = thirdparty/dirent
+	url = git@github.com:GerHobbelt/dirent.git

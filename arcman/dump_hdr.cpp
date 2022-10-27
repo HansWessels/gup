@@ -8,15 +8,6 @@
 
 #if ENABLE_DUMP_OUTPUT_MODES
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "sysdep/arcman.h"
 #include "header.h"
 #include "dump_hdr.h"

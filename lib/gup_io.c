@@ -43,14 +43,6 @@
  *			  writing: points to the end of the buffer (start + buf_size).
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-
 #include "gup.h"
 
 #ifdef HAVE_UNISTD_H

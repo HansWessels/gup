@@ -9,22 +9,6 @@
 
 #if ENABLE_DUMP_OUTPUT_MODES
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
-#include <fstream>
-#include <string>
-#include <iostream>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "gup_err.h"
 #include "compress.h"
@@ -40,7 +24,13 @@
 #include "os.h"
 #include "support.h"
 
+#include <fstream>
+#include <string>
+#include <iostream>
+
+
 #define DEBUG_DUMP_HEADERS 0
+
 
 static uint32_t hash_string(const char *s)
 {
@@ -60,6 +50,14 @@ static uint32_t hash_string(const char *s)
     return hash;
 }
 
+static uint32_t folded_hash_string(const char* s)
+{
+    uint32_t h = hash_string(s);
+
+    h ^= h >> 16;
+    return h & 0xFFFF;
+}
+
 // generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
 static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath)
 {
@@ -68,7 +66,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 	if (drv)
 		fpath = drv + 1;
 	
-	uint32_t h = hash_string(fpath);
+	uint32_t h = folded_hash_string(fpath);
 	
 	// convert string to variable-name-safe:
 	
@@ -77,7 +75,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 #define DIRTREE_DEPTH_LIMIT  4
 
 	assert(dstsize > 20);
-	snprintf(dst, dstsize, "packed_%X04_", (unsigned int)h);
+	snprintf(dst, dstsize, "packed_%04X_", (unsigned int)h);
 
 	char *e = dst + dstsize - 1;
 	*e = 0;
@@ -123,6 +121,73 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 		memmove(dst + 7 + 5, d, strlen(d) + 1);
 	assert(strlen(dst) < dstsize);
 	
+	return dst;
+}
+	
+
+// generate a decent filename part for the unambiguous input file path, i.e. we use the entire (relative?) path:
+static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath)
+{
+	// calc a simple hash of the input string, sans Windows/DOS drive:
+	const char *drv = strchr(fpath, ':');
+	if (drv)
+		fpath = drv + 1;
+	
+	uint32_t h = folded_hash_string(fpath);
+	
+	// convert string to file-name-safe:
+	
+	assert(dstsize > 20);
+	snprintf(dst, dstsize, "%04X.", (unsigned int)h);
+	char *d0 = dst + strlen(dst);
+
+	char *e = dst + dstsize - 1;
+	*e = 0;
+	char *d = e;
+	bool has_seen_underscore = true;
+    int dirtree_depth_level = 0;
+	size_t len = strlen(fpath);
+	
+	for (int i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > d0; i--)
+	{
+		char c = fpath[i];
+		
+		if (c >= 'A' && c <= 'Z')
+			has_seen_underscore = false;
+		else if (c >= 'a' && c <= 'z')
+			has_seen_underscore = false;
+		else if (c >= '0' && c <= '9')
+			has_seen_underscore = false;
+		else 
+		{
+			if (c == '\\' || c == '/')
+			{
+				c = '.';
+				e = d + 1;
+				dirtree_depth_level++;
+
+				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
+					break;
+			}
+			else if (c != '.')
+			{
+				c = '_';
+			}
+			
+			if (has_seen_underscore)
+				continue;
+			has_seen_underscore = true;
+		}
+		
+		*--d = c;
+	}
+
+	if (d != d0)
+		memmove(d0, d, strlen(d) + 1);
+	assert(strlen(dst) < dstsize);
+	
+printf("mk_filename_part: --> %s\n", dst);
+
 	return dst;
 }
 	
@@ -591,6 +656,8 @@ bindump_archive::~bindump_archive()
 
 dump_output_bufptr_t bindump_archive::generate_main_header()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer(1024 + cur_main_hdr->archive_path.length() * 2 + cur_main_hdr->archive_comment.length()));
 
     char *filename;
@@ -603,9 +670,9 @@ dump_output_bufptr_t bindump_archive::generate_main_header()
 FILE index no.: %d\n\
 DUMP filename: %s\n\
 comment: %s\n\
-creation time: %12u\n\
+creation time: %12lu\n\
 archive size: %12zu\n\
-", file_no, cur_main_hdr->archive_path, cur_main_hdr->comment, (unsigned int)cur_main_hdr->archive_ctime, cur_main_hdr->archive_output_size);
+", file_no, cur_main_hdr->archive_path, cur_main_hdr->comment, (unsigned long int)cur_main_hdr->archive_ctime, cur_main_hdr->archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -625,6 +692,8 @@ archive size: %12zu\n\
 
 dump_output_bufptr_t bindump_archive::generate_file_header()
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -634,7 +703,8 @@ dump_output_bufptr_t bindump_archive::generate_file_header()
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+	
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -662,11 +732,12 @@ FILE index no.: %d\n\
 FILE name: %s\n\
 FILE filename: %s\n\
 comment: %s\n\
-creation time:                 \n\
+creation time:         %12lu\n\
 filesize uncompressed: %12lu\n\
 filesize packed:       %12lu\n\
 CRC:                     0x%08lx\n\
 ", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
@@ -682,7 +753,11 @@ CRC:                     0x%08lx\n\
 printf("> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
 
     metafile_path += ".";
-    metafile_path += name_ptr;
+	
+	char filepart_name[80];
+	mk_filename_part(filepart_name, sizeof(filepart_name), name_ptr);
+	
+    metafile_path += filepart_name;
     metafile_path += ".meta.nfo";
 
 printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
@@ -693,6 +768,16 @@ printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_mai
     out << msg;
     //out.close();
 
+
+	// PLUS: append to the archive metafile. But only when we're completely done with the file, as gup code will invoke this method TWICE per file!
+    metafile_path = cur_main_hdr->archive_path;
+
+    metafile_path += ".meta.nfo";
+
+    std::ofstream out_arc(metafile_path, std::ios_base::app);
+    out_arc << msg;
+    //out_arc.close();
+
     delete[] name_ptr;
 
     buf->clear();
@@ -702,11 +787,12 @@ printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_mai
 
 dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
-    dump_output_bufptr_t buf(new dump_output_buffer(datasize));
+    TRACE_ME();
+    dump_output_bufptr_t buf(new dump_output_buffer(datasize + 1));
 
     size_t dstsize = buf->get_remaining_usable_size();
-    assert(dstsize == datasize);
-    memcpy(buf->get_append_ref(), data, dstsize);
+    assert(dstsize == datasize + 1);
+    memcpy(buf->get_append_ref(), data, datasize);
 
     buf->set_appended_length(datasize);
 
@@ -715,6 +801,7 @@ dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data,
 
 dump_output_bufptr_t bindump_archive::generate_end()
 {
+    TRACE_ME();
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     // no sentinel bytes at all. nada. zilch. noppes. niente.
@@ -746,6 +833,8 @@ cdump_archive::~cdump_archive()
 
 dump_output_bufptr_t cdump_archive::generate_main_header()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
     char *filename;
@@ -763,9 +852,9 @@ dump_output_bufptr_t cdump_archive::generate_main_header()
     DUMP name: %s\n\
     DUMP filename: %s\n\
     comment: %s\n\
-    creation time: %12u\n\
+    creation time: %12lu\n\
     archive size: %12zu\n\
-*/\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, archive_output_size);
+*/\n", file_no, archive_path, filename, comment, (unsigned long int)timestamp, archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -777,6 +866,8 @@ dump_output_bufptr_t cdump_archive::generate_main_header()
 
 dump_output_bufptr_t cdump_archive::generate_file_header()
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -786,7 +877,7 @@ dump_output_bufptr_t cdump_archive::generate_file_header()
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -812,11 +903,12 @@ dump_output_bufptr_t cdump_archive::generate_file_header()
     FILE name: %s\n\
     FILE filename: %s\n\
     comment: %s\n\
-    creation time:                 \n\
+    creation time:         %12lu\n\
     filesize uncompressed: %12lu\n\
     filesize packed:       %12lu\n\
     CRC:                     0x%08lx\n\
 */\n", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
@@ -833,6 +925,8 @@ dump_output_bufptr_t cdump_archive::generate_file_header()
 
 dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
+    TRACE_ME();
+
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
 
@@ -863,13 +957,15 @@ dump_output_bufptr_t cdump_archive::generate_file_content(const uint8_t *data, s
         buf->set_appended_length(hdr_len);
     }
 
-    buf->append_string("};\n");
+    buf->append_string("};\n\n");
 
     return buf;
 }
 
 dump_output_bufptr_t cdump_archive::generate_end()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     char *dst = reinterpret_cast<char *>(buf->get_append_ref());
@@ -906,6 +1002,8 @@ asmdump_archive::~asmdump_archive()
 
 dump_output_bufptr_t asmdump_archive::generate_main_header()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer(1024 + strlen(archive_path) * 2 + strlen(comment)));
 
     char *filename;
@@ -923,9 +1021,9 @@ dump_output_bufptr_t asmdump_archive::generate_main_header()
     DUMP name: %s\n\
     DUMP filename: %s\n\
     comment: %s\n\
-    creation time: %12u\n\
+    creation time: %12lu\n\
     archive size: %12zu\n\
-*/\n\n", file_no, archive_path, filename, comment, (unsigned int)timestamp, archive_output_size);
+*/\n\n", file_no, archive_path, filename, comment, (unsigned long int)timestamp, archive_output_size);
 
     size_t hdr_len = strlen(dst);
     buf->set_appended_length(hdr_len);
@@ -937,6 +1035,8 @@ dump_output_bufptr_t asmdump_archive::generate_main_header()
 
 dump_output_bufptr_t asmdump_archive::generate_file_header()
 {
+    TRACE_ME();
+
     char *name_ptr;
     unsigned long total_hdr_size, bytes_left;
     const char *src;
@@ -946,7 +1046,8 @@ dump_output_bufptr_t asmdump_archive::generate_file_header()
     const char *comment = header->get_comment();
     if (!comment)
         comment = "";
-    header->get_file_stat();
+
+    const osstat *file_stat = header->get_file_stat();
 
     name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
@@ -972,11 +1073,12 @@ dump_output_bufptr_t asmdump_archive::generate_file_header()
     FILE name: %s\n\
     FILE filename: %s\n\
     comment: %s\n\
-    creation time:                 \n\
+    creation time:         %12lu\n\
     filesize uncompressed: %12lu\n\
     filesize packed:       %12lu\n\
     CRC:                     0x%08lx\n\
 */\n\n", file_no, src, name_ptr, comment,
+        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)header->file_crc
@@ -993,35 +1095,44 @@ dump_output_bufptr_t asmdump_archive::generate_file_header()
 
 dump_output_bufptr_t asmdump_archive::generate_file_content(const uint8_t *data, size_t datasize)
 {
+    TRACE_ME();
+
     // reckon with additional costs per *line*, calc those as per-input-byte and exaggerate that scaled estimate:
     dump_output_bufptr_t buf(new dump_output_buffer(datasize * (6+1) + 512));
+
+    buf->append_string("file_data:\n");
 
     for (size_t i = 0; i < datasize; i += 20)
     {
         char *dst = reinterpret_cast<char *>(buf->get_append_ref());
         size_t dstsize = buf->get_remaining_usable_size();
 
-        strcpy(dst, "\n{ ");
+        strcpy(dst, "    dc.b ");
         dstsize -= strlen(dst);
         dst += strlen(dst);
-        for (int j = 0; j < 20; j++)
+        for (int j = 0; j < 20 && i + j < datasize; j++)
         {
             snprintf(dst, dstsize, "0x%02X, ", data[i + j]);
             dstsize -= strlen(dst);
             dst += strlen(dst);
         }
-        strcpy(dst, " },");
+		dst -= 2;
+        strcpy(dst, "\n");
 
         dst = reinterpret_cast<char *>(buf->get_append_ref());
         size_t hdr_len = strlen(dst);
         buf->set_appended_length(hdr_len);
     }
 
+    buf->append_string("\n; --------------------- end of packed file data ---------------------\n\n");
+
     return buf;
 }
 
 dump_output_bufptr_t asmdump_archive::generate_end()
 {
+    TRACE_ME();
+
     dump_output_bufptr_t buf(new dump_output_buffer());
 
     char *dst = reinterpret_cast<char *>(buf->get_append_ref());

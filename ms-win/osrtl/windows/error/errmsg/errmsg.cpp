@@ -127,7 +127,7 @@ OsErrorMessage                // displays an error message
       Convert(message, ansimessage, MAXMESSAGELENGTH);
       Convert(title,   ansititle,   MAXTITLELENGTH  );
 
-      MessageBox(static_cast<HWND>(OSNULL),
+      MessageBoxA(static_cast<HWND>(OSNULL),
                  ansimessage,
                  ansititle,
                  MB_SYSTEMMODAL | MB_ICONHAND);
