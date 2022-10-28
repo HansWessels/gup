@@ -246,12 +246,12 @@
 #define NDEBUG /* no debugging */
 #endif
 
-#if 0
+#if 01
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
 	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
-	#define LOG_BIT(bit) printf("bit = %i\n",bit);
+	#define LOG_BIT(bit) // printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
 	#define LOG_COUNTER_RESET log_pos_counter=0;
 	#define LOG_TEXT(string) printf(string);
