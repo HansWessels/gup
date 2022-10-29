@@ -38,7 +38,7 @@ decode_n0:
 	bsr.s		.get_bit			; get value bit in x register
 	addx.w	D0,D0				; verdubbel en tel waarde van bit op bij D0
 	bsr.s		.get_bit			; nog een bit?
-	bcs.s		.next_bit		; yep
+	bcc.s		.next_bit		; yep
 .copy_loop:
 	move.b	(A2)+,(A0)+		; copy
 	dbra		D0,.copy_loop

@@ -3377,11 +3377,11 @@ void store_n0_val(uint32 val, packstruct *com)
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N0(0);
+			ST_BIT_N0(1);
 		}
 		else
 		{
-			ST_BIT_N0(1);
+			ST_BIT_N0(0);
 		}
 	}while(mask!=0);
 }

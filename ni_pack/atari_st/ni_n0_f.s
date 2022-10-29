@@ -19,22 +19,23 @@ decode_n0:
 	moveq		#-128,D1			; bit buffer sentry
 .lit:
 	move.b	(A1)+,(A0)+		; copy
-.loop:
 	add.b		D1,D1				; schuif bit naar buiten
-	bne.s		.get_bit_done0	; klaar
+	bcc.s		.lit				; literal
+.loop:
+	bne.s		.ptr_len			; klaar
 	move.b	(A1)+,D1			; nieuwe bits
 	addx.b	D1,D1				; bit naar buiten, sentry naar binnen
-.get_bit_done0:
-	bcc.s		.lit				; pointer
+	bcc.s		.lit				; literal
 .ptr_len:
 	moveq    #-1,D0			; init offset
 	move.b	(A1)+,D0			; 1e 8 bits
 	add.b		D1,D1				; schuif bit naar buiten
+	bcc.s		.bit_8			; 8 bit pointer
 	bne.s		.get_bit_done1	; klaar
 	move.b	(A1)+,D1			; nieuwe bits
 	addx.b	D1,D1				; bit naar buiten, sentry naar binnen
+	bcc.s		.bit_8			; 8 bit pointer
 .get_bit_done1:
-	bcc.s		.bit_8				; 8 bit pointer
 	lsl.w    #8,D0				; schuif bits
 	beq.s		.done  			; klaar!
 	not.w    d0             ; negatief maken
@@ -50,11 +51,12 @@ decode_n0:
 .get_bit_done2:
 	addx.w	D0,D0				; verdubbel en tel waarde van bit op bij D0
 	add.b		D1,D1				; schuif bit naar buiten
+	bcc.s		.next_bit		; yep
 	bne.s		.get_bit_done3	; klaar
 	move.b	(A1)+,D1			; nieuwe bits
 	addx.b	D1,D1				; bit naar buiten, sentry naar binnen
+	bcc.s		.next_bit		; yep
 .get_bit_done3:
-	bcs.s		.next_bit		; yep
 	subq.w	#1,d0
 	lsr.w		#1,D0
 	bcc.s		.copy_loop
@@ -63,7 +65,9 @@ decode_n0:
 	move.b	(A2)+,(A0)+		; copy
 	move.b	(A2)+,(A0)+		; copy
 	dbra		D0,.copy_loop
-	bra.s    .loop
+	add.b		D1,D1				; schuif bit naar buiten
+	bcc.s		.lit				; literal
+	bra.s		.loop				; continue loop
 .done:
 	move.l	(SP)+,A2			; restore A2
 	rts
