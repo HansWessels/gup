@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		printf(" CRC Errors = %lu\n", error_count);
+		printf("CRC Errors = %lu\n", error_count);
 	}
 	free(data);
 	return 0;

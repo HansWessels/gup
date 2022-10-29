@@ -12,6 +12,7 @@ atari_st\arj_crc.s
 atari_st\arj_m4.s
 atari_st\arj_m7.s
 atari_st\ni_n0.s
+;atari_st\ni_n0_f.s
 atari_st\ni_n1.s
 atari_st\unstore.s
 

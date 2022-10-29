@@ -26,13 +26,13 @@ decode_n0:
 	moveq    #-1,D0			; init offset
 	move.b	(A1)+,D0			; 1e 8 bits
 	bsr.s		.get_bit			; 8 of 16 bit offset
-	bcc.s		.8bit				; 8 bit pointer
+	bcc.s		.bit_8			; 8 bit pointer
 	lsl.w    #8,D0				; schuif bits
 	beq.s		.done  			; klaar!
 	not.w    d0             ; negatief maken
 	move.b	(A1)+,D0			; 2e 8 bits
-.8bit:	
-	lea		0(D0.l,A0),A2	; pointer offset
+.bit_8:	
+	lea		0(A0,D0.l),A2	; pointer offset
 	moveq		#1,D0				; init waarde
 .next_bit:
 	bsr.s		.get_bit			; get value bit in x register
