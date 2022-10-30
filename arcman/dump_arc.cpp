@@ -459,6 +459,54 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
 
         printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
 
+        // Special service in the DUMP modes: we perform a CRC check on the compressed output to doublecheck our packer
+        // didn't produce some unexpected, 'insane' output. DUMP MODE is aimed at DEMOSCENE and other specialized
+        // use cases, where CRC checking the loaded data (our packed output) is not the norm.
+        //
+        // In order to prevent disputes and confusion about any data corruption in such scenarios, we'ld better make
+        // sure ours is squeaky clean, so we can start pointing fingers *outside* our own GUP application.  ;-) ;-)
+        //
+        {
+            long start;
+            WRITE_CRC_STRUCT wcs;
+
+            wcs.crc = init_crc();
+            wcs.handle = -1;
+            wcs.arc = this;
+
+            st.unpack_str.wc_propagator = &wcs;
+            st.unpack_str.mode = header->method;
+            st.unpack_str.origsize = header->origsize;
+
+            st.unpack_str.write_crc = buf_write_crc_test;
+
+            st.unpack_str.br_buf = file;
+
+            unsigned int old_no_wr = opt_no_write;
+            opt_no_write = 1;
+
+            if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
+                return result;
+
+            if ((result = ::decode(&st.unpack_str)) != GUP_OK)
+                return result;
+
+            opt_no_write = old_no_wr;
+
+            if ((result = seek(current_pos, SEEK_SET)) != GUP_OK)
+                return result;
+
+            /*
+            * Set the CRC calculated while decompressing.
+            */
+            uint32 real_crc = post_process_crc(wcs.crc);
+            if (real_crc != header->file_crc)
+            {
+                fprintf(stderr, "Verified depacked content CRC does not match original file CRC: this is a CATASTROPHIC INTERNAL FAILURE of the packer! CRC: 0x%08lx != 0x%08lx\n", (unsigned long)real_crc, (unsigned long)header->file_crc);
+                return GUP_INTERNAL;
+            }
+        }
+
         // now we have the binary packed data in file/buffer.
         // What must be done next is fetch that binary data, copy it into
         // a temporary buffer and then rewind the output file to the start

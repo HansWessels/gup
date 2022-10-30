@@ -51,23 +51,6 @@
 #include "os.h"
 #include "support.h"
 
-/*
- * Typedefs.
- */
-
-typedef struct
-{
-	int handle;							/* File handle of source file. */
-	archive *arc;
-	uint32 crc;
-} READ_CRC_STRUCT;
-
-typedef struct
-{
-	int handle;							/* File handle of destination file. */
-	archive *arc;
-	uint32 crc;
-} WRITE_CRC_STRUCT;
 
 /*****************************************************************************
  *																			 *
@@ -220,7 +203,7 @@ static gup_result buf_write_nocrc(long count, void *buffer, void *propagator)
 		return GUP_OK;
 }
 
-static gup_result buf_write_crc_test(long count, void *buffer, void *propagator)
+gup_result buf_write_crc_test(long count, void *buffer, void *propagator)
 {
 	TRACE_ME();
 	WRITE_CRC_STRUCT *com = (WRITE_CRC_STRUCT *) propagator;
@@ -400,7 +383,7 @@ gup_result archive::create_archive(const char *name, OPTIONS *options,
 	st.pack_str.buf_read_crc = buf_read_crc;
 
 	st.pack_str.buf_write_announce = gup_buf_write_announce;
-	st.pack_str.bw_propagator = (archive *) this;
+	st.pack_str.bw_propagator = this;
 
 	st.pack_str.gmalloc = gmalloc;
 	st.pack_str.gm_propagator = NULL;
@@ -422,6 +405,32 @@ gup_result archive::create_archive(const char *name, OPTIONS *options,
 
 		return result;
 	}
+
+	// Also initialize the UNPACK structure, for that one will be used by the DUMP modes, at least:
+	st.unpack_str.gmalloc = gmalloc;
+	st.unpack_str.gm_propagator = NULL;
+	st.unpack_str.gfree = gfree;
+	st.unpack_str.gf_propagator = NULL;
+
+	if ((result = init_decode(&st.unpack_str)) != GUP_OK)
+	{
+		volumes.clear();
+		delete[] archive_name;
+
+		return result;
+	}
+
+	// !options->no_crc_checking
+		if (options->no_write_data)
+			st.unpack_str.write_crc = buf_write_crc_test;
+		else
+			st.unpack_str.write_crc = buf_write_crc;
+
+	st.unpack_str.buf_fill = gup_buf_fill;
+	st.unpack_str.br_propagator = this;
+
+	st.unpack_str.print_progres = msgfunc->print_progress;
+	st.unpack_str.pp_propagator = msgfunc->pp_propagator;
 
 	/*
 	 * Open the archive for writing.

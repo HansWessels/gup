@@ -43,17 +43,6 @@
 #define HDR_FLAGS				3		/* Offset of flags in header. */
 
 /*
- * Typedefs.
- */
-
-typedef struct
-{
-	int handle;							/* File handle of destination file. */
-	archive *arc;
-	uint32 crc;
-} WRITE_CRC_STRUCT;
-
-/*
  * Local variables.
  */
 
