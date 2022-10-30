@@ -104,8 +104,12 @@ class dump_archive : public arj_archive
 {
   protected:
     dump_mainheader *cur_main_hdr;
+
     int file_no;                                    // 'index' number of the file in the archive, starts counting at 1 (1-based index)
-    bool increment_file_no;                     // signal that the file content has been written and the index should be updated
+    bool increment_file_no;                         // signal that the file content has been written and the index should be updated
+
+    long archive_file_offset;                       // offset in archive file (output) where current compresed file data is written
+    bool at_end_of_archive_action;
         
   public:
     dump_archive(void);
@@ -152,7 +156,7 @@ class dump_archive : public arj_archive
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size) = 0;
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header) = 0;
     virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header) = 0;
-    virtual dump_output_bufptr_t generate_end() = 0;
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive) = 0;
 };
 
 
@@ -171,7 +175,7 @@ class bindump_archive : public dump_archive
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
     virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 
@@ -188,7 +192,7 @@ class cdump_archive : public dump_archive
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
     virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 
@@ -205,7 +209,7 @@ class asmdump_archive : public dump_archive
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
     virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 #endif
