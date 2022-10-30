@@ -613,7 +613,7 @@ static char **args2f(char *files[])
 	return ret;
 }
 
-static const char *basename(const char* path)
+static const char *mk_basename(const char* path)
 {
 	ARJ_Assert(path != NULL);
 	const char* p1 = strrchr(path, '/');
@@ -641,12 +641,13 @@ int main(int argc, char *argv[])
 			const char* appname = argv[0];
 			if (!appname || !*appname)
 				appname = "gup";
-			appname = basename(appname);
+			appname = mk_basename(appname);
 
 			// Windows et al: strip off the .EXE extension, convert to all-lowercase, etc.
 			std::string apnm(appname);
 			size_t dotpos = apnm.find_first_of('.');
-			apnm.erase(dotpos);
+			if (dotpos != std::string::npos)
+				apnm.erase(dotpos);
 			std::transform(apnm.begin(), apnm.end(), apnm.begin(), [](unsigned char c) { return std::tolower(c); });
 
 			default_mode = TRUE;

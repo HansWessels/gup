@@ -186,7 +186,7 @@ static uint32_t folded_hash_string(const char* s)
     return h & 0xFFFF;
 }
 
-static std::string basename(const char *path)
+static std::string mk_basename(const char *path)
 {
     ARJ_Assert(path != NULL);
     const char* p1 = strrchr(path, '/');
@@ -784,7 +784,7 @@ BINDUMP:\n\
   file_list:\n\
 \n\
 # --------------------------------------------------------------------\n\
-\n", PACKAGE, VERSION, basename(filename).c_str(), filename, comment, (unsigned long)timestamp);
+\n", PACKAGE, VERSION, mk_basename(filename).c_str(), filename, comment, (unsigned long)timestamp);
 
         size_t hdr_len = strlen(dst);
         buf->set_appended_length(hdr_len);
@@ -889,7 +889,7 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
 \n\
 # --------------------------------------------------------------------\n\
 \n",
-        file_no, name_ptr, basename(name_ptr).c_str(), var_name, comment,
+        file_no, name_ptr, mk_basename(name_ptr).c_str(), var_name, comment,
         (unsigned long)arj_conv_from_os_time(file_stat->ctime),
         (int)header->method,
         cvt_method2str(header->method),
