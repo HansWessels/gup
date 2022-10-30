@@ -858,11 +858,11 @@ gup:
 	cd unix
 	make
 
-ni_packer:
-	cd ni_packer
+ni_pack:
+	cd ni_pack
 	make
 
-test: gup ni_packer
+test: gup ni_pack
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
@@ -923,7 +923,7 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_packer
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
