@@ -21,4 +21,9 @@
 #include "../arcman/arcctl.h"
 #include "../arcman/os.h"
 
+
+extern int compress(OPTIONS* opt);
+extern int decompress(OPTIONS* opt);
+extern int list_arj(OPTIONS* opt);
+
 #endif
