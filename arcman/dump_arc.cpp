@@ -29,6 +29,136 @@
 #include <iostream>
 
 
+static const char* cvt_file_type2str(int file_type)
+{
+    switch (file_type)
+    {
+    case BINARY_TYPE: return "BINARY_TYPE";
+    case TEXT_TYPE: return "TEXT_TYPE ";
+    case COMMENT_TYPE: return "COMMENT_TYPE";
+    case DIR_TYPE: return "DIR_TYPE";
+    case LABEL_TYPE: return "LABEL_TYPE";
+    case SYMLINK_TYPE: return "SYMLINK_TYPE";
+    case HARDLINK_TYPE: return "HARDLINK_TYPE";
+    default:
+        return "###_UNKNOWN_###";
+    }
+}
+
+static const char* cvt_method2str(int method)
+{
+    switch (method)
+    {
+    case STORE: return "STORE";
+    case ARJ_MODE_1: return "ARJ_MODE_1";
+    case ARJ_MODE_2: return "ARJ_MODE_2";
+    case ARJ_MODE_3: return "ARJ_MODE_3";
+    case ARJ_MODE_4: return "ARJ_MODE_4";
+    case GNU_ARJ_MODE_7: return "GNU_ARJ_MODE_7";
+    case NI_MODE_0: return "NI_MODE_0";
+    case NI_MODE_1: return "NI_MODE_1";
+    case NI_MODE_2: return "NI_MODE_2";
+    case NI_MODE_3: return "NI_MODE_3";
+    case NI_MODE_4: return "NI_MODE_4";
+    case NI_MODE_5: return "NI_MODE_5";
+    case NI_MODE_6: return "NI_MODE_6";
+    case NI_MODE_7: return "NI_MODE_7";
+    case NI_MODE_8: return "NI_MODE_8";
+    case NI_MODE_9: return "NI_MODE_9";
+
+    case LHA_LHD_: return "LHA_LHD_";
+    case LHA_LZ4_: return "LHA_LZ4_";
+    case LHA_LZS_: return "LHA_LZS_";
+    case LHA_LZ5_: return "LHA_LZ5_";
+    case LHA_AFX_: return "LHA_AFX_";
+    case LHA_LH0_: return "LHA_LH0_";
+    case LHA_LH1_: return "LHA_LH1_";
+    case LHA_LH2_: return "LHA_LH2_";
+    case LHA_LH3_: return "LHA_LH3_";
+    case LHA_LH4_: return "LHA_LH4_";
+    case LHA_LH5_: return "LHA_LH5_";
+    case LHA_LH6_: return "LHA_LH6_";
+    case LHA_LH7_: return "LHA_LH7_";
+
+    case GZIP: return "GZIP    ";
+
+    default:
+        return "###_UNKNOWN_###";
+    }
+}
+
+static const char* cvt_method2description(int method)
+{
+    switch (method)
+    {
+    case STORE:
+        return "general store";
+    case ARJ_MODE_1:
+        return "arj mode 1";
+    case ARJ_MODE_2:
+        return "arj mode 2";
+    case ARJ_MODE_3:
+        return "arj mode 3";
+    case ARJ_MODE_4:
+        return "arj mode 4";
+    case GNU_ARJ_MODE_7:
+        return "gnu arj mode 7";
+    case NI_MODE_0:
+        return "ni packer mode 0";
+    case NI_MODE_1:
+        return "ni packer mode 1";
+    case NI_MODE_2:
+        return "ni packer mode 2";
+    case NI_MODE_3:
+        return "ni packer mode 3";
+    case NI_MODE_4:
+        return "ni packer mode 4";
+    case NI_MODE_5:
+        return "ni packer mode 5";
+    case NI_MODE_6:
+        return "ni packer mode 6";
+    case NI_MODE_7:
+        return "ni packer mode 7";
+    case NI_MODE_8:
+        return "ni packer mode 8";
+    case NI_MODE_9:
+        return "ni packer mode 9";
+
+    case LHA_LHD_:
+        return "LHarc directory method";
+    case LHA_LZ4_:
+        return "no compression";
+    case LHA_LZS_:
+        return " 2k sliding dictionary(max 17 bytes, min match = 2, not supported by gup)";
+    case LHA_LZ5_:
+        return " 4k sliding dictionary(max 18 bytes)";
+    case LHA_AFX_:
+        return "same as -lz5-";
+    case LHA_LH0_:
+        return "no compression";
+    case LHA_LH1_:
+        return " 4k sliding dictionary(max 60 bytes) + dynamic Huffman + fixed encoding of position";
+    case LHA_LH2_:
+        return " 8k sliding dictionary(max 256 bytes) + dynamic Huffman";
+    case LHA_LH3_:
+        return " 8k sliding dictionary(max 256 bytes) + static Huffman";
+    case LHA_LH4_:
+        return " 4k sliding dictionary(max 256 bytes) + static Huffman + improved encoding of position and trees";
+    case LHA_LH5_:
+        return " 8k sliding dictionary(max 256 bytes) + static Huffman + improved encoding of position and trees";
+    case LHA_LH6_:
+        return "32k sliding dictionary(max 256 bytes) + static Huffman + improved encoding of position and trees";
+    case LHA_LH7_:
+        return "64k sliding dictionary(max 256 bytes) + static Huffman + improved encoding of position and trees";
+
+    case GZIP:
+        return "GZIP implode method, 32k dictionary, maxmatch = 258";
+
+    default:
+        return "UNKNOWN method; internal failure?!";
+    }
+}
+
 
 static uint32_t hash_string(const char *s)
 {
@@ -135,72 +265,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 	
 	return dst;
 }
-	
 
-// generate a decent filename part for the unambiguous input file path, i.e. we use the entire (relative?) path:
-static const char *mk_filename_part(char *dst, size_t dstsize, const char *fpath)
-{
-	// calc a simple hash of the input string, sans Windows/DOS drive:
-	const char *drv = strchr(fpath, ':');
-	if (drv)
-		fpath = drv + 1;
-	
-	uint32_t h = folded_hash_string(fpath);
-	
-	// convert string to file-name-safe:
-	
-	assert(dstsize > 20);
-	snprintf(dst, dstsize, "%04X.", (unsigned int)h);
-	char *d0 = dst + strlen(dst);
-
-	char *e = dst + dstsize - 1;
-	*e = 0;
-	char *d = e;
-	bool has_seen_underscore = true;
-    int dirtree_depth_level = 0;
-	size_t len = strlen(fpath);
-	
-	for (int i = len - 1, stop = len - LENGTH_LIMIT; i >= 0 && i > stop && d > d0; i--)
-	{
-		char c = fpath[i];
-		
-		if (c >= 'A' && c <= 'Z')
-			has_seen_underscore = false;
-		else if (c >= 'a' && c <= 'z')
-			has_seen_underscore = false;
-		else if (c >= '0' && c <= '9')
-			has_seen_underscore = false;
-		else 
-		{
-			if (c == '\\' || c == '/')
-			{
-				c = '.';
-				e = d + 1;
-				dirtree_depth_level++;
-
-				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
-					break;
-			}
-			else if (c != '.')
-			{
-				c = '_';
-			}
-			
-			if (has_seen_underscore)
-				continue;
-			has_seen_underscore = true;
-		}
-		
-		*--d = c;
-	}
-
-	if (d != d0)
-		memmove(d0, d, strlen(d) + 1);
-	assert(strlen(dst) < dstsize);
-	
-	return dst;
-}
-	
 
 /*****************************************************************************
  *                                                                           *
@@ -719,7 +784,7 @@ BINDUMP:\n\
   file_list:\n\
 \n\
 # --------------------------------------------------------------------\n\
-\n", PACKAGE, VERSION, archive_path, filename, comment, (unsigned long)timestamp);
+\n", PACKAGE, VERSION, basename(filename).c_str(), filename, comment, (unsigned long)timestamp);
 
         size_t hdr_len = strlen(dst);
         buf->set_appended_length(hdr_len);
@@ -811,6 +876,10 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
       variable_name: %s\n\
       comment: %s\n\
       created_at: %12lu\n\
+      compression_method: %d\n\
+      compression_method_name: %s             # %s\n\
+      file_type: %d\n\
+      file_type_name: %s\n\
       filesize:\n\
         uncompressed: %12lu\n\
         packed: %12lu\n\
@@ -820,8 +889,13 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
 \n\
 # --------------------------------------------------------------------\n\
 \n",
-        file_no, src, name_ptr, var_name, comment,
+        file_no, name_ptr, basename(name_ptr).c_str(), var_name, comment,
         (unsigned long)arj_conv_from_os_time(file_stat->ctime),
+        (int)header->method,
+        cvt_method2str(header->method),
+        cvt_method2description(header->method),
+        (int)header->file_type,
+        cvt_file_type2str(header->file_type),
         (unsigned long)header->origsize,
         (unsigned long)header->compsize,
         (unsigned long)archive_file_offset,
