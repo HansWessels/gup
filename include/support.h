@@ -15,7 +15,7 @@
  * functions.
  */
 
-#include "config.h"
+#include "gup.h"
 
 #ifdef __cplusplus
 extern "C"

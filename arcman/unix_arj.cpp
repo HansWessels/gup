@@ -14,11 +14,10 @@
  * First working version. Only ARJ support, no multiple volume.
  */
 
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
 #include "gup.h"
+
+#if (OS == OS_UNIX)
+
 #include "arc_util.h"
 #include "gup_err.h"
 #include "sysdep/arcman.h"
@@ -106,3 +105,5 @@ char *arj_conv_from_os_name(const char *os_name, uint16 &fspec_pos, int pathsym_
 
 	return arj_name;
 }
+
+#endif // OS

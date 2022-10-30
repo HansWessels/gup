@@ -2524,7 +2524,7 @@ osbasicwindow::priv_Create   // creates an <osbasicwindow>
                         if (visible)
                            style |= WS_VISIBLE;
 
-                        window = CreateWindowEx
+                        window = CreateWindowExA
                                     (WS_EX_ACCEPTFILES
                                         | WS_EX_NOPARENTNOTIFY,
                                      idansi,
@@ -2824,7 +2824,7 @@ osbasicwindow::Write                // writes text to the window
             }
 
             if (result == OSRESULT_OK)
-               if (!TextOut(reinterpret_cast<HDC>(paint),
+               if (!TextOutA(reinterpret_cast<HDC>(paint),
                             xpos, wpy,
                             text-written, write))
                   result = OSINTERNAL_WRITE;
@@ -2931,7 +2931,7 @@ GenericHandler      // processes all messages for a window
       newborn = reinterpret_cast<osbasicwindow *>(data->lpCreateParams);
 
       // Store <newborn> in the window <window>.
-      SetWindowLong(window, GWL_USERDATA, reinterpret_cast<LONG>(newborn));
+      SetWindowLongA(window, GWL_USERDATA, reinterpret_cast<LONG>(newborn));
 
       // Define the handle of the new window.
       newborn->priv_handle =
@@ -2944,7 +2944,7 @@ GenericHandler      // processes all messages for a window
 
       // Find the destination for the message.
       destination = reinterpret_cast<osbasicwindow *>
-                            (GetWindowLong(window, GWL_USERDATA));
+                            (GetWindowLongA(window, GWL_USERDATA));
 
       // Check if *destination is indeed the destination for the message.
       if (    destination != static_cast<osbasicwindow *>(OSNULL)

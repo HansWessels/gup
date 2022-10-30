@@ -14,9 +14,7 @@
 
 #include "gup.h"
 
-#include <string.h>
-#include <sys/types.h>
-#include <windows.h>
+#if (OS == OS_WIN32)
 
 #include "arc_util.h"
 #include "gup_err.h"
@@ -107,3 +105,5 @@ char *arj_conv_from_os_name(const char *os_name, uint16 &fspec_pos, int pathsym_
 
 	return arj_name;
 }
+
+#endif // OS

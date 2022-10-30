@@ -40,17 +40,6 @@
 
 #include "gup.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "gup_err.h"
 #include "compress.h"
@@ -108,8 +97,8 @@ static int crc_use_cnt = 0;
 static int get_arj_suffix_cnt(const char *filename, char **suffix_ptr)
 {
 	TRACE_ME();
-	register int arj_suff;
-	register char *name_ptr;
+	int arj_suff;
+	char *name_ptr;
 
 	/*
 	 * Note in the following code that on some operating systems

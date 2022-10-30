@@ -54,6 +54,15 @@
 /* __EXTENSIONS__. */
 /* #undef __EXTENSIONS__ */
 
+/* Define to 1 if you have the <direct.h> header file. */
+/* #undef HAVE_DIRECT_H */
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#define HAVE_DIRENT_H 1
+
+/* Define to 1 if you have the <dir.h> header file. */
+/* #undef HAVE_DIR_H */
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -83,6 +92,9 @@
 
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
+
+/* Define to 1 if you have the `mkdir' function. */
+#define HAVE_MKDIR 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
@@ -120,8 +132,17 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the <tos.h> header file. */
+/* #undef HAVE_TOS_H */
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the <utime.h> header file. */
+#define HAVE_UTIME_H 1
+
+/* Define to 1 if you have the `_mkdir' function. */
+/* #undef HAVE__MKDIR */
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"

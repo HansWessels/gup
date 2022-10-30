@@ -145,7 +145,7 @@ windowadmin::Create          // administers creation of a window
       // If no windows exist, register the window class with Windows.
       if (windows == 0)
       {
-         WNDCLASS  wc;   // window class for generic windows
+         WNDCLASSA  wc;   // window class for generic windows
 
          wc.style         =   CS_HREDRAW
                             | CS_VREDRAW
@@ -269,7 +269,7 @@ guard_osrtl_window_admin::~guard_osrtl_window_admin  // performs exit checks
                           ClassName(),
                           &classnameansi) == OSRESULT_OK)
       {
-         if (!UnregisterClass(classnameansi,
+         if (!UnregisterClassA(classnameansi,
                               static_cast<HINSTANCE>(ProgramInstance())))
             OsDebugErrorMessage(L"Cannot unregister the window class.");
 

@@ -29,22 +29,6 @@
 
 #include "gup.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-
-#if (OS == OS_UNIX)
-#include <grp.h>
-#include <pwd.h>
-#endif
-
-#if (OS == OS_WIN32)
-#include <windows.h>
-#endif
-
 #include "arc_util.h"
 #include "gup_err.h"
 #include "compress.h"
@@ -265,7 +249,7 @@ gup_result lha_archive::create_next_volume(unsigned long volume_size)
 gup_result lha_archive::write_end_of_volume(int mv)
 {
 	gup_result result;
-	register uint8 *ptr;
+	uint8 *ptr;
 	unsigned long bytes_left;
 
 	(void) mv;
@@ -336,7 +320,7 @@ gup_result lha_archive::write_main_header(const mainheader *header)
 
 		if ((result = gup_io_write_announce(file, total_hdr_size)) == GUP_OK)
 		{
-			register uint8 *p;
+			uint8 *p;
 			unsigned long bytes_left;
 			const char *src;
 			int len = 0;
