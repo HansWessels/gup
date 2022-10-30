@@ -457,8 +457,6 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
             return GUP_INTERNAL;
         }
 
-        printf("############### BINBUF READ: %lu, SIZE WANTED: %lu\n", binsize_read, binsize);
-
         // Special service in the DUMP modes: we perform a CRC check on the compressed output to doublecheck our packer
         // didn't produce some unexpected, 'insane' output. DUMP MODE is aimed at DEMOSCENE and other specialized
         // use cases, where CRC checking the loaded data (our packed output) is not the norm.
@@ -792,18 +790,12 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
     // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
     std::string metafile_path(cur_main_hdr->archive_path);
 
-    printf("> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
-
     metafile_path += ".meta.nfo";
 
     char var_name[80];
     mk_variable_name(var_name, sizeof(var_name), name_ptr);
 
-    printf(">> metafile: %s // %s // %s\n", metafile_path.c_str(), name_ptr, cur_main_hdr->archive_path.c_str());
-
     dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
-
-    printf("> metafile: --> %s // %s\n", name_ptr, cur_main_hdr->archive_path.c_str());
 
     TRACE_ME();
     char* dst = reinterpret_cast<char*>(buf->get_append_ref());
