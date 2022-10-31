@@ -10,8 +10,8 @@ export unstore
 ; A1 src
 
 loop:
-	move.b	(A1)+,(A0)+
+		move.b	(A1)+,(A0)+
 unstore:
-	subq.l	#1,D0
-	bcc.s		loop
-	rts
+		subq.l	#1,D0
+		bcc.s	loop
+		rts
