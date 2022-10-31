@@ -28,8 +28,8 @@
 **   g index_t match_2[NC*NC]; laatst geziene locatie van twee bytes -> matchlen=2
 **   h index_t hash[HASH_SIZE]; 1e locatie voor de hash
 **   i index_t run_len[NC]; 1e locatie voor een runlen match
-**   j node_t tree[file_size]; dictionary tree
-**   k costs_t cost[file_size]; geschatte kosten om tot een bepaalde plek te komen
+**   j tree_t tree[file_size]; dictionary tree
+**   k cost_t cost[file_size]; geschatte kosten om tot een bepaalde plek te komen
 ** 10 functies voor de geschatte literal, len en ptr kosten
 **
 ** Hoe moet een insert verlopen?
@@ -50,10 +50,75 @@ gup_result init_dictionary32(packstruct *com)
 	{
 		return GUP_NOMEM;
 	}
+	com->compressed_data=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(byte_t), com->gm_propagator);
+	if (com->compressed_data == NULL)
+	{
+		return GUP_NOMEM;
+	}
 	com->match_len=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(match_t), com->gm_propagator);
 	if (com->match_len == NULL)
 	{
 		return GUP_NOMEM;
 	}
+	com->ptr_len=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(ptr_t), com->gm_propagator);
+	if (com->ptr_len == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->backmatch_len=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(match_t), com->gm_propagator);
+	if (com->backmatch_len == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->match_1=com->gmalloc((NC)*sizeof(index_t), com->gm_propagator);
+	if (com->match_1 == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->match_2=com->gmalloc((NC*NC)*sizeof(index_t), com->gm_propagator);
+	if (com->match_2 == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->hash=com->gmalloc((HASH_SIZE)*sizeof(index_t), com->gm_propagator);
+	if (com->hash == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->run_len=com->gmalloc((NC)*sizeof(index_t), com->gm_propagator);
+	if (com->run_len == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->tree=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(tree_t), com->gm_propagator);
+	if (com->tree == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->cost=com->gmalloc((com->origsize+DICTIONAY_START_OFFSET)*sizeof(cost_t), com->gm_propagator);
+	if (com->cost == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	/* initialiseer de index_hashes en de kosten */
+	memset(com->hash, 0, (HASH_SIZE)*sizeof(index_t));
+	memset(com->match_1, 0, (NC)*sizeof(index_t));
+	memset(com->match_2, 0, (NC*NC)*sizeof(index_t));
+	memset(com->cost, 0xFF, (com->origsize+DICTIONAY_START_OFFSET)*sizeof(cost_t));
 	return GUP_OK;
+}
+
+void free_dictionary32(packstruct *com)
+{
+	com->gfree(com->dictionary, com->gf_propagator);
+	com->gfree(com->compressed_data, com->gf_propagator);
+	com->gfree(com->match_len, com->gf_propagator);
+	com->gfree(com->ptr_len, com->gf_propagator);
+	com->gfree(com->backmatch_len, com->gf_propagator);
+	com->gfree(com->match_1, com->gf_propagator);
+	com->gfree(com->match_2, com->gf_propagator);
+	com->gfree(com->hash, com->gf_propagator);
+	com->gfree(com->run_len, com->gf_propagator);
+	com->gfree(com->tree=com, com->gf_propagator);
+	com->gfree(com->cost, com->gf_propagator);
 }
