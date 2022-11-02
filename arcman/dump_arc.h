@@ -116,6 +116,8 @@ class dump_archive : public arj_archive
     virtual ~dump_archive(void);
 
     virtual gup_result write_end_of_volume(int mv);
+    virtual gup_result close_archive(int ok);
+
     virtual gup_result write_main_header(const mainheader *header);
     virtual gup_result write_file_header(const fileheader *header);
     virtual gup_result write_file_trailer(const fileheader *header);
@@ -168,9 +170,7 @@ class bindump_archive : public dump_archive
     bindump_archive(void);
     virtual ~bindump_archive(void);
 
-    /*
-     * Functions for opening and closing the archive.
-     */
+    virtual gup_result close_archive(int ok);
 
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
@@ -185,9 +185,7 @@ class cdump_archive : public dump_archive
     cdump_archive(void);
     virtual ~cdump_archive(void);
 
-    /*
-     * Functions for opening and closing the archive.
-     */
+    virtual gup_result close_archive(int ok);
 
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
@@ -202,9 +200,7 @@ class asmdump_archive : public dump_archive
     asmdump_archive(void);
     virtual ~asmdump_archive(void);
 
-    /*
-     * Functions for opening and closing the archive.
-     */
+    virtual gup_result close_archive(int ok);
 
     virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
     virtual dump_output_bufptr_t generate_file_header(const fileheader *header);

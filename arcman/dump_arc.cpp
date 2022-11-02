@@ -622,6 +622,11 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
 }
 
 
+gup_result dump_archive::close_archive(int ok)
+{
+    return arj_archive::close_archive(ok);
+}
+
 
 gup_result dump_archive::gup_io_flush_header(buf_fhandle_t *file)
 {
@@ -957,6 +962,33 @@ dump_output_bufptr_t bindump_archive::generate_end(bool end_of_archive)
 }
 
 
+gup_result bindump_archive::close_archive(int ok)
+{
+    gup_result result;
+
+    if (opened)
+    {
+        if (rw)
+        {
+            if (!ok && cur_main_hdr)
+            {
+                /*
+                 * Archive is not ok. Delete all volumes' metadata files.
+                 */
+                std::string metafile_path(cur_main_hdr->archive_path);
+
+                metafile_path += ".meta.nfo";
+
+                unlink(metafile_path.c_str());
+            }
+        }
+    }
+
+    return dump_archive::close_archive(ok);
+}
+
+
+
 
 //===================================================================================
 //===================================================================================
@@ -1123,6 +1155,35 @@ dump_output_bufptr_t cdump_archive::generate_end(bool end_of_archive)
 
     return buf;
 }
+
+
+gup_result cdump_archive::close_archive(int ok)
+{
+    gup_result result;
+
+    if (opened)
+    {
+        if (rw)
+        {
+            if (!ok && cur_main_hdr)
+            {
+                /*
+                 * Archive is not ok. Delete all volumes' metadata files.
+                 */
+                std::string metafile_path(cur_main_hdr->archive_path);
+
+                metafile_path += ".meta.nfo";
+
+                unlink(metafile_path.c_str());
+            }
+        }
+    }
+
+    return dump_archive::close_archive(ok);
+}
+
+
+
 
 
 //===================================================================================
@@ -1292,6 +1353,33 @@ dump_output_bufptr_t asmdump_archive::generate_end(bool end_of_archive)
 
     return buf;
 }
+
+
+gup_result asmdump_archive::close_archive(int ok)
+{
+    gup_result result;
+
+    if (opened)
+    {
+        if (rw)
+        {
+            if (!ok && cur_main_hdr)
+            {
+                /*
+                 * Archive is not ok. Delete all volumes' metadata files.
+                 */
+                std::string metafile_path(cur_main_hdr->archive_path);
+
+                metafile_path += ".meta.nfo";
+
+                unlink(metafile_path.c_str());
+            }
+        }
+    }
+
+    return dump_archive::close_archive(ok);
+}
+
 
 #endif // ENABLE_DUMP_OUTPUT_MODES
 
