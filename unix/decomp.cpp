@@ -141,10 +141,12 @@ int scan_arj_directory(OPTIONS *opts,
 		delete main_hdr;
 	}
 
-	archive->close_archive(1);
+	gup_result result_cls =	archive->close_archive(1);
+	if (result == GUP_OK)
+		result = result_cls;
 	delete archive;
 
-	return 0;
+	return result;
 }
 
 /*
@@ -316,9 +318,7 @@ int decompress(OPTIONS *opts)
 	if (opts->command == CMD_TEST)
 		opts->no_write_data = 1;
 
-	scan_arj_directory(opts, do_unpack1, do_unpack2);
-
-	return 0;
+	return scan_arj_directory(opts, do_unpack1, do_unpack2);
 }
 
 gup_result do_list1(archive *archive, fileheader *ah,
@@ -352,7 +352,5 @@ int list_arj(OPTIONS *opts)
 	printf("Filename                                    Original Compressed Ratio Mode\n");
 	printf("                                          ---------- ---------- ----- ----\n");
 
-	scan_arj_directory(opts, do_list1, do_list2);
-
-	return 0;
+	return scan_arj_directory(opts, do_list1, do_list2);
 }

@@ -749,7 +749,7 @@ int main(int argc, char *argv[])
 				if ((opts.arj_name = (char*)malloc(strlen(argv[files]) + 4)) ==
 					NULL)
 				{
-					error = GUP_INTERNAL;
+					error = GUP_NOMEM;
 					break;
 				}
 
@@ -762,7 +762,7 @@ int main(int argc, char *argv[])
 				if ((opts.arj_name = (char*)malloc(strlen(argv[files]) * 2 + 12)) ==
 					NULL)
 				{
-					error = GUP_INTERNAL;
+					error = GUP_NOMEM;
 					break;
 				}
 
@@ -790,11 +790,9 @@ int main(int argc, char *argv[])
 
 				// is it a directory?
 				osstat st;
-				if (gup_stat(p, &st) != GUP_OK)
-				{
-					error = GUP_INTERNAL;
+				if ((error = gup_stat(p, &st)) != GUP_OK)
 					break;
-				}
+
 				char *dst = p + len;
 				size_t dlen = len + 12;  // remainder of allocated space
 				if (gup_file_type(&st) == FILE_ATTRIBUTE_DIRECTORY)
@@ -857,7 +855,7 @@ int main(int argc, char *argv[])
 
 		if ((opts.args = args2f(argv + files + 1)) == NULL)
 		{
-			error = GUP_INTERNAL;
+			error = GUP_NOMEM;
 			break;
 		}
 
@@ -905,6 +903,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 		ARJ_Assert(opts.type != AT_UNKNOWN);
+		ARJ_Assert(error == GUP_OK);
 
 		/*
 		 * Execute command.
@@ -914,17 +913,17 @@ int main(int argc, char *argv[])
 			(opts.command == CMD_GARBLE) || (opts.command == CMD_MOVE) ||
 			(opts.command == CMD_UPDATE))
 		{
-			compress(&opts);
+			error = compress(&opts);
 		}
 		else if ((opts.command == CMD_EXTRACT) || (opts.command == CMD_PRINT)
 				 || (opts.command == CMD_TEST)
 				 || (opts.command == CMD_XTRACT))
 		{
-			decompress(&opts);
+			error = decompress(&opts);
 		}
 		else if (opts.command == CMD_LIST)
 		{
-			list_arj(&opts);
+			error = list_arj(&opts);
 		}
 		else
 		{
@@ -935,6 +934,7 @@ int main(int argc, char *argv[])
 		return error;
 	}
 
-	fprintf(stderr, "%s: Not enough memory\n", opts.programname);
+	fprintf(stderr, "%s: ", opts.programname);
+	display_error((gup_result)error);
 	return error;
 }
