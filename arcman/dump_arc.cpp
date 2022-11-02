@@ -226,7 +226,7 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
     int dirtree_depth_level = 0;
 	size_t len = strlen(fpath);
 	
-    for (size_t i = len - 1, stop = (len >= LENGTH_LIMIT ? len - LENGTH_LIMIT : 0); i >= 0 && i > stop && d > dst + 7 + 5; i--)
+    for (size_t i = len - 1, stop = (len >= LENGTH_LIMIT ? len - LENGTH_LIMIT : 0); i >= 0 && i >= stop && d > dst + 7 + 5; i--)
 	{
 		char c = fpath[i];
 		
