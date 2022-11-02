@@ -246,10 +246,10 @@
     <Filter Include="Misc Files\lib">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0078}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Misc Files\ni_packer">
+    <Filter Include="Misc Files\ni_pack">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0080}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Misc Files\ni_packer\atari_st">
+    <Filter Include="Misc Files\ni_pack\atari_st">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0079}</UniqueIdentifier>
     </Filter>
     <Filter Include="Misc Files\spec">
@@ -288,31 +288,31 @@
     <Filter Include="Resource Files\test\test-data\src">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0090}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ni_packer">
+    <Filter Include="Source Files\ni_pack">
       <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0145}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../../ni_packer/arj_crc.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/arj_crc.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/arj_m4.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/arj_m4.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/arj_m7.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/arj_m7.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/depack_t.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/depack_t.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/ni_n0.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/ni_n0.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/ni_n1.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/ni_n1.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
-    <ClCompile Include="../../ni_packer/unstore.c">
-      <Filter>Source Files\ni_packer</Filter>
+    <ClCompile Include="../../ni_pack/unstore.c">
+      <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
     <ClInclude Include="../../acconfig.h">
       <Filter>Header Files</Filter>
@@ -848,20 +848,20 @@
     <Text Include="../../mk_autoconf.sh">
       <Filter>Misc Files</Filter>
     </Text>
-    <Text Include="../../ni_packer/atari_st/arj_crc.s">
-      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    <Text Include="../../ni_pack/atari_st/arj_crc.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
     </Text>
-    <Text Include="../../ni_packer/atari_st/arj_m4.s">
-      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    <Text Include="../../ni_pack/atari_st/arj_m4.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
     </Text>
-    <Text Include="../../ni_packer/atari_st/arj_m7.s">
-      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    <Text Include="../../ni_pack/atari_st/arj_m7.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
     </Text>
-    <Text Include="../../ni_packer/atari_st/ni_n0.s">
-      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    <Text Include="../../ni_pack/atari_st/ni_n0.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
     </Text>
-    <Text Include="../../ni_packer/atari_st/unstore.s">
-      <Filter>Misc Files\ni_packer\atari_st</Filter>
+    <Text Include="../../ni_pack/atari_st/unstore.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
     </Text>
     <Text Include="../../spec/archive.txt">
       <Filter>Misc Files\spec</Filter>
