@@ -518,7 +518,7 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
 
         if (binsize_read != binsize)
         {
-            fprintf(stderr, "couldn't read/reload all packed bytes: %lu != %lu\n", binsize_read, binsize);
+            fprintf(stderr, "Couldn't read/reload all packed bytes: %lu != %lu\n", binsize_read, binsize);
             return GUP_INTERNAL;
         }
 
@@ -552,7 +552,10 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
                 return result;
 
             if ((result = ::decode(&st.unpack_str)) != GUP_OK)
+            {
+                fprintf(stderr, "\nFailure while testing the compressed data stream: ");
                 return result;
+            }
 
             opt_no_write = old_no_wr;
 
