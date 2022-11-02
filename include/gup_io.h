@@ -50,6 +50,8 @@ gup_result gup_io_tell(buf_fhandle_t *file, long *fpos);
 gup_result gup_io_flush(buf_fhandle_t *file);
 gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dstbufsize, unsigned long *real_count);
 
+gup_result gup_io_switch_to_read_mode(buf_fhandle_t* file);
+gup_result gup_io_switch_to_write_mode(buf_fhandle_t* file);
 
 /*
  * Low level functions.

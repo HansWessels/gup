@@ -101,6 +101,9 @@ gup_result gup_io_flush(buf_fhandle_t *file)
 	file_struct *com = (void *) file;
 	long count, real_count;
 
+	if (!(com->flags & FSF_WRITE))
+		return GUP_INTERNAL;
+
 	/*
 	 * Determine the number of bytes in the buffer.
 	 */
@@ -862,4 +865,82 @@ void gup_io_set_position(buf_fhandle_t *file, long position)
 			com->last_ptr = file->current;
 		}
 	}
+}
+
+gup_result gup_io_switch_to_read_mode(buf_fhandle_t* file)
+{
+	TRACE_ME();
+	file_struct* com = (void*)file;
+	gup_result result = GUP_OK;
+
+	if (com->flags & FSF_WRITE)
+	{
+		if ((result = gup_io_flush(file)) != GUP_OK)
+			return result;
+
+		//unsigned long file_pos = tell(com->handle);		
+		unsigned long file_pos = lseek(com->handle, 0, SEEK_CUR);
+
+		long fpos;
+		result = gup_io_tell(file, &fpos);
+
+		ARJ_Assert(fpos == file_pos);
+		ARJ_Assert(!(com->flags & FSF_MMAPPED));
+
+		com->flags &= ~FSF_WRITE;
+
+		// 'flush' buffer for read:
+		file->current = com->last_ptr = file->end = file->start;
+		// and FAKE a current position that'll trigger gup_io_seek() to invoke a buffer (re)fill:
+		com->pos = file_pos + 1;
+
+		long dummy;
+		result = gup_io_seek(file, file_pos, SEEK_SET, &dummy);
+		if (result == GUP_OK && dummy != file_pos)
+		{
+			com->flags |= FSF_WRITE;
+			return GUP_INTERNAL;
+		}
+	}
+
+	return result;
+}
+
+
+gup_result gup_io_switch_to_write_mode(buf_fhandle_t* file)
+{
+	TRACE_ME();
+	file_struct* com = (void*)file;
+	gup_result result = GUP_OK;
+
+	if (!(com->flags & FSF_WRITE))
+	{
+		//unsigned long file_pos = tell(com->handle);		
+		unsigned long file_pos = lseek(com->handle, 0, SEEK_CUR);
+
+		long fpos;
+		//result = gup_io_tell(file, &fpos);  -- delivers wrong results for this case:
+		fpos = com->pos + (file->end - file->start);
+
+		ARJ_Assert(fpos == file_pos);
+		ARJ_Assert(!(com->flags & FSF_MMAPPED));
+
+		com->flags |= FSF_WRITE;
+
+		// 'flush' buffer for write:
+		file->current = com->last_ptr = file->start;
+		// *recover* the write buffer size:
+		file->end = file->start + com->buf_size;
+		// and FAKE a current position that'll trigger gup_io_seek() to invoke a buffer (re)fill:
+		com->pos = file_pos + 1;
+
+		long dummy;
+		result = gup_io_seek(file, file_pos, SEEK_SET, &dummy);
+		if (result == GUP_OK && dummy != file_pos)
+		{
+			return GUP_INTERNAL;
+		}
+	}
+
+	return result;
 }

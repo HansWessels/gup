@@ -547,8 +547,18 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
             unsigned int old_no_wr = opt_no_write;
             opt_no_write = 1;
 
+            // nasty: flip the file mode:
+            if ((result = gup_io_switch_to_read_mode(file)) != GUP_OK)
+                return result;
+
             if ((result = seek(cur_main_hdr->current_file_pack_start_offset, SEEK_SET)) != GUP_OK)
                 return result;
+
+            if ((result = ::init_decode(&st.unpack_str)) != GUP_OK)
+            {
+                fprintf(stderr, "\nFailure while testing the compressed data stream: ");
+                return result;
+            }
 
             if ((result = ::decode(&st.unpack_str)) != GUP_OK)
             {
@@ -556,10 +566,9 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
                 return result;
             }
 
-            opt_no_write = old_no_wr;
+            free_decode(&st.unpack_str);
 
-            if ((result = seek(current_pos, SEEK_SET)) != GUP_OK)
-                return result;
+            opt_no_write = old_no_wr;
 
             /*
             * Set the CRC calculated while decompressing.
@@ -570,6 +579,12 @@ gup_result dump_archive::write_file_trailer(const fileheader* header)
                 fprintf(stderr, "Verified depacked content CRC does not match original file CRC: this is a CATASTROPHIC INTERNAL FAILURE of the packer! CRC: 0x%08lx != 0x%08lx\n", (unsigned long)real_crc, (unsigned long)header->file_crc);
                 return GUP_INTERNAL;
             }
+
+            if ((result = gup_io_switch_to_write_mode(file)) != GUP_OK)
+                return result;
+
+            if ((result = seek(current_pos, SEEK_SET)) != GUP_OK)
+                return result;
         }
 
         // now we have the binary packed data in file/buffer.

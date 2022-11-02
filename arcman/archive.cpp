@@ -270,7 +270,7 @@ static void gfree(void* ptr, void *propagator)
  * 																			 *
  *****************************************************************************/
 
-archive::archive(void)
+archive::archive(void) : volumes()
 {
 	archive_name = NULL;
 
@@ -412,6 +412,7 @@ gup_result archive::create_archive(const char *name, OPTIONS *options,
 	st.unpack_str.gfree = gfree;
 	st.unpack_str.gf_propagator = NULL;
 
+#if 0
 	if ((result = init_decode(&st.unpack_str)) != GUP_OK)
 	{
 		volumes.clear();
@@ -419,12 +420,13 @@ gup_result archive::create_archive(const char *name, OPTIONS *options,
 
 		return result;
 	}
+#endif
 
 	// !options->no_crc_checking
-		if (options->no_write_data)
-			st.unpack_str.write_crc = buf_write_crc_test;
-		else
-			st.unpack_str.write_crc = buf_write_crc;
+	if (options->no_write_data)
+		st.unpack_str.write_crc = buf_write_crc_test;
+	else
+		st.unpack_str.write_crc = buf_write_crc;
 
 	st.unpack_str.buf_fill = gup_buf_fill;
 	st.unpack_str.br_propagator = this;

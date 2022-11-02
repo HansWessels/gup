@@ -193,7 +193,7 @@ unsigned long int tb(int xbits, int* bib, unsigned long int bitbuf, decode_struc
           bib = INT_MAX;                                    \
           newbuf <<= 8*(i+1);                               \
           break;                                            \
-	      }                                                   \
+        }                                                   \
       }                                                     \
       newbuf <<= 8;                                         \
       newbuf+=*com->rbuf_current++;                         \
