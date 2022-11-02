@@ -432,8 +432,7 @@ gup_result dump_archive::write_file_header(const fileheader *header)
     if (cur_main_hdr == NULL)
         return GUP_INTERNAL;
 
-    if ((result = tell(header_pos)) != GUP_OK)  /* Store current position for
-                                           use by 'write_file_tailer'. */
+    if ((result = tell(header_pos)) != GUP_OK)  /* Store current position for use by 'write_file_tailer'. */
         return result;
 
     // do not generate meta files ("headers") for DIRECTORIES, only for actual FILES:

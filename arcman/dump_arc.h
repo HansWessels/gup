@@ -9,10 +9,12 @@
 #if ENABLE_DUMP_OUTPUT_MODES
 
 #include <memory>
+#include <string>
 #include <assert.h>
 
 #include "arj_hdr.h"
 #include "arj_arc.h"
+
 
 // buffer type used to hold dump mode headers while they are generated.
 class dump_output_buffer

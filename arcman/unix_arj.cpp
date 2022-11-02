@@ -43,7 +43,6 @@ ostime arj_conv_to_os_time(uint32 arj_time)
  *
  * Convert a filename in ARJ format to OS format.
  */
-
 char *arj_conv_to_os_name(const char *arj_name, uint16 &fspec_pos, int pathsym_flag)
 {
 	char *os_name, *dest;
@@ -80,7 +79,6 @@ char *arj_conv_to_os_name(const char *arj_name, uint16 &fspec_pos, int pathsym_f
  *
  * Convert a filename in OS format to ARJ format.
  */
-
 char *arj_conv_from_os_name(const char *os_name, uint16 &fspec_pos, int pathsym_flag)
 {
 	char *arj_name, *dest;
