@@ -895,6 +895,7 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
 
         metafile_path += ".meta.nfo";
 
+        // produce a unique variable name to reference the packed data in the bindump:
         std::string var_name = mk_variable_name_base(name_ptr);
 
         // check for collisions:
