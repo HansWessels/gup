@@ -844,7 +844,11 @@ int main(int argc, char *argv[])
 				// to check this one against the incoming filename, in case the user
 				// drag&dropped an *archive* on us: we DO NOT want to overwrite that
 				// one!
+#if defined(WIN32) || defined(WIN64)
 				if (0 == stricmp(opts.arj_name, argv[files]))
+#else
+				if (0 == strcasecmp(opts.arj_name, argv[files]))
+#endif
 				{
 					printf("%s: dropped an archive file (%s) on GUP in DRAG&DROP mode: not going to replace or do anything else with it for your protection.\n", opts.programname, argv[files]);
 					return GUP_INVAL;
