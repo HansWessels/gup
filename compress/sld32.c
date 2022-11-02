@@ -10,7 +10,7 @@
 **   e costs_t = uint64_t: geschatte kosten in (fracties van) bits
 **   f node_t = {index_t parent, index_t c_left, index_t c_right, index_t link}: node in de dictionary tree
 **   g NC = 256; Number of Characters, aantal verschillende karaters in byte_t
-**   h HASH_SIZE = 65536; groote van de hash array voor de eerste karakter van een insert, we zouden deze NC*NC*NC kunnen maken dan is het altijd raak...
+**   h HASH_SIZE = 65536+256; groote van de hash array voor de eerste karakter van een insert, we zouden deze NC*NC*NC kunnen maken dan is het altijd raak...
 ** 4 back match lengte
 ** 5 match history foot current match.. hoe lang moet deze zijn
 ** 6 zeef 34, gewoon terukijken in de dictionary
@@ -27,7 +27,6 @@
 **   f index_t match_1[NC]; laatst geziene locatie van een enkele byte -> matchlen=1
 **   g index_t match_2[NC*NC]; laatst geziene locatie van twee bytes -> matchlen=2
 **   h index_t hash[HASH_SIZE]; 1e locatie voor de hash
-**   i index_t run_len[NC]; 1e locatie voor een runlen match
 **   j tree_t tree[file_size]; dictionary tree
 **   k cost_t cost[file_size]; geschatte kosten om tot een bepaalde plek te komen
 ** 10 functies voor de geschatte literal, len en ptr kosten
@@ -42,6 +41,7 @@
 */
 
 #define DICTIONAY_START_OFFSET 4  /* eerste 4 posities in de dictionary zijn voor speciaal gebruik */
+#define NO_NODE 0
 
 gup_result init_dictionary32(packstruct *com)
 {
@@ -80,13 +80,8 @@ gup_result init_dictionary32(packstruct *com)
 	{
 		return GUP_NOMEM;
 	}
-	com->hash=com->gmalloc((HASH_SIZE)*sizeof(index_t), com->gm_propagator);
+	com->hash_table=com->gmalloc((HASH_SIZE)*sizeof(index_t), com->gm_propagator);
 	if (com->hash == NULL)
-	{
-		return GUP_NOMEM;
-	}
-	com->run_len=com->gmalloc((NC)*sizeof(index_t), com->gm_propagator);
-	if (com->run_len == NULL)
 	{
 		return GUP_NOMEM;
 	}
@@ -117,8 +112,89 @@ void free_dictionary32(packstruct *com)
 	com->gfree(com->backmatch_len, com->gf_propagator);
 	com->gfree(com->match_1, com->gf_propagator);
 	com->gfree(com->match_2, com->gf_propagator);
-	com->gfree(com->hash, com->gf_propagator);
-	com->gfree(com->run_len, com->gf_propagator);
+	com->gfree(com->hash_table, com->gf_propagator);
 	com->gfree(com->tree=com, com->gf_propagator);
 	com->gfree(com->cost, com->gf_propagator);
 }
+
+index_t *hash(index_t pos, packstruct* com)
+{ /* bereken de positie in de hash table en geef deze positie terug */
+	uint32_t val;
+	val=(com->dictionary[pos]^com->dictionary[pos+1]);
+	val<<=8;
+	val|=(com->dictionary[pos+1]^com->dictionary[pos+2]);
+	if(val==0)
+	{ /* rle match */
+		val+=65536+com->dictionary[pos];
+	}
+	return &hash_table[val];
+}
+
+match_t find_dictionary32(index_t pos, packstruct* com)
+{
+	match_t best_match=0;
+	ptr_t best_ptr=0;
+	match_t max_match=com->max_match;
+	if(max_match>(com->origsize-pos))
+	{
+		max_match=(com->origsize-pos);
+	}
+	if(pos>com->maxptr32)
+	{ /* remove node op pos-maxptr32-1 */
+		index_t *parent;
+		parent=com->tree[pos-com->maxptr32-1].parent;
+		if(parent!=NULL)
+		{
+			*parent=NO_NODE;
+		}
+	}
+	if(com->min_match==1)
+	{
+		index_t match_pos;
+		byte_t key=com->dictionary[pos];
+		match_pos=com->match_1[key];
+		if(match_pos!=NO_NODE)
+		{
+			if(com->dictionary[match_pos]==com->dictionary[pos])
+			{
+				best_match=1;
+				best_ptr=pos-match_pos-1;
+			}
+		}
+		com->match_1[key]=pos;
+	}
+	if((com->min_match==2) && (max_match>=2))
+	{
+		index_t match_pos;
+		word_t key=(com->dictionary[pos]<<8)+com->dictionary[pos+1];
+		match_pos=com->match_2[key];
+		if(match_pos!=NO_NODE)
+		{
+			if((com->dictionary[match_pos]==com->dictionary[pos]) && (com->dictionary[match_pos+1]==com->dictionary[pos+1])
+			{
+				best_match=2;
+				best_ptr=pos-match_pos-1;
+			}
+		}
+		com->match_2[key]==pos;
+	}
+	if(max_match>2)
+	{
+		index_t current_pos;
+		index_t next_pos;
+		index_t* parent;
+		byte orig=com->dictionary[pos+max_match];
+		parent=hash(pos, com);
+		next_pos=*parent;
+		com->tree[pos].parent=parent;
+		com->tree[pos].c_left=NO_NODE;
+		com->tree[pos].c_right=NO_NODE;
+		current_pos=pos;
+		while(next_pos!=NO_NODE)
+		{ /* insert next_pos in current_pos */
+			
+		}
+		com->dictionary[pos+max_match]=orig;
+	}
+}
+
