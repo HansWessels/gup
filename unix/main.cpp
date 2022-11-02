@@ -650,7 +650,6 @@ int main(int argc, char *argv[])
 			if (dotpos != std::string::npos)
 				apnm.erase(dotpos);
 			std::transform(apnm.begin(), apnm.end(), apnm.begin(), [](unsigned char c) { return std::tolower(c); });
-			apnm = "pack";
 
 			default_mode = TRUE;
 
@@ -674,13 +673,15 @@ int main(int argc, char *argv[])
 				opts.mode = ARJ_MODE_4;
 				opts.type = AT_ARJ;
 
-				char* opts = strdup(apnm.c_str());
-				char* opt = strtok(opts, " _-");
+				default_mode = FALSE;  // we do the defaults right here, so the default handling further down below for the generic case SHOULD NOT be executed.
+
+				char* optstr = strdup(apnm.c_str());
+				char* opt = strtok(optstr, " _-");
 				// skip initial part of appname, but do infer the archive type from it, 
 				// when it has the format XXX2A, where XXX is any arbitrary text and A
 				// is one of the archive format identifiers: B=bindump, C=cdump, S=asmdump, A=arj, L=lzh, Z=gz
 				// (default = ARJ)
-				arc_type = AT_UNKNOWN;
+				arc_type = (archive_type)opts.type;
 				if (opt)
 				{
 					char* fmt = strrchr(opt, '2');
@@ -705,8 +706,9 @@ int main(int argc, char *argv[])
 						arc_type = AT_CDUMP;
 						break;
 					default:
-						arc_type = AT_UNKNOWN;
+						break;
 					}
+					opts.type = arc_type;
 
 					*opt = 0;
 				}
@@ -718,7 +720,7 @@ int main(int argc, char *argv[])
 						setoption(opt - 1 /* nasty hack to re-use setoption() under these circumstances */);
 					opt = strtok(NULL, " _-");
 				}
-				free(opts);
+				free(optstr);
 			}
 
 			atexit(doexit);
@@ -894,7 +896,7 @@ int main(int argc, char *argv[])
 			if (default_mode)
 				opts.mode = GNU_ARJ_MODE_7;     // GNU_ARJ_MODE_8? or something...
 
-			if (opts.type != AT_ARJ && opts.type != AT_UNKNOWN)
+			if (opts.type != AT_ARJ && opts.type != AT_UNKNOWN && opts.type != AT_BINDUMP && opts.type != AT_CDUMP && opts.type != AT_ASMDUMP)
 			{
 				printf("%s: DUMP MODE is only supported for ARJ style compression settings.\n", opts.programname);
 				return GUP_INVAL;
