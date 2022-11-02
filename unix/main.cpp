@@ -795,7 +795,7 @@ int main(int argc, char *argv[])
 
 				char *dst = p + len;
 				size_t dlen = len + 12;  // remainder of allocated space
-				if (gup_file_type(&st) == FILE_ATTRIBUTE_DIRECTORY)
+				if (gup_file_type(&st) == DIR_TYPE)
 				{
 					snprintf(dst, dlen, "/%s", name);
 					dst++;
