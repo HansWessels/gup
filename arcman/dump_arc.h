@@ -10,6 +10,8 @@
 
 #include <memory>
 #include <string>
+#include <map>
+#include <vector>
 #include <assert.h>
 
 #include "arj_hdr.h"
@@ -112,6 +114,10 @@ class dump_archive : public arj_archive
 
     long archive_file_offset;                       // offset in archive file (output) where current compresed file data is written
     bool at_end_of_archive_action;
+
+    // variable name production for file metadata code references:
+    std::map<std::string, int> varname_collisions;  // tracks the number of collisions per auto-generated varname 'base'.
+    std::vector<std::string> actual_varnames;       // collects all generated variable names.
         
   public:
     dump_archive(void);

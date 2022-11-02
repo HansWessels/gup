@@ -200,35 +200,39 @@ static std::string mk_basename(const char *path)
     return path;
 }
 
-// generate a decent variable name for the unambiguous file path, i.e. we use the entire (relative?) path:
-static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath)
+// generate a decent variable name for the (possibly ambiguous!) file path.
+//
+// heuristic: when the given path includes directories, we only use thee last two
+//as part of the varname production.
+static std::string mk_variable_name_base(const char *fpath)
 {
-	// calc a simple hash of the input string, sans Windows/DOS drive:
-	const char *drv = strchr(fpath, ':');
-	if (drv)
-		fpath = drv + 1;
-	
-	uint32_t h = folded_hash_string(fpath);
-	
+    char* p = strdup(fpath);
+
+    // transform to simple unixy path first:
+    for (char* p2 = p; *p2; p2++)
+        if (strchr(":\\/", *p2))
+            *p2 = '/';
+
+    // now find the start of the grandparent dir, `/gp/p/file` is all that should remain after this.
+    char* marker = p;
+    for (char* p2 = strchr(p, 0) - 1, cnt = 2; cnt >= 0 && p2 > p; p2--)
+    {
+        if (*p2 == '/')
+        {
+            cnt--;
+            marker = p2 + 1;
+        }
+    }
+
 	// convert string to variable-name-safe:
-	
-	// filter and restrict length to N (N = 40 by default) and a maximum directory tree depth of 4
-#define LENGTH_LIMIT  40
-#define DIRTREE_DEPTH_LIMIT  4
 
-	assert(dstsize > 20);
-	snprintf(dst, dstsize, "packed_%04X_", (unsigned int)h);
-
-	char *e = dst + dstsize - 1;
-	*e = 0;
-	char *d = e;
+    char* e = strchr(marker, 0);
+	char *d = p;
 	bool has_seen_underscore = true;
-    int dirtree_depth_level = 0;
-	size_t len = strlen(fpath);
 	
-    for (size_t i = len - 1, stop = (len >= LENGTH_LIMIT ? len - LENGTH_LIMIT : 0); i >= 0 && i >= stop && d > dst + 7 + 5; i--)
+    for (size_t i = 0; marker[i]; i++)
 	{
-		char c = fpath[i];
+		char c = marker[i];
 		
 		if (c >= 'A' && c <= 'Z')
 			has_seen_underscore = false;
@@ -238,32 +242,30 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
 			has_seen_underscore = false;
 		else 
 		{
-			if (c == '\\' || c == '/')
-			{
 				c = '_';
-				e = d + 1;
-				dirtree_depth_level++;
-				if (dirtree_depth_level >= DIRTREE_DEPTH_LIMIT)
-					break;
-			}
-			else
-			{
-				c = '_';
-			}
 			
 			if (has_seen_underscore)
 				continue;
 			has_seen_underscore = true;
 		}
 		
-		*--d = c;
+		*d++ = c;
 	}
-	
-	if (d != dst + 7 + 5)
-		memmove(dst + 7 + 5, d, strlen(d) + 1);
-	assert(strlen(dst) < dstsize);
-	
-	return dst;
+    *d = 0;
+
+    // trim leading and trailing _ underscores:
+    for (d--; d > p && *d == '_'; d--)
+        ;
+    d[1] = 0;
+    for (marker = p; *marker == '_'; marker++)
+        ;
+    // and in the very rare case where the filename was Unicode or nonsense that all got filtered out:
+    if (!*marker)
+        marker = strncpy(p, "file", strlen(fpath));
+
+    std::string rv(marker);
+    free(p);
+    return std::move(rv);
 }
 
 
@@ -273,7 +275,14 @@ static const char *mk_variable_name(char *dst, size_t dstsize, const char *fpath
  *                                                                           *
  *****************************************************************************/
 
-dump_archive::dump_archive() : cur_main_hdr(NULL), increment_file_no(false), archive_file_offset(0), file_no(0), at_end_of_archive_action(false)
+dump_archive::dump_archive()
+    : cur_main_hdr(NULL)
+    , increment_file_no(false)
+    , archive_file_offset(0)
+    , file_no(0)
+    , at_end_of_archive_action(false)
+    , varname_collisions()
+    , actual_varnames()
 {
     TRACE_ME();
 }
@@ -850,47 +859,66 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
 {
     TRACE_ME();
 
-    char* name_ptr;
-    unsigned long total_hdr_size, bytes_left;
-    const char* src;
-    uint16 fspec_pos;
+    // Do the work only when we're completely done with the file, as gup code will invoke this method TWICE per file!
+    if (increment_file_no)
+    {
+        char* name_ptr;
+        unsigned long total_hdr_size, bytes_left;
+        const char* src;
+        uint16 fspec_pos;
 
-    src = header->get_filename();
-    const char* comment = header->get_comment();
-    if (!comment)
-        comment = "";
+        src = header->get_filename();
+        const char* comment = header->get_comment();
+        if (!comment)
+            comment = "";
 
-    const osstat* file_stat = header->get_file_stat();
+        const osstat* file_stat = header->get_file_stat();
 
-    name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
+        name_ptr = arj_conv_from_os_name(src, fspec_pos, PATHSYM_FLAG);
 
-    header->method; /* Packing mode. */
-    header->file_type;  /* File type. */
+        header->method; /* Packing mode. */
+        header->file_type;  /* File type. */
 
-    //      header->orig_time_stamp;    /* Time stamp. */
-    header->compsize;   /* Compressed size. */
-    header->origsize;   /* Original size. */
-    header->file_crc;   /* File CRC. */
-    fspec_pos;          /* File spec position in filename. */
-    //      header->orig_file_mode; /* File attributes. */
-    //      header->host_data;  /* Host data. */
+        //      header->orig_time_stamp;    /* Time stamp. */
+        header->compsize;   /* Compressed size. */
+        header->origsize;   /* Original size. */
+        header->file_crc;   /* File CRC. */
+        fspec_pos;          /* File spec position in filename. */
+        //      header->orig_file_mode; /* File attributes. */
+        //      header->host_data;  /* Host data. */
 
-    header->offset; /* Extended file position. */
+        header->offset; /* Extended file position. */
 
 
-    // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
-    std::string metafile_path(cur_main_hdr->archive_path);
+        // ALT:: write the archive metadata to *another* output file, whose name is derived off `archive_path`?
+        std::string metafile_path(cur_main_hdr->archive_path);
 
-    metafile_path += ".meta.nfo";
+        metafile_path += ".meta.nfo";
 
-    char var_name[80];
-    mk_variable_name(var_name, sizeof(var_name), name_ptr);
+        std::string var_name = mk_variable_name_base(name_ptr);
 
-    dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+        // check for collisions:
+        auto search = varname_collisions.find(var_name);
+        if (search != varname_collisions.end())
+        {
+            int col_cnt = search->second++;
+            char numbuf[20];
+            snprintf(numbuf, sizeof(numbuf), "gup%02d_", col_cnt);
+            var_name = numbuf + var_name;
 
-    TRACE_ME();
-    char* dst = reinterpret_cast<char*>(buf->get_append_ref());
-    snprintf(dst, buf->get_remaining_usable_size(), "\
+            this->actual_varnames.push_back(var_name);
+        }
+        else
+        {
+            varname_collisions.insert({ var_name, 1 });
+            this->actual_varnames.push_back(var_name);
+        }
+
+        dump_output_bufptr_t buf(new dump_output_buffer(strlen(comment) + strlen(src) * 2 + 1024));
+
+        TRACE_ME();
+        char* dst = reinterpret_cast<char*>(buf->get_append_ref());
+        snprintf(dst, buf->get_remaining_usable_size(), "\
   - FILE:\n\
       index no.: %d\n\
       filename: %s\n\
@@ -911,39 +939,39 @@ dump_output_bufptr_t bindump_archive::generate_file_header(const fileheader* hea
 \n\
 # --------------------------------------------------------------------\n\
 \n",
-        file_no, name_ptr, mk_basename(name_ptr).c_str(), var_name, comment,
-        (unsigned long)arj_conv_from_os_time(file_stat->ctime),
-        (int)header->method,
-        cvt_method2str(header->method),
-        cvt_method2description(header->method),
-        (int)header->file_type,
-        cvt_file_type2str(header->file_type),
-        (unsigned long)header->origsize,
-        (unsigned long)header->compsize,
-        (unsigned long)archive_file_offset,
-        (unsigned long)header->offset,
-        (unsigned long)header->file_crc
-    );
+file_no, name_ptr, mk_basename(name_ptr).c_str(), var_name.c_str(), comment,
+(unsigned long)arj_conv_from_os_time(file_stat->ctime),
+(int)header->method,
+cvt_method2str(header->method),
+cvt_method2description(header->method),
+(int)header->file_type,
+cvt_file_type2str(header->file_type),
+(unsigned long)header->origsize,
+(unsigned long)header->compsize,
+(unsigned long)archive_file_offset,
+(unsigned long)header->offset,
+(unsigned long)header->file_crc
+);
 
-    TRACE_ME();
-    size_t hdr_len = strlen(dst);
-    buf->set_appended_length(hdr_len);
+        TRACE_ME();
+        size_t hdr_len = strlen(dst);
+        buf->set_appended_length(hdr_len);
 
-    std::string msg(dst, buf->length());
+        std::string msg(dst, buf->length());
 
-    // PLUS: append to the archive metafile. But only when we're completely done with the file, as gup code will invoke this method TWICE per file!
-    if (increment_file_no)
-    {
-        std::ofstream out_arc(metafile_path, std::ios_base::app);
-        out_arc << msg;
-        //out_arc.close();
+        {
+            std::ofstream out_arc(metafile_path, std::ios_base::app);
+            out_arc << msg;
+            //out_arc.close();
+        }
+
+        delete[] name_ptr;
+
+        buf->clear();
     }
 
-    delete[] name_ptr;
-
-    buf->clear();
-
-    return buf;
+    // no header data in the bindump itself:
+    return dump_output_bufptr_t(new dump_output_buffer());
 }
 
 dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header)
