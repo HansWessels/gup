@@ -635,6 +635,7 @@ int main(int argc, char *argv[])
 	{
 		int files;
 		bool is_special_appname = false;
+		archive_type arc_type = AT_UNKNOWN;
 
 		/* set default options, dependent on actual application name */
 		{
@@ -649,6 +650,7 @@ int main(int argc, char *argv[])
 			if (dotpos != std::string::npos)
 				apnm.erase(dotpos);
 			std::transform(apnm.begin(), apnm.end(), apnm.begin(), [](unsigned char c) { return std::tolower(c); });
+			apnm = "pack";
 
 			default_mode = TRUE;
 
@@ -661,60 +663,195 @@ int main(int argc, char *argv[])
 			opts.programname = strdup(appname);
 			opts.type = AT_UNKNOWN;
 
+			// When the archiver isn't named GUP, it's intended to be a simple drag&drop-all-the-stuff-to-pack-onto-me 
+			// application. That implies that we also need to construct a suitable archive file name & all argv[] are
+			// paths to stuff to archive:
 			if (apnm != "gup")
 			{
 				is_special_appname = true;
 
 				opts.command = CMD_ADD;
+				opts.mode = ARJ_MODE_4;
+				opts.type = AT_ARJ;
 
 				char* opts = strdup(apnm.c_str());
 				char* opt = strtok(opts, " _-");
-				// skip initial part of appname
+				// skip initial part of appname, but do infer the archive type from it, 
+				// when it has the format XXX2A, where XXX is any arbitrary text and A
+				// is one of the archive format identifiers: B=bindump, C=cdump, S=asmdump, A=arj, L=lzh, Z=gz
+				// (default = ARJ)
+				arc_type = AT_UNKNOWN;
 				if (opt)
+				{
+					char* fmt = strrchr(opt, '2');
+					switch (fmt ? tolower(fmt[1]) : 0)
+					{
+					case 'a':
+						arc_type = AT_ARJ;
+						break;
+					case 'l':
+						arc_type = AT_LHA;
+						break;
+					case 'z':
+						arc_type = AT_GZIP;
+						break;
+					case 'b':
+						arc_type = AT_BINDUMP;
+						break;
+					case 's':
+						arc_type = AT_ASMDUMP;
+						break;
+					case 'c':
+						arc_type = AT_CDUMP;
+						break;
+					default:
+						arc_type = AT_UNKNOWN;
+					}
+
 					*opt = 0;
+				}
+
 				// rest of appname represents gup options:
 				while (opt)
 				{
 					if (*opt)
-						setoption(opt - 1 /* nasty hack to re-use setoption() under these circumstances */ );
+						setoption(opt - 1 /* nasty hack to re-use setoption() under these circumstances */);
 					opt = strtok(NULL, " _-");
 				}
 				free(opts);
 			}
+
+			atexit(doexit);
+
+			/*
+			 * Parse command line.
+			 */
+
+			if (argc == 1)
+			{
+				usage(opts.programname);
+			}
+
+			if ((argc == 2) &&
+				(strcmp(argv[1], "-h") || strcmp(argv[1], "/h") ||
+					strcmp(argv[1], "-?") || strcmp(argv[1], "/?") ||
+					strcmp(argv[1], "--help")))
+			{
+				help(opts.programname);
+			}
+
+			if (!is_special_appname)
+			{
+				files = parse(argc, argv);
+
+				if ((opts.arj_name = (char*)malloc(strlen(argv[files]) + 4)) ==
+					NULL)
+				{
+					error = GUP_INTERNAL;
+					break;
+				}
+
+				strcpy(opts.arj_name, argv[files]);
+			}
+			else
+			{
+				// use the first path as a template for the archive name in drag&drop mode:
+				files = 1;
+				if ((opts.arj_name = (char*)malloc(strlen(argv[files]) * 2 + 12)) ==
+					NULL)
+				{
+					error = GUP_INTERNAL;
+					break;
+				}
+
+				strcpy(opts.arj_name, argv[files]);
+
+				char* p = opts.arj_name;
+				size_t len = strlen(p);
+
+				// trim off trailing '/':
+				if (strchr("\\/", p[len - 1]))
+					p[len - 1] = 0;
+
+				char* name = strrchr(p, '/');
+				if (name)
+					name++;
+				else
+					name = p;
+				char* p2 = strrchr(p, '\\');
+				if (p2)
+					p2++;
+				else
+					p2 = p;
+				if (p2 > name)
+					name = p2;
+
+				// is it a directory?
+				osstat st;
+				if (gup_stat(p, &st) != GUP_OK)
+				{
+					error = GUP_INTERNAL;
+					break;
+				}
+				char *dst = p + len;
+				size_t dlen = len + 12;  // remainder of allocated space
+				if (gup_file_type(&st) == FILE_ATTRIBUTE_DIRECTORY)
+				{
+					snprintf(dst, dlen, "/%s", name);
+					dst++;
+					dlen--;
+				}
+				else
+				{
+					dst = name;
+				}
+
+				// now append the proper archive type suffix to the archive name:
+				// (first chop of any existing file extension)
+				p2 = strrchr(dst, '.');
+				if (p2)
+					*p2 = 0;
+				len = strlen(name);
+				dst += len;
+				dlen -= len;
+
+				const char* ext;
+				switch (arc_type)
+				{
+				default:
+				case AT_ARJ:
+					ext = "arj";
+					break;
+				case AT_LHA:
+					ext = "lzh";
+					break;
+				case AT_GZIP:
+					ext = "gz";
+					break;
+				case AT_BINDUMP:
+					ext = "bindump";
+					break;
+				case AT_ASMDUMP:
+					ext = "asmdump";
+					break;
+				case AT_CDUMP:
+					ext = "cdump";
+					break;
+				}
+				snprintf(dst, dlen, ".%s", ext);
+
+				// archive name has been constructed. Before we go, however, we need
+				// to check this one against the incoming filename, in case the user
+				// drag&dropped an *archive* on us: we DO NOT want to overwrite that
+				// one!
+				if (0 == stricmp(opts.arj_name, argv[files]))
+				{
+					printf("%s: dropped an archive file (%s) on GUP in DRAG&DROP mode: not going to replace or do anything else with it for your protection.\n", opts.programname, argv[files]);
+					return GUP_INVAL;
+				}
+				files = 0;
+			}
 		}
-
-		atexit(doexit);
-
-		/*
-		 * Parse command line.
-		 */
-
-		if (argc == 1)
-		{
-			usage(opts.programname);
-		}
-
-		if ((argc == 2) &&
-			(strcmp(argv[1], "-h") || strcmp(argv[1], "/h") ||
-			 strcmp(argv[1], "-?") || strcmp(argv[1], "/?") ||
-			 strcmp(argv[1], "--help")))
-		{
-			help(opts.programname);
-		}
-
-		if (!is_special_appname)
-			files = parse(argc, argv);
-		else
-			files = 1;
-
-		if ((opts.arj_name = (char *) malloc(strlen(argv[files]) + 4)) ==
-			NULL)
-		{
-			error = GUP_INTERNAL;
-			break;
-		}
-
-		strcpy(opts.arj_name, argv[files]);
 
 		if ((opts.args = args2f(argv + files + 1)) == NULL)
 		{
@@ -726,7 +863,7 @@ int main(int argc, char *argv[])
 		 * Handle archive type specific options.
 		 */
 
-		archive_type arc_type = get_arc_type(opts.arj_name);
+		arc_type = get_arc_type(opts.arj_name);
 		switch (arc_type)
 		{
 		case AT_ARJ:
