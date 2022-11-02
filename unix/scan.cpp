@@ -43,6 +43,7 @@ gup_result traverse_dirs(DSTACK *dir, const char *pattern,
 						 archive *archive, OPTIONS *opts)
 {
 	DSTACK *cur;
+	gup_result result = GUP_OK;
 
 	/* this may be a formality....*/
 
@@ -50,11 +51,10 @@ gup_result traverse_dirs(DSTACK *dir, const char *pattern,
 
 	/* cur is last in list */
 
-	while (dir != NULL)
+	while (dir != NULL && result == GUP_OK)
 	{
 		long dirl = strlen(dir->name);
 		DIR *dirp;
-		gup_result result = GUP_OK;
 
 		if( dirl == 0 )
 		{
@@ -142,7 +142,7 @@ gup_result traverse_dirs(DSTACK *dir, const char *pattern,
 		dir = dir->next;
 	}
 
-	return GUP_OK;
+	return result;
 }
 
 /* is_regexp checks if expr regexpish

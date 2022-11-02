@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{00811970-815B-4F64-BC9D-219078102F5B}</ProjectGuid>
-    <RootNamespace>ni_packer</RootNamespace>
+    <RootNamespace>ni_pack</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -217,13 +217,13 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="../../ni_packer/arj_crc.c" />
-    <ClCompile Include="../../ni_packer/arj_m4.c" />
-    <ClCompile Include="../../ni_packer/arj_m7.c" />
-    <ClCompile Include="../../ni_packer/depack_t.c" />
-    <ClCompile Include="../../ni_packer/ni_n0.c" />
-    <ClCompile Include="../../ni_packer/ni_n1.c" />
-    <ClCompile Include="../../ni_packer/unstore.c" />
+    <ClCompile Include="../../ni_pack/arj_crc.c" />
+    <ClCompile Include="../../ni_pack/arj_m4.c" />
+    <ClCompile Include="../../ni_pack/arj_m7.c" />
+    <ClCompile Include="../../ni_pack/depack_t.c" />
+    <ClCompile Include="../../ni_pack/ni_n0.c" />
+    <ClCompile Include="../../ni_pack/ni_n1.c" />
+    <ClCompile Include="../../ni_pack/unstore.c" />
     <ClInclude Include="../../acconfig.h" />
     <ClInclude Include="../../arcman/arc_util.h" />
     <ClInclude Include="../../arcman/arcctl.h" />
@@ -405,11 +405,11 @@
     <Text Include="../../lib/Makefile.in" />
     <Text Include="../../ltmain.sh" />
     <Text Include="../../mk_autoconf.sh" />
-    <Text Include="../../ni_packer/atari_st/arj_crc.s" />
-    <Text Include="../../ni_packer/atari_st/arj_m4.s" />
-    <Text Include="../../ni_packer/atari_st/arj_m7.s" />
-    <Text Include="../../ni_packer/atari_st/ni_n0.s" />
-    <Text Include="../../ni_packer/atari_st/unstore.s" />
+    <Text Include="../../ni_pack/atari_st/arj_crc.s" />
+    <Text Include="../../ni_pack/atari_st/arj_m4.s" />
+    <Text Include="../../ni_pack/atari_st/arj_m7.s" />
+    <Text Include="../../ni_pack/atari_st/ni_n0.s" />
+    <Text Include="../../ni_pack/atari_st/unstore.s" />
     <Text Include="../../spec/archive.txt" />
     <Text Include="../../spec/headers.txt" />
     <Text Include="../../sync_to_Q_network_drive.sh" />

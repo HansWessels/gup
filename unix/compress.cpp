@@ -193,7 +193,14 @@ gup_result pack_file(archive *archive, const char *the_name, const osstat *st, O
 				}
 
 				if (result == GUP_OK)
+				{
 					result = archive->write_file_trailer(header);
+					if (result != GUP_OK)
+					{
+						printf("\n");
+						display_error(result);
+					}
+				}
 			}
 		}
 
@@ -309,7 +316,7 @@ int compress(OPTIONS *opts)
 				}
 			}
 
-			if ((cls_result = archive->close_archive((i == -1) ? 0 : 1)) != GUP_OK)
+			if ((cls_result = archive->close_archive(result == GUP_OK)) != GUP_OK)
 			{
 				if (result == GUP_OK)
 					result = cls_result;
@@ -320,5 +327,5 @@ int compress(OPTIONS *opts)
 
 	delete archive;
 
-	return (result != GUP_OK) ? -1 : 0;
+	return result;
 }
