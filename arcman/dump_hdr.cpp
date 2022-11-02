@@ -38,8 +38,7 @@ dump_mainheader::dump_mainheader(const dump_mainheader& from)
 	archive_ctime(from.archive_ctime),
 	archive_comment(from.archive_comment),
 	archive_volume_path(from.archive_volume_path), 
-	archive_metafile_path(from.archive_metafile_path), 
-	
+	archive_metafile_path(from.archive_metafile_path)
 {
 	TRACE_ME_EX("archive_path = %s", archive_path.c_str());
 }

@@ -251,7 +251,7 @@
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
 	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
-	#define LOG_BIT(bit) printf("bit = %i\n",bit);
+	#define LOG_BIT(bit) // printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
 	#define LOG_COUNTER_RESET log_pos_counter=0;
 	#define LOG_TEXT(string) printf(string);
@@ -3377,11 +3377,11 @@ void store_n0_val(uint32 val, packstruct *com)
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N0(0);
+			ST_BIT_N0(1);
 		}
 		else
 		{
-			ST_BIT_N0(1);
+			ST_BIT_N0(0);
 		}
 	}while(mask!=0);
 }

@@ -105,42 +105,13 @@ typedef std::unique_ptr<dump_output_buffer> dump_output_bufptr_t;
 class dump_archive : public arj_archive
 {
   protected:
-	//
-	// file header-y stuff:
-	//
-	
+    dump_mainheader *cur_main_hdr;
+
     int file_no;                                    // 'index' number of the file in the archive, starts counting at 1 (1-based index)
     bool increment_file_no;                         // signal that the file content has been written and the index should be updated
 
-    // ALT:: write the file metadata to *another* output file, whose name is derived off `file_path`?
-    std::string file_metafile_path;
-	
-	std::string output_var_name;							// C-style variable name for the current file's `file_path`
-	
-    std::string file_path;
-	std::string file_comment;
-
-	size_t file_packed_length;						/* File length (compressed) */
-	size_t file_original_length;						/* File length (original = uncompressed) */
-
-	osmode file_mode;						/* File attributes. */
-	ostime file_ctime;						/* Creation time. */
-	ostime file_atime;						/* Last access time. */
-	ostime file_mtime;						/* Modification time. */
-
-	int file_host_os;						/* Operating system used to pack the file. */
-	ftype file_type;					/* File type. */
-	int file_pack_method;							/* Packmode. */
-
-	size_t file_data_offset;				/* Offset of packed data in output archive */
-	uint32 file_crc;					/* CRC of the file. */
-
-
-	//
-	// archive file stuff:
-	//
-    dump_mainheader *cur_main_hdr;
-
+    long archive_file_offset;                       // offset in archive file (output) where current compresed file data is written
+    bool at_end_of_archive_action;
         
   public:
     dump_archive(void);
@@ -184,10 +155,10 @@ class dump_archive : public arj_archive
     /*
      * Overloadable handlers used for producing the various dump output formats.
      */
-    virtual dump_output_bufptr_t generate_main_header() = 0;
-    virtual dump_output_bufptr_t generate_file_header() = 0;
-    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize) = 0;
-    virtual dump_output_bufptr_t generate_end() = 0;
+    virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size) = 0;
+    virtual dump_output_bufptr_t generate_file_header(const fileheader *header) = 0;
+    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header) = 0;
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive) = 0;
 };
 
 
@@ -203,10 +174,10 @@ class bindump_archive : public dump_archive
      * Functions for opening and closing the archive.
      */
 
-    virtual dump_output_bufptr_t generate_main_header();
-    virtual dump_output_bufptr_t generate_file_header();
-    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+    virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 
@@ -220,10 +191,10 @@ class cdump_archive : public dump_archive
      * Functions for opening and closing the archive.
      */
 
-    virtual dump_output_bufptr_t generate_main_header();
-    virtual dump_output_bufptr_t generate_file_header();
-    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+    virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 
@@ -237,10 +208,10 @@ class asmdump_archive : public dump_archive
      * Functions for opening and closing the archive.
      */
 
-    virtual dump_output_bufptr_t generate_main_header();
-    virtual dump_output_bufptr_t generate_file_header();
-    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize);
-    virtual dump_output_bufptr_t generate_end();
+    virtual dump_output_bufptr_t generate_main_header(const char *archive_path, const char *comment, uint32_t timestamp, size_t arc_output_size);
+    virtual dump_output_bufptr_t generate_file_header(const fileheader *header);
+    virtual dump_output_bufptr_t generate_file_content(const uint8_t *data, size_t datasize, const fileheader *header);
+    virtual dump_output_bufptr_t generate_end(bool end_of_archive);
 };
 
 #endif

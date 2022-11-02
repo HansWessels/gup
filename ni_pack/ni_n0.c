@@ -33,7 +33,7 @@ typedef int32_t int32;
 		GET_N0_BIT(bit);								\
 		val+=val+bit;									\
 		GET_N0_BIT(bit);								\
-	} while(bit!=0);									\
+	} while(bit==0);									\
 }
 
 

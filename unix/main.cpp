@@ -12,6 +12,10 @@
 #include <ctype.h>
 #include <sys/types.h>
 
+#include <string>
+#include <algorithm>
+#include <cctype>
+
 #if (OS == OS_WIN32)
 #include <windows.h>
 #endif
@@ -609,9 +613,19 @@ static char **args2f(char *files[])
 	return ret;
 }
 
-extern int compress(OPTIONS * opt);
-extern int decompress(OPTIONS * opt);
-extern int list_arj(OPTIONS * opt);
+static const char *mk_basename(const char* path)
+{
+	ARJ_Assert(path != NULL);
+	const char* p1 = strrchr(path, '/');
+	const char* p2 = strrchr(path, '\\');
+	if (p1 && p2)
+		return p1 < p2 ? p2 + 1 : p1 + 1;
+	if (p2)
+		return p2 + 1;
+	if (p1)
+		return p1 + 1;
+	return path;
+}
 
 int main(int argc, char *argv[])
 {
@@ -620,31 +634,56 @@ int main(int argc, char *argv[])
 	for (;;)
 	{
 		int files;
+		bool is_special_appname = false;
 
-		/* set default options */
+		/* set default options, dependent on actual application name */
+		{
+			const char* appname = argv[0];
+			if (!appname || !*appname)
+				appname = "gup";
+			appname = mk_basename(appname);
 
-		default_mode = TRUE;
+			// Windows et al: strip off the .EXE extension, convert to all-lowercase, etc.
+			std::string apnm(appname);
+			size_t dotpos = apnm.find_first_of('.');
+			if (dotpos != std::string::npos)
+				apnm.erase(dotpos);
+			std::transform(apnm.begin(), apnm.end(), apnm.begin(), [](unsigned char c) { return std::tolower(c); });
 
-		memset(&opts, 0, sizeof(opts));
-		opts.recursive = 1;
-		opts.jm = 1;
-		opts.speed = 0;
-		opts.mode = GNU_ARJ_MODE_7;
-		opts.stream = 0;
-		opts.programname = "gup";
-		opts.type = AT_UNKNOWN;
+			default_mode = TRUE;
+
+			memset(&opts, 0, sizeof(opts));
+			opts.recursive = 1;
+			opts.jm = 1;
+			opts.speed = 0;
+			opts.mode = GNU_ARJ_MODE_7;
+			opts.stream = 0;
+			opts.programname = strdup(appname);
+			opts.type = AT_UNKNOWN;
+
+			if (apnm != "gup")
+			{
+				is_special_appname = true;
+
+				opts.command = CMD_ADD;
+
+				char* opts = strdup(apnm.c_str());
+				char* opt = strtok(opts, " _-");
+				// skip initial part of appname
+				if (opt)
+					*opt = 0;
+				// rest of appname represents gup options:
+				while (opt)
+				{
+					if (*opt)
+						setoption(opt - 1 /* nasty hack to re-use setoption() under these circumstances */ );
+					opt = strtok(NULL, " _-");
+				}
+				free(opts);
+			}
+		}
 
 		atexit(doexit);
-
-		if (argv[0] != NULL)
-		{
-			char *t;
-
-			t = strrchr(argv[0], DELIM);
-
-			if (t != NULL)
-				opts.programname = t + 1;
-		}
 
 		/*
 		 * Parse command line.
@@ -663,7 +702,10 @@ int main(int argc, char *argv[])
 			help(opts.programname);
 		}
 
-		files = parse(argc, argv);
+		if (!is_special_appname)
+			files = parse(argc, argv);
+		else
+			files = 1;
 
 		if ((opts.arj_name = (char *) malloc(strlen(argv[files]) + 4)) ==
 			NULL)

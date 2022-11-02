@@ -858,11 +858,11 @@ gup:
 	cd unix
 	make
 
-ni_packer:
-	cd ni_packer
+ni_pack:
+	cd ni_pack
 	make
 
-test: gup ni_packer
+test: gup ni_pack
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
@@ -874,7 +874,7 @@ test: gup ni_packer
 	./test_check_archive_size.sh  test.arj
 	make testdump
 
-testdump: testcdump testasmdump testbindump
+testdump:    testbindump
 
 testcdump: gup
 	-rm test.cdump*
@@ -897,7 +897,7 @@ testbindump: gup
 	echo "=== testing DUMP MODES: RAW BINARY ==="
 	$(GUP_EXE) a test.bindump $(TEST_DATA_DIR)/src/
 	od -A d -t x1 test.bindump | tee test.bindump.hexdump
-	sed -i -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/'   test.bindump.meta.nfo
+	sed -i -E -e 's/created_at:\s+[0-9]+/created_at: TIMESTAMP/'   test.bindump.meta.nfo
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; then cp test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; fi
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo    ; then cp test.bindump.meta.nfo  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo ; fi
 	diff -u test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt
@@ -923,7 +923,7 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_packer
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

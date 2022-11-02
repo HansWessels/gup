@@ -86,6 +86,11 @@ uint32_t get_long(unsigned char *p)
 	return res;
 }
 
+static double total_time=0.0;
+static unsigned long error_count=0;
+static unsigned long total_compressed_size=0;
+static unsigned long total_original_size=0;
+
 void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 { /* decode the data pointed to data */
 	uint8_t *dst;
@@ -116,13 +121,14 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 		decode_n0(dst, data);
 		break;
 	case NI_MODE_1:
-//		decode_n1(dst, data);
+		decode_n1(dst, data);
 		break;
 	default:
 		printf("Unknown method: %X", mode);
 		break;
 	}
 	printf(" %7.3f s ", (double)(clock() - start) / CLOCKS_PER_SEC);
+	total_time+=(double)(clock() - start) / CLOCKS_PER_SEC;
 	if((res_crc=crc32(size, dst, crc_table))==crc)
 	{
 		printf("CRC OK");
@@ -130,13 +136,10 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	else
 	{
 		printf("CRC ERROR! :%08lX", (unsigned long) res_crc);
+		error_count++;
 	}
 	free(dst);
 }
-
-
-static unsigned long total_compressed_size=0;
-static unsigned long total_original_size=0;
 
 int main(int argc, char *argv[])
 {
@@ -262,7 +265,16 @@ int main(int argc, char *argv[])
 	}
 	printf("\n%-20s", "totaal");
 	printf(" %12lu ", total_original_size);
-	printf(" %12lu\n", total_compressed_size);
+	printf(" %12lu               ", total_compressed_size);
+	printf(" %7.3f s ", total_time);
+	if(error_count==0)
+	{
+		printf("CRC OK\n");
+	}
+	else
+	{
+		printf("CRC Errors = %lu\n", error_count);
+	}
 	free(data);
 	return 0;
 }

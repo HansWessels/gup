@@ -34,6 +34,7 @@
 #include "compress.h"
 #include "options.h"
 
+
 typedef struct
 {
 	void (*print_progress)(unsigned long delta_size, void* pp_propagator);
@@ -79,7 +80,7 @@ class volume_list
 class archive
 {
  protected:
-	union
+	struct
 	{
 		packstruct pack_str;
 		decode_struct unpack_str;
@@ -236,5 +237,23 @@ typedef enum { AT_UNKNOWN, AT_ARJ, AT_LHA, AT_GZIP, AT_BINDUMP, AT_ASMDUMP, AT_C
 
 archive *new_archive(archive_type type);
 archive_type get_arc_type(const char *filename);
+
+
+
+typedef struct
+{
+	int handle;							/* File handle of source file. */
+	archive* arc;
+	uint32 crc;
+} READ_CRC_STRUCT;
+
+typedef struct
+{
+	int handle;							/* File handle of destination file. */
+	archive* arc;
+	uint32 crc;
+} WRITE_CRC_STRUCT;
+
+gup_result buf_write_crc_test(long count, void* buffer, void* propagator);
 
 #endif

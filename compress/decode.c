@@ -1099,7 +1099,7 @@ gup_result decode_m4(decode_struct *com)
 		GET_N0_BIT(bit);								\
 		val+=val+bit;									\
 		GET_N0_BIT(bit);								\
-	} while(bit!=0);									\
+	} while(bit==0);									\
 }
 
 
