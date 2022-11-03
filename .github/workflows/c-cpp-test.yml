@@ -1,4 +1,6 @@
-name: C/C++ autoconf/configure based CI
+name: C/C++ autoconf/configure CI running gup system tests
+
+# derived of c-cpp.yml
 
 on:
   push:
@@ -21,5 +23,5 @@ jobs:
       run: make
     - name: make check
       run: make check
-#    - name: make distcheck
-#      run: make distcheck
+    - name: make test
+      run: make test
