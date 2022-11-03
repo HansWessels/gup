@@ -13,10 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: make configure script (and others) executablee
-      run: chmod a+x ./configure *.sh
-    - name: configure
-      run: ./configure
+    - name: run configure script
+      run: |
+        chmod a+x ./configure *.sh
+        ./configure
     - name: make
       run: make
     - name: make check
