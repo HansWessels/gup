@@ -1,4 +1,4 @@
-name: C/C++ autoconf/configure based CI
+name: autoconf CI: does it build?
 
 on:
   push:
