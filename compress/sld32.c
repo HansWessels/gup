@@ -149,7 +149,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		}
 	}
 	if(com->min_match==1)
-	{
+	{ /* check for length 1 match */
 		index_t match_pos;
 		byte_t key=com->dictionary[pos];
 		match_pos=com->match_1[key];
@@ -164,7 +164,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		com->match_1[key]=pos;
 	}
 	if((com->min_match==2) && (max_match>=2))
-	{
+	{ /* check for length 2 match */
 		index_t match_pos;
 		word_t key=(com->dictionary[pos]<<8)+com->dictionary[pos+1];
 		match_pos=com->match_2[key];
@@ -179,22 +179,71 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		com->match_2[key]==pos;
 	}
 	if(max_match>2)
-	{
-		index_t current_pos;
-		index_t next_pos;
+	{ /* insert pos into slidingdictionary tree and try to find matches */
+		index_t match_pos; /* working node */
+		index_t* c_leftp;
+		index_t* c_rightp;
 		index_t* parent;
 		byte orig=com->dictionary[pos+max_match];
 		parent=hash(pos, com);
-		next_pos=*parent;
+		match_pos=*parent;
 		com->tree[pos].parent=parent;
-		com->tree[pos].c_left=NO_NODE;
-		com->tree[pos].c_right=NO_NODE;
-		current_pos=pos;
-		while(next_pos!=NO_NODE)
+		c_leftp=&com->tree[pos].c_left;
+		c_rightp=&com->tree[pos].c_right;
+		while(match_pos!=NO_NODE)
 		{ /* insert next_pos in current_pos */
-			
+			match_t p=pos;
+			match_t q=match_pos;
+			com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
+			while(com->dictionary[p]==com->dictionary[q])
+			{
+				p++;
+				q++;
+			}
+			if((p-pos)>best_match)
+			{ /* found new best_match */
+				best_match=p-pos;
+				best_ptr=pos-match_pos-1;
+				if(best_match==max_match)
+				{ /* found max_match, we are done inserting */
+					break;
+				}	
+			}
+			if(com->dictionary[p]<com->dictionary[q])
+			{ /* insert node on left side of the tree */
+				*c_leftp=match_pos;
+				com->tree[match_pos].parent=c_leftp;
+				c_leftp=&com->tree[match_pos].c_right;
+				match_pos=com->tree[match_pos].c_right;
+			}
+			else
+			{ /* insert node on right side on the tree */
+				*c_rightp=match_pos;
+				com->tree[match_pos].parent=c_rightp;
+				c_rightp=&com->tree[match_pos].c_left;
+				match_pos=com->tree[match_pos].c_left;
+			}
+		}
+		if(best_match==max_match)
+		{ /* node op match_pos kan er uit, deze is gelijk aan de huidige node wat matching betreft */
+			*c_rightp=com->tree[match_pos].c_right;
+			if(com->tree[match_pos].c_right!=NO_NODE)
+			{
+				com->tree[com->tree[match_pos].c_right].parent=c_rightp;
+			}
+			*c_leftp=com->tree[match_pos].c_left;
+			if(com->tree[match_pos].c_left!=NO_NODE)
+			{
+				com->tree[com->tree[match_pos].c_left].parent=c_leftp;
+			}
+		}	
+		else
+		{ /* close the child pointers */
+			*c_leftp=NO_NODE;
+			*c_rightp=NO_NODE;
 		}
 		com->dictionary[pos+max_match]=orig;
 	}
+	return best_match;
 }
 
