@@ -232,11 +232,9 @@ static std::string mk_variable_name_base(const char *fpath)
 	
     for (size_t i = 0; marker[i]; i++)
 	{
-		char c = marker[i];
+		char c = tolower(marker[i]);
 		
-		if (c >= 'A' && c <= 'Z')
-			has_seen_underscore = false;
-		else if (c >= 'a' && c <= 'z')
+		if (c >= 'a' && c <= 'z')
 			has_seen_underscore = false;
 		else if (c >= '0' && c <= '9')
 			has_seen_underscore = false;
@@ -264,7 +262,9 @@ static std::string mk_variable_name_base(const char *fpath)
         marker = strncpy(p, "file", strlen(fpath));
 
     std::string rv(marker);
-    free(p);
+    // variablees must start with a [a-z] alphanumeric character
+    if (marker[0] < 'a' || marker[0] > 'z')
+        rv = 'g' + rv;
     return std::move(rv);
 }
 
