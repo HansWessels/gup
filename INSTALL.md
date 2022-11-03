@@ -55,7 +55,7 @@ Compilers and Options
 =====================
 
    Some systems require unusual options for compilation or linking that
-the `configure` script does not know about.  You can give `configure'
+the `configure` script does not know about.  You can give `configure`
 initial values for variables by setting them in the environment.  Using
 a Bourne-compatible shell, you can do that on the command line like
 this:
@@ -77,7 +77,7 @@ directory where you want the object files and executables to go and run
 the `configure` script.  `configure` automatically checks for the
 source code in the directory that `configure` is in and in `..'.
 
-   If you have to use a `make` that does not supports the `VPATH'
+   If you have to use a `make` that does not supports the `VPATH`
 variable, you have to compile the package for one architecture at a time
 in the source code directory.  After you have installed the package for
 one architecture, use `make distclean` before reconfiguring for another
@@ -93,7 +93,7 @@ option `--prefix=PATH'.
 
    You can specify separate installation prefixes for
 architecture-specific files and architecture-independent files.  If you
-give `configure` the option `--exec-prefix=PATH', the package will use
+give `configure` the option `--exec-prefix=PATH`, the package will use
 PATH as the prefix for installing programs and libraries.
 Documentation and other data files will still use the regular prefix.
 
@@ -110,7 +110,7 @@ Optional Features
 =================
 
    Some packages pay attention to `--enable-FEATURE` options to
-`configure', where FEATURE indicates an optional part of the package.
+`configure`, where FEATURE indicates an optional part of the package.
 They may also pay attention to `--with-PACKAGE` options, where PACKAGE
 is something like `gnu-as` or `x` (for the X Window System).  The
 `README` should mention any `--enable-` and `--with-` options that the
@@ -129,7 +129,7 @@ automatically, but needs to determine by the type of host the package
 will run on.  Usually `configure` can figure that out, but if it prints
 a message saying it can not guess the host type, give it the
 `--host=TYPE` option.  TYPE can either be a short name for the system
-type, such as `sun4', or a canonical name with three fields:
+type, such as `sun4`, or a canonical name with three fields:
      CPU-COMPANY-SYSTEM
 
 See the file `config.sub` for the possible values of each field.  If
@@ -158,27 +158,27 @@ Operation Controls
    `configure` recognizes the following options to control how it
 operates.
 
-`--cache-file=FILE'
+`--cache-file=FILE`
      Use and save the results of the tests in FILE instead of
      `./config.cache`.  Set FILE to `/dev/null` to disable caching, for
      debugging `configure'.
 
-`--help'
-     Print a summary of the options to `configure', and exit.
+`--help`
+     Print a summary of the options to `configure`, and exit.
 
-`--quiet'
-`--silent'
-`-q'
+`--quiet`
+`--silent`
+`-q`
      Do not print messages saying which checks are being made.  To
      suppress all normal output, redirect it to `/dev/null` (any error
      messages will still be shown).
 
-`--srcdir=DIR'
+`--srcdir=DIR`
      Look for the package's source code in directory DIR.  Usually
      `configure` can determine that directory automatically.
 
-`--version'
-     Print the version of Autoconf used to generate the `configure'
+`--version`
+     Print the version of Autoconf used to generate the `configure`
      script, and exit.
 
 `configure` also accepts some other, not widely useful, options.
