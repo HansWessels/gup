@@ -18,4 +18,4 @@ cat <<EOF
 >>> Fetching all remote work...
 
 EOF
-git fetch --all 
+git pull --all 
