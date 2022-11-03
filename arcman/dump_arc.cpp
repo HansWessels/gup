@@ -262,7 +262,7 @@ static std::string mk_variable_name_base(const char *fpath)
         marker = strncpy(p, "file", strlen(fpath));
 
     std::string rv(marker);
-    // variablees must start with a [a-z] alphanumeric character
+    // variables must start with a [a-z] alphanumeric character
     if (marker[0] < 'a' || marker[0] > 'z')
         rv = 'g' + rv;
     return std::move(rv);
