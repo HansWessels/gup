@@ -142,7 +142,11 @@ int scan_arj_directory(OPTIONS *opts,
 	}
 
 	gup_result result_cls =	archive->close_archive(1);
-	if (result == GUP_OK)
+	// expected 'okay' error codes when we arrive here: { GUP_OK, GUP_END_ARCHIVE, GUP_END_VOLUME }
+	// 
+	// assertion checks for *sane* error codes or the set above; anything else is an internal implementation failure.
+	ARJ_Assert((result >= GUP_OK && result < GUP_LAST_ERROR) || result == GUP_END_ARCHIVE || result == GUP_END_VOLUME);
+	if (result == GUP_OK || result > GUP_LAST_ERROR)
 		result = result_cls;
 	delete archive;
 
