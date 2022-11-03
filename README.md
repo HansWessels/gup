@@ -46,7 +46,7 @@ The depacker cores are MIT, so you can always use the packed data in *any* setti
 
 We want GUP to remain Open and Public and hope you will share your derivative works likewise. We also don't want any restrictions on the *use* of GUP; more specifically: the compressed data results.
 
-Hence the choice for MIT for the **depacker**: this allows you, for example, to use the GUP tool in in-housee commercial embedded development, write the compressed data *plus* our depacker code in ROM/Flash/... to save space and time and then sell your product. 
+Hence the choice for MIT for the **depacker**: this allows you, for example, to use the GUP tool in in-house commercial embedded development, write the compressed data *plus* our depacker code in ROM/Flash/... to save space and time and then sell your product. 
 
 *Ditto* for UPX-style scenarios: you can *pack* your commercial software using GUP as an UPX alternative, for there again, your output is your own propriatary files in *compressed form*, plus our depacker code, to form a new executable that self-extracts and executes your code after depacking.
 
