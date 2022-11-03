@@ -1,4 +1,4 @@
-name: autoconf CI running gup system tests
+name: "autoconf CI: running gup system tests"
 
 # derived of c-cpp.yml
 
