@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Checkout submodules / prerequisites
+      run: git submodule update --init --recursive
     - name: run configure script
       run: |
         chmod a+x ./configure *.sh

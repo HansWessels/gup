@@ -1,6 +1,6 @@
 name: "autoconf CI: running gup system tests"
 
-# derived of c-cpp.yml
+# derived off c-cpp.yml
 
 on:
   push:
