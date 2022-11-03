@@ -1,6 +1,6 @@
 # AUTHOR <EMAIL>
 
-- Hans Wessels (a.k.a. *Mr.Ni!*)
+- Hans Wessels (a.k.a. *Mr Ni!*)
 - Wout Klaren (a.k.a. *MCP*)
 - Ric Klaren (a.k.a. *Chainsaw*)
 - Erick Silkens
