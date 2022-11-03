@@ -1,4 +1,4 @@
-name: autoconf CI: does it build?
+name: "autoconf CI: does it build?"
 
 on:
   push:
