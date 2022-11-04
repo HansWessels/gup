@@ -12,8 +12,6 @@ extern "C"
 {
 #endif
 
-typedef uint8_t	byte_t;	/* 1 byte, 1 fundamentele eenheid waarop de compressor werkt, 8 bits */
-typedef uint16_t	word_t;	/* 2 bytes, 1 word */
 typedef uint32_t	match_t; /* bevat de lengte van de match, is nul bij geen match */
 typedef uint32_t	ptr_t;	/* relatieve offset van de match, geinverteerd, 0 is 1 karakter terug */
 typedef uint32_t	index_t;	/* index in een van de array's */

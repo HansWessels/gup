@@ -35,6 +35,9 @@ c_codetype insert2s(uint16 pos, uint16 rle_size, packstruct *com);
 c_codetype inserts(uint16 pos, uint16 hash, packstruct *com);
 void insert2nms(uint16 pos, uint16 rle_size, packstruct *com);
 void insertnms(uint16 pos, uint16 hash, packstruct *com);
+void init_dictionary_small(packstruct *com);
+c_codetype find_dictionary_small(uint16 pos, packstruct *com);
+c_codetype find_dictionary_small_fast(uint16 pos, packstruct *com);
 
 void insertnms_fast(uint16 nnode, uint16 hash, packstruct *com);
 c_codetype inserts_fast(uint16 nnode, uint16 hash, packstruct *com);

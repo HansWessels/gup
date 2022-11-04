@@ -1,11 +1,11 @@
 noinst_LIBRARIES = libcompress.a
 
 libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c \
-						sld_med.c sld_smll.c
+						sld_med.c sld_smll.c sld32.c
 libcompress_a_LIBADD = @OPTMOBJS@
 libcompress_a_DEPENDENCIES = $(libcompress_a_LIBADD)
 
-noinst_HEADERS = decode.h encode.h evaluatr.h
+noinst_HEADERS = decode.h encode.h evaluatr.h sld32.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 

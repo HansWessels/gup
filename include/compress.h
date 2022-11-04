@@ -250,6 +250,8 @@
 #ifndef __COMPRESS_H__
 #define __COMPRESS_H__
 
+#include "gup.h"
+#include "sld32.h"
 #include "gup_err.h"
 #include "compr_io.h"
 
@@ -491,7 +493,22 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   uint8 *inmem_output_cur; /* current position in inmem_ouput buffer */
   uint16 *inmem_input; /* buffer for origsize 16 bit words */
   uint16 *inmem_input_cur; /* current position in the inmem_input buffer */
-  long origsize; /* size of uncompressed file */
+  /* used bij sld32 */
+	long origsize; /* size of uncompressed file */
+	match_t *match_len; /* match lengte op iedere positie van de file */
+	ptr_t *ptr_len; /* bij behorende pointer lengte op iedere positie van de file */
+	match_t *backmatch_len; /* back match lengte op iedere positie van de file */
+	uint8 *compressed_data; /* de gecomprimeerde data */
+	index_t *match_1; /* laatst geziene locatie van een enkele byte -> matchlen=1 */
+	index_t *match_2; /* laatst geziene locatie van twee bytes -> matchlen=2 */
+	index_t *hash_table; /* 1e locatie voor de hash */
+	node_t *tree32; /* dictionary tree */
+	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
+	ptr_t maxptr32; /* maximum size of a pointer */
+	match_t min_match32; /* minimum match */
+	match_t max_match32; /* maximum match */
+	match_t match32; /* found match after find dictionary */
+	ptr_t ptr32; /* value of the ptr after find_dictionary */
 } packstruct;
 #endif
 
