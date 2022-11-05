@@ -6,8 +6,8 @@
 #define __ENCODE_H__
 
 #include "gup_err.h"
-#include "compr_io.h"
 #include "compress.h"
+#include "compr_io.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -122,6 +122,16 @@ void init_n1_fast_log(packstruct *com);
 void init_lzs_fast_log(packstruct *com);
 void init_lz5_fast_log(packstruct *com);
 #define LOG(x) com->fast_log[x]
+
+int32 first_bit_set32(uint32 u);
+gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal bytes in huffblok aan */
+
+
+gup_result compress_n0(packstruct *com);
+gup_result close_n0_stream(packstruct *com);
+
+gup_result compress_n9(packstruct *com);
+gup_result close_n9_stream(packstruct *com);
 
 #ifdef __cplusplus
 }

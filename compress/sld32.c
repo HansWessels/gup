@@ -44,8 +44,6 @@
 #include "compress.h"
 #include "encode.h"
 
-#define DICTIONARY_START_OFFSET 2  /* eerste 2 posities in de dictionary zijn voor speciaal gebruik, laatste twee ook */
-#define DICTIONARY_END_OFFSET 2
 #define NO_NODE 0
 
 gup_result init_dictionary32(packstruct *com);

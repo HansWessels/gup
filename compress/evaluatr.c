@@ -1383,7 +1383,68 @@ gup_result encode_big(packstruct *com)
 #endif
 
 
+gup_result encode32(packstruct *com)
+{
+	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
+	unsigned long bytes_to_do;
+	{ /*- dictionary buffer vullen */
+		long byte_count;
+		if ((byte_count = com->buf_read_crc(com->origsize, com->dictionary+DICTIONARY_START_OFFSET, com->brc_propagator)) < 0)
+		{
+			return GUP_READ_ERROR; /* ("Read error"); */
+		}
+		else
+		{
+			if (com->origsize == 0)
+			{
+				com->packed_size = com->bytes_packed = 0;
+				return GUP_OK;
+			}
+			else if (com->origsize != byte_count)
+			{
+				return GUP_READ_ERROR; /* ("Read error"); */
+			}
+			#ifndef PP_AFTER
+			com->print_progres(byte_count, com->pp_propagator);
+			#endif
+		}
+		bytes_to_do = byte_count;
+	}
+	com->packed_size = 0;
+	while (bytes_to_do)
+	{ /*- hoofd_lus, deze lus zorgt voor al het pack werk */
+		match_t match;
+		ptr_t ptr=0;
+      match = find_dictionary32(current_pos, com);
+      if(match>0)
+      {
+			ptr = com->ptr32;
+		}
+		com->match_len[current_pos]=match;
+		com->ptr_len[current_pos]=ptr;
+		current_pos++;
+		bytes_to_do--;
+	}
+	{
+		gup_result res;
+		if((res=com->compress(com))!=GUP_OK)
+		{
+			return res;
+		}
+	}
+	/*
+	** Nu alleen compressed bitstram afsluiten
+	*/
+	{
+		gup_result res;
+		if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
+		{
+			return res;
+		}
+	}
+	return GUP_OK;
+}
 
 
- 
- 
+
+
