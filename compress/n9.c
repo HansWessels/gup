@@ -2,7 +2,7 @@
 #include "compress.h"
 #include "decode.h"
 
-#if 01
+#if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
@@ -176,7 +176,6 @@ gup_result compress_n9(packstruct *com)
 		*com->rbuf_current++ = 0; 
 		ST_BIT_N9(1); /* deze combi kan niet voorkomen */
 	}
-	printf("n9 bitbuf\n");
 	if (com->bits_in_bitbuf>0)
 	{
 		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
@@ -187,7 +186,6 @@ gup_result compress_n9(packstruct *com)
 	com->packed_size=com->rbuf_current-com->compressed_data;
 	com->bytes_packed=com->origsize;
 	com->rbuf_current=rbuf_current_store;
-	printf("n9 write\n");
 	{
 		unsigned long bytes_to_do=com->packed_size;
 		uint8 *src=com->compressed_data;
@@ -210,8 +208,6 @@ gup_result compress_n9(packstruct *com)
 			}	
 		}
 	}
-	printf("Origsize    = %lu\n", com->origsize);
-	printf("packed size = %lu\n", com->packed_size);
 	return GUP_OK;
 }
 

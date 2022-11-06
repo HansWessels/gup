@@ -23,7 +23,7 @@
 **   b match_t match_len[file_size]; match lengte op iedere positie van de file
 **   c ptr_t ptr_len[file_size]; bij behorende pointer lengte op iedere positie van de file
 **   d match_t backmatch_len[file_size]; back match lengte op iedere positie van de file
-**   e uint8 compressed_data[file_size]; de gecomprimeerde data
+**   e uint8 compressed_data[...]; de gecomprimeerde data, daarvoor wordt de cost array gebruikt. Maximale expansie van de data is 4
 **   f index_t match_1[NC]; laatst geziene locatie van een enkele byte -> matchlen=1
 **   g index_t match_2[NC*NC]; laatst geziene locatie van twee bytes -> matchlen=2
 **   h index_t hash_table[HASH_SIZE]; 1e locatie voor de hash
@@ -58,11 +58,6 @@ gup_result init_dictionary32(packstruct *com)
 	{
 		return GUP_NOMEM;
 	}
-	com->compressed_data=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(uint8), com->gm_propagator);
-	if (com->compressed_data == NULL)
-	{
-		return GUP_NOMEM;
-	}
 	com->match_len=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(match_t), com->gm_propagator);
 	if (com->match_len == NULL)
 	{
@@ -88,7 +83,7 @@ gup_result init_dictionary32(packstruct *com)
 	{
 		return GUP_NOMEM;
 	}
-	com->hash_table=com->gmalloc((HASH_SIZE)*sizeof(index_t), com->gm_propagator);
+	com->hash_table=com->gmalloc((HASH_SIZE32)*sizeof(index_t), com->gm_propagator);
 	if (com->hash_table == NULL)
 	{
 		return GUP_NOMEM;
@@ -103,18 +98,19 @@ gup_result init_dictionary32(packstruct *com)
 	{
 		return GUP_NOMEM;
 	}
+	com->compressed_data=(void*)com->cost;
 	/* initialiseer de index_hashes en de kosten */
-	memset(com->hash_table, 0, (HASH_SIZE)*sizeof(index_t));
+	memset(com->hash_table, 0, (HASH_SIZE32)*sizeof(index_t));
 	memset(com->match_1, 0, (NC)*sizeof(index_t));
 	memset(com->match_2, 0, (NC*NC)*sizeof(index_t));
 	memset(com->cost, 0xFF, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(cost_t));
+//	memset(com->tree32, 0, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(node_t));
 	return GUP_OK;
 }
 
 void free_dictionary32(packstruct *com)
 {
 	com->gfree(com->dictionary, com->gf_propagator);
-	com->gfree(com->compressed_data, com->gf_propagator);
 	com->gfree(com->match_len, com->gf_propagator);
 	com->gfree(com->ptr_len, com->gf_propagator);
 	com->gfree(com->backmatch_len, com->gf_propagator);
@@ -147,7 +143,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 	{
 		max_match=(com->origsize-pos+DICTIONARY_START_OFFSET);
 	}
-	if(pos>com->maxptr32)
+	if((pos-DICTIONARY_START_OFFSET)>com->maxptr32)
 	{ /* remove node op pos-maxptr32-1 */
 		index_t *parent;
 		parent=com->tree32[pos-com->maxptr32-1].parent;

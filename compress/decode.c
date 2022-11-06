@@ -280,7 +280,6 @@ gup_result decode(decode_struct *com)
   gup_result ret;
   com->rbuf_current=com->br_buf->current;
   com->rbuf_tail=com->br_buf->end;
-  printf("decode select:\n");
   switch(com->mode)
   {
   case STORE:
