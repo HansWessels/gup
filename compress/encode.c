@@ -442,8 +442,9 @@ gup_result init_encode(packstruct *com)
       break;
     case NI_MODE_9:
 		com->use_sld32=1;
-      com->maxptr= 65534UL;
-      com->max_match=MAX_MATCH;
+		com->min_match32=3;
+      com->maxptr32= 65534UL;
+      com->max_match32=MAX_MATCH;
       com->compress=compress_n9;
       i_fastlog=init_fast_log_empty;
       com->close_packed_stream=close_n9_stream;
@@ -813,7 +814,7 @@ gup_result encode(packstruct *com)
 	{
 		res=store(com);
 	}
-	else if(com->bufbase != NULL)
+	else if(com->use_sld32 == 0)
 	{ /* gebruik de originele sld */
 		com->rbuf_current=com->bw_buf->current;
 		com->rbuf_tail=com->bw_buf->end;
@@ -824,11 +825,14 @@ gup_result encode(packstruct *com)
 	else
 	{
 		res=init_dictionary32(com);
+		com->rbuf_current=com->bw_buf->current;
+		com->rbuf_tail=com->bw_buf->end;
 		if(res==GUP_OK)
 		{
 			res=encode32(com);
 			free_dictionary32(com);
 		}
+		com->bw_buf->current=com->rbuf_current;
 	}
 	return res;
 }

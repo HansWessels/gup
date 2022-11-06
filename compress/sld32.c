@@ -143,9 +143,9 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 	match_t best_match=0;
 	ptr_t best_ptr=0;
 	match_t max_match=com->max_match32;
-	if(max_match>(com->origsize-pos))
+	if(max_match>(com->origsize-pos+DICTIONARY_START_OFFSET))
 	{
-		max_match=(com->origsize-pos);
+		max_match=(com->origsize-pos+DICTIONARY_START_OFFSET);
 	}
 	if(pos>com->maxptr32)
 	{ /* remove node op pos-maxptr32-1 */
@@ -171,7 +171,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		}
 		com->match_1[key]=pos;
 	}
-	if((com->min_match32==2) && (max_match>=2))
+	if((com->min_match32<=2) && (max_match>=2))
 	{ /* check for length 2 match */
 		index_t match_pos;
 		uint16 key=(com->dictionary[pos]<<8)+com->dictionary[pos+1];
@@ -195,6 +195,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		uint8 orig=com->dictionary[pos+max_match];
 		parent=hash(pos, com);
 		match_pos=*parent;
+		*parent=pos;
 		com->tree32[pos].parent=parent;
 		c_leftp=&com->tree32[pos].c_left;
 		c_rightp=&com->tree32[pos].c_right;

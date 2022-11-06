@@ -328,7 +328,7 @@ typedef struct
   pointer_type ptr;
 } hist_struct;
 
-typedef hist_struct history[65536 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker */];
+typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker */];
 
 /* definitions for the pack methods */
 
@@ -493,7 +493,8 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   uint8 *inmem_output_cur; /* current position in inmem_ouput buffer */
   uint16 *inmem_input; /* buffer for origsize 16 bit words */
   uint16 *inmem_input_cur; /* current position in the inmem_input buffer */
-  /* used bij sld32 */
+	/* used bij sld32 */
+	int use_sld32; /* set if routine uses sld32 */
 	long origsize; /* size of uncompressed file */
 	match_t *match_len; /* match lengte op iedere positie van de file */
 	ptr_t *ptr_len; /* bij behorende pointer lengte op iedere positie van de file */
@@ -512,10 +513,15 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 } packstruct;
 #endif
 
-gup_result encode(packstruct *com);
+gup_result encode32(packstruct *com);
+gup_result init_dictionary32(packstruct *com);
+void free_dictionary32(packstruct *com);
+match_t find_dictionary32(index_t pos, packstruct* com);
+
 gup_result re_crc(unsigned long origsize, packstruct *com);
 uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
 
+gup_result encode(packstruct *com);
 gup_result init_encode(packstruct *com);
 void free_encode(packstruct *com);
 
@@ -588,6 +594,7 @@ typedef struct
 gup_result init_decode(decode_struct *com);
 gup_result decode(decode_struct *com);
 void free_decode(decode_struct *com);
+
 
 
 #ifdef __cplusplus

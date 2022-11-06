@@ -120,7 +120,6 @@
 #include "encode.h"
 #include "evaluatr.h"
 
-
 #if ((DIC_START_SIZE)>(DIC_SIZE))
   #error "Dictionary start size > dictionary size"
 #endif

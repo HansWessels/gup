@@ -904,7 +904,6 @@ gup_result archive::encode(fileheader *header, int infile)
 	rcs.arc = this;
 
 	st.pack_str.brc_propagator = &rcs;
-
 	if ((result = tell(start)) == GUP_OK)
 	{
 		long filesize=lseek(infile, 0, SEEK_END);

@@ -12,6 +12,10 @@ extern "C"
 {
 #endif
 
+#define DICTIONARY_START_OFFSET 2  /* eerste 2 posities in de dictionary zijn voor speciaal gebruik, laatste twee ook */
+#define DICTIONARY_END_OFFSET 2
+
+
 typedef uint32_t	match_t; /* bevat de lengte van de match, is nul bij geen match */
 typedef uint32_t	ptr_t;	/* relatieve offset van de match, geinverteerd, 0 is 1 karakter terug */
 typedef uint32_t	index_t;	/* index in een van de array's */

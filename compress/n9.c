@@ -2,7 +2,7 @@
 #include "compress.h"
 #include "decode.h"
 
-#if 0
+#if 01
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
@@ -134,8 +134,17 @@ gup_result compress_n9(packstruct *com)
 	*/
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do=com->origsize;
+	void* rbuf_current_store=com->rbuf_current;
 	com->rbuf_current=com->compressed_data;
 	com->bits_in_bitbuf=0;
+	{
+		match_t kar;
+		kar=com->dictionary[current_pos];
+		LOG_LITERAL(kar);
+		*com->rbuf_current++=(uint8)kar;
+		bytes_to_do--;
+		current_pos++;
+	}
 	while(bytes_to_do>0)
 	{
 		match_t match;
@@ -157,45 +166,17 @@ gup_result compress_n9(packstruct *com)
 			ptr=com->ptr_len[current_pos];
          store_n9_ptr_val(ptr, com);
          store_n9_len_val(match, com);
-         LOG_PTR_LEN(kar, ptr+1);
+         LOG_PTR_LEN(match, ptr+1);
          bytes_to_do-=match;
          current_pos+=match;
 		}
 	}
-	return GUP_OK;
-}
-
-gup_result close_n9_stream(packstruct *com)
-{
-	long bits_comming=10; /* end of archive marker */
-	long bytes_extra=0;
-	gup_result res;
-	if(com->command_byte_ptr!=NULL)
-	{ /* command byte pointer is gebruikt, is hij nu in gebruik? */
-		if(com->bits_in_bitbuf!=0)
-		{ /* er zitten bits in de bitbuf, we mogen wegschrijven tot de command_byte_ptr */
-			bytes_extra=com->rbuf_current-com->command_byte_ptr;
-			com->rbuf_current=com->command_byte_ptr;
-		}
-	}
-	if((res=announce(bytes_extra+((bits_comming+7)>>3), com))!=GUP_OK)
-	{
-		return res;
-	}
-	if(com->command_byte_ptr!=NULL)
-	{
-		memcpy(com->rbuf_current, com->command_byte_ptr, bytes_extra);
-		com->command_byte_ptr=com->rbuf_current;
-		com->rbuf_current+=bytes_extra;
-   }
-   bits_comming+=com->bits_rest;
-   com->bits_rest=(int16)(bits_comming&7);
-   com->packed_size += bits_comming>>3;
-	{ /* schrijf n9 end of stream marker, een speciaal geformateerde ptr */
+	{ /* schrijf n0 end of file marker */
 		ST_BIT_N9(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
 		ST_BIT_N9(1); /* deze combi kan niet voorkomen */
 	}
+	printf("n9 bitbuf\n");
 	if (com->bits_in_bitbuf>0)
 	{
 		com->bitbuf=com->bitbuf<<(8-com->bits_in_bitbuf);
@@ -203,10 +184,40 @@ gup_result close_n9_stream(packstruct *com)
 		com->bits_in_bitbuf=0;
 	}
 	com->command_byte_ptr=NULL;
-	if(com->bits_rest!=0)
+	com->packed_size=com->rbuf_current-com->compressed_data;
+	com->bytes_packed=com->origsize;
+	com->rbuf_current=rbuf_current_store;
+	printf("n9 write\n");
 	{
-		com->packed_size++; /* corrigeer packed_size */
+		unsigned long bytes_to_do=com->packed_size;
+		uint8 *src=com->compressed_data;
+		while(bytes_to_do>0)
+		{
+			unsigned long bytes_comming=65536;
+			gup_result res;
+			if(bytes_comming>bytes_to_do)
+			{
+				bytes_comming=bytes_to_do;
+			}
+			if((res=announce(bytes_comming, com))!=GUP_OK)
+			{
+				return res;
+			}
+			bytes_to_do-=bytes_comming;
+			while(bytes_comming-->0)
+			{
+				*com->rbuf_current++=*src++;
+			}	
+		}
 	}
+	printf("Origsize    = %lu\n", com->origsize);
+	printf("packed size = %lu\n", com->packed_size);
+	return GUP_OK;
+}
+
+gup_result close_n9_stream(packstruct *com)
+{
+	NEVER_USE(com);
 	return GUP_OK;
 }
 

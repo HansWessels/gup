@@ -2,7 +2,7 @@
 #include "compress.h"
 #include "decode.h"
 
-#if 0
+#if 01
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
