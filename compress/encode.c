@@ -443,8 +443,8 @@ gup_result init_encode(packstruct *com)
     case NI_MODE_9:
 		com->use_sld32=1;
 		com->min_match32=3;
-      com->maxptr32= 65534UL;
-      com->max_match32=MAX_MATCH;
+      com->maxptr32= 65536UL;
+      com->max_match32=65536;
       com->compress=compress_n9;
       i_fastlog=init_fast_log_empty;
       com->close_packed_stream=close_n9_stream;

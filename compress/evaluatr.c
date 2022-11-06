@@ -1381,6 +1381,13 @@ gup_result encode_big(packstruct *com)
 }
 #endif
 
+unsigned long cost_lit(match_t kar);
+
+unsigned long cost_lit(match_t kar)
+{
+	NEVER_USE(kar);
+	return 9;
+}
 
 gup_result encode32(packstruct *com)
 {
@@ -1412,17 +1419,47 @@ gup_result encode32(packstruct *com)
 	com->packed_size = 0;
 	while (bytes_to_do)
 	{ /*- hoofd_lus, deze lus zorgt voor al het pack werk */
-		match_t match;
-		ptr_t ptr=0;
-      match = find_dictionary32(current_pos, com);
-      if(match>0)
-      {
-			ptr = com->ptr32;
+		unsigned long cost;
+		cost=com->cost[current_pos-1];
+		cost+=cost_lit(com->dictionary[current_pos]);
+		if(cost<com->cost[current_pos])
+		{ /* hier komen met een literal is het goedkoopst */
+			com->match_len[current_pos]=0;
+			com->cost[current_pos]=cost;
 		}
-		com->match_len[current_pos]=match;
-		com->ptr_len[current_pos]=ptr;
+      find_dictionary32(current_pos, com);
 		current_pos++;
 		bytes_to_do--;
+	}
+	{ /* terug rekenen voor de goedkoopste weg */
+		current_pos--;
+		match_t match;
+		ptr_t ptr;
+		match=com->match_len[current_pos];
+		ptr=com->ptr_len[current_pos];
+		com->match_len[current_pos]=0;
+		while(current_pos>DICTIONARY_START_OFFSET)
+		{
+			if(match==0)
+			{ /* literal */
+				current_pos--;
+				match=com->match_len[current_pos];
+				ptr=com->ptr_len[current_pos];
+				com->match_len[current_pos]=0;
+			}
+			else
+			{
+				match_t new_match;
+				ptr_t new_ptr;
+				current_pos-=match;
+				new_match=com->match_len[current_pos];
+				new_ptr=com->ptr_len[current_pos];
+				com->match_len[current_pos]=match;
+				com->ptr_len[current_pos]=ptr;
+				match=new_match;
+				ptr=new_ptr;
+			}
+		}
 	}
 	{
 		gup_result res;

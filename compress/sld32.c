@@ -143,11 +143,36 @@ index_t *hash(index_t pos, packstruct* com)
 	return &com->hash_table[val];
 }
 
+unsigned long cost_ptrlen(match_t match, ptr_t ptr);
+
+unsigned long cost_ptrlen(match_t match, ptr_t ptr)
+{
+	unsigned long res=1;
+	if(match<3)
+	{ /* match < 3 niet mogelijk */
+		return -1UL;
+	}
+	res+=2*(first_bit_set32(match-1)-1);
+	if(ptr<256)
+	{
+		res+=9;
+	}
+	else
+	{
+		res+=17;
+	}
+	return res;
+}
+
+
 match_t find_dictionary32(index_t pos, packstruct* com)
 {
 	match_t best_match=0;
 	ptr_t best_ptr=0;
-	match_t max_match=com->max_match32;
+	unsigned long cost;
+	match_t max_match;
+	cost=com->cost[pos];
+	max_match=com->max_match32;
 	if(max_match>(com->origsize-pos+DICTIONARY_START_OFFSET))
 	{
 		max_match=(com->origsize-pos+DICTIONARY_START_OFFSET);
@@ -172,6 +197,12 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 			{
 				best_match=1;
 				best_ptr=pos-match_pos-1;
+				if((cost+cost_ptrlen(best_match, best_ptr))<com->cost[pos+best_match])
+				{
+					com->cost[pos+best_match]=cost+cost_ptrlen(best_match, best_ptr);
+					com->match_len[pos+best_match]=best_match;
+					com->ptr_len[pos+best_match]=best_ptr;
+				}
 			}
 		}
 		com->match_1[key]=pos;
@@ -187,6 +218,12 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 			{
 				best_match=2;
 				best_ptr=pos-match_pos-1;
+				if((cost+cost_ptrlen(best_match, best_ptr))<com->cost[pos+best_match])
+				{
+					com->cost[pos+best_match]=cost+cost_ptrlen(best_match, best_ptr);
+					com->match_len[pos+best_match]=best_match;
+					com->ptr_len[pos+best_match]=best_ptr;
+				}
 			}
 		}
 		com->match_2[key]=pos;
@@ -218,6 +255,18 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 			{ /* found new best_match */
 				best_match=p-pos;
 				best_ptr=pos-match_pos-1;
+				{
+					match_t i=com->min_match32;
+					do
+					{
+						if((cost+cost_ptrlen(i, best_ptr))<com->cost[pos+i])
+						{
+							com->cost[pos+i]=cost+cost_ptrlen(i, best_ptr);
+							com->match_len[pos+i]=i;
+							com->ptr_len[pos+i]=best_ptr;
+						}
+					} while(i++<best_match);
+				}
 				if(best_match==max_match)
 				{ /* found max_match, we are done inserting */
 					break;
@@ -240,6 +289,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 		}
 		if(best_match==max_match)
 		{ /* node op match_pos kan er uit, deze is gelijk aan de pos node wat matching betreft */
+			com->tree32[match_pos].parent=NULL;
 			*c_rightp=com->tree32[match_pos].c_right;
 			if(com->tree32[match_pos].c_right!=NO_NODE)
 			{
