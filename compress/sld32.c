@@ -104,7 +104,16 @@ gup_result init_dictionary32(packstruct *com)
 	memset(com->match_1, 0, (NC)*sizeof(index_t));
 	memset(com->match_2, 0, (NC*NC)*sizeof(index_t));
 	memset(com->cost, 0xFF, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(cost_t));
-//	memset(com->tree32, 0, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(node_t));
+	{ /* init special cases, tree en costs vullen tot DICTIONARY_START_OFFSET */
+		int i=DICTIONARY_START_OFFSET;
+		while(--i>=0)
+		{
+			com->tree32[i].parent=NULL;
+			com->tree32[i].c_left=NO_NODE;
+			com->tree32[i].c_right=NO_NODE;
+			com->cost[i]=0;
+		}
+	}
 	return GUP_OK;
 }
 
@@ -143,7 +152,7 @@ match_t find_dictionary32(index_t pos, packstruct* com)
 	{
 		max_match=(com->origsize-pos+DICTIONARY_START_OFFSET);
 	}
-	if((pos-DICTIONARY_START_OFFSET)>com->maxptr32)
+	if(pos>com->maxptr32)
 	{ /* remove node op pos-maxptr32-1 */
 		index_t *parent;
 		parent=com->tree32[pos-com->maxptr32-1].parent;
