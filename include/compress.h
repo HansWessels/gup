@@ -502,21 +502,20 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	uint8 *compressed_data; /* de gecomprimeerde data */
 	index_t *match_1; /* laatst geziene locatie van een enkele byte -> matchlen=1 */
 	index_t *match_2; /* laatst geziene locatie van twee bytes -> matchlen=2 */
-	index_t *hash_table; /* 1e locatie voor de hash */
+	index_t *hash_table; /* hash of the macth string */
+	index_t *hash_table_rle; /* hash of rle match string */
 	node_t *tree32; /* dictionary tree */
 	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
 	ptr_t maxptr32; /* maximum size of a pointer */
 	match_t min_match32; /* minimum match */
 	match_t max_match32; /* maximum match */
-	match_t match32; /* found match after find dictionary */
-	ptr_t ptr32; /* value of the ptr after find_dictionary */
 } packstruct;
 #endif
 
 gup_result encode32(packstruct *com);
 gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
-match_t find_dictionary32(index_t pos, packstruct* com);
+void find_dictionary32(index_t pos, packstruct* com);
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
 uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
