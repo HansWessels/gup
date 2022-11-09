@@ -115,7 +115,6 @@
 #define NDEBUG /* no debugging */
 #endif
 
-
 #include "gup.h"
 #include "encode.h"
 #include "evaluatr.h"

@@ -241,8 +241,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 	{ /* insert pos into slidingdictionary tree and try to find matches */
 		uint32_t h;
 		uint8 orig=com->dictionary[pos+max_match];
-		h=hash(pos, com);
-		if(h==0)
+		if((com->rle_size>0) || ((h=hash(pos, com))==0))
 		{ /* RLE hash */
 			insert_rle(cost, max_match, pos, com);
 		}
@@ -338,12 +337,12 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 	index_t* c_rightp;
 	index_t* parent;
 	uint32_t h;
-	com->dictionary[pos+max_match]=~com->dictionary[pos]; /* sentinel, orig wordt door aanroeper terug gezet */
 	if(com->rle_size>0)
 	{ /* already running an RLE */
 		if(com->rle_size==(RLE32_DEPTH-1))
 		{ /* continue on max depth? */
-			if(com->dictionary[pos+RLE32_DEPTH+2]!=com->dictionary[pos])
+			com->dictionary[pos+max_match]=~com->dictionary[pos]; /* sentinel, orig wordt door aanroeper terug gezet */
+			if(com->dictionary[pos+RLE32_DEPTH+1]!=com->dictionary[pos])
 			{ /* rle is getting smaller */
 				com->rle_size--;
 			}
@@ -375,6 +374,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 	else
 	{ /* new RLE */
 		match_t rle=3;
+		com->dictionary[pos+max_match]=~com->dictionary[pos]; /* sentinel, orig wordt door aanroeper terug gezet */
 		while(com->dictionary[pos+rle]==com->dictionary[pos])
 		{
 			rle++;
