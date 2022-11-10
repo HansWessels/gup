@@ -17,8 +17,8 @@ extern "C"
 #define LHA_PBIT 4                     /* lha: aantal bits in pointer */
 
 gup_result read_data(decode_struct *com);
-gup_result decode_n0(decode_struct *com);
-gup_result decode_n9(decode_struct *com);
+gup_result n0_decode(decode_struct *com);
+gup_result n9_decode(decode_struct *com);
 
 
 #ifdef __cplusplus

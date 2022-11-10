@@ -438,7 +438,7 @@ gup_result init_encode(packstruct *com)
       com->max_match=MAX_MATCH;
       com->compress=n0_compress;
       i_fastlog=n0_init_fast_log;
-      com->close_packed_stream=n0_close_stream; /* close_n0_stream() */
+      com->close_packed_stream=n0_close_stream; /* n0_close_stream() */
       com->command_byte_ptr=NULL;
       break;
     case NI_MODE_9:
@@ -830,6 +830,7 @@ gup_result encode(packstruct *com)
 		res=init_dictionary32(com);
 		com->rbuf_current=com->bw_buf->current;
 		com->rbuf_tail=com->bw_buf->end;
+		com->mv_bits_left=0;
 		if(res==GUP_OK)
 		{
 			res=encode32(com);

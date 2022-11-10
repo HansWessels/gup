@@ -306,7 +306,7 @@ gup_result decode(decode_struct *com)
     break;
   case NI_MODE_0:
   case NI_MODE_9:
-    ret=decode_n0(com);
+    ret=n0_decode(com);
     break;
   case NI_MODE_1:
     ret=decode_n1(com);
