@@ -21,20 +21,40 @@
 #endif
 
 
-int n9_lit_len(uint32 val);
-int n9_len_len(uint32 val);
-int n9_ptr_len(uint32 val);
-void store_n9_val(uint32 val, packstruct *com);
-void store_n9_len_val(uint32 val, packstruct *com);
-void store_n9_literal_val(uint32 val, packstruct *com);
-void store_n9_ptr_val(int32_t val, packstruct *com);
 
-int n9_len_len(uint32 val)
+int n9_len_len(match_t val);
+int n9_ptr_len(ptr_t val);
+void n9_store_val(uint32 val, packstruct *com);
+void n9_store_len_val(uint32 val, packstruct *com);
+void n9_store_literal_val(uint32 val, packstruct *com);
+void n9_store_ptr_val(int32_t val, packstruct *com);
+
+
+unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr)
+{
+	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
+	if(match<3)
+	{ /* match < 3 niet mogelijk */
+		return -1UL;
+	}
+	res+=n9_len_len(match);
+	res+=n9_ptr_len(ptr);
+	return res;
+}
+
+unsigned long n9_cost_lit(match_t kar)
+{
+	NEVER_USE(kar);
+	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
+}
+
+
+int n9_len_len(match_t val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
 	return 2*(first_bit_set32(val-1)-1);
 }
 
-int n9_ptr_len(uint32 val)
+int n9_ptr_len(ptr_t val)
 { /* bereken de code lengte voor val, 0 <= val <= 65536 */
 	if(val<256)
 	{
@@ -46,7 +66,7 @@ int n9_ptr_len(uint32 val)
 	}
 }
 
-#define ST_BIT_N9(bit)												\
+#define N9_ST_BIT(bit)												\
 { /* store a 1 or a 0 */											\
 	int val=bit;			                                 \
 	LOG_BIT(val);														\
@@ -64,7 +84,7 @@ int n9_ptr_len(uint32 val)
 	}																		\
 }
 
-void store_n9_val(uint32 val, packstruct *com)
+void n9_store_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
 	int bits_to_do=first_bit_set32(val)-1;
 	uint32 mask=1<<bits_to_do;
@@ -73,48 +93,48 @@ void store_n9_val(uint32 val, packstruct *com)
 	{
 		if((val&mask)==0)
 		{
-			ST_BIT_N9(0);
+			N9_ST_BIT(0);
 		}
 		else
 		{
-			ST_BIT_N9(1);
+			N9_ST_BIT(1);
 		}
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N9(1);
+			N9_ST_BIT(1);
 		}
 		else
 		{
-			ST_BIT_N9(0);
+			N9_ST_BIT(0);
 		}
 	}while(mask!=0);
 }
 
-void store_n9_len_val(uint32 val, packstruct *com)
+void n9_store_len_val(uint32 val, packstruct *com)
 { /* waarde val >=3 */
-	store_n9_val(val-1, com);
+	n9_store_val(val-1, com);
 }
 
-void store_n9_ptr_val(int32_t val, packstruct *com)
+void n9_store_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
 	val++;
 	if(val<=256)
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) (val&0xff);
-		ST_BIT_N9(0);
+		N9_ST_BIT(0);
 	}
 	else
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
-		ST_BIT_N9(1);
+		N9_ST_BIT(1);
 		*com->rbuf_current++ = (uint8) (val&0xff);
 	}
 }
 
-gup_result compress_n9(packstruct *com)
+gup_result n9_compress(packstruct *com)
 {
 	/*
 	** pointer lengte codering:
@@ -152,7 +172,7 @@ gup_result compress_n9(packstruct *com)
 		if(match==0)
 		{ /* store literal */
 			match_t kar;
-			ST_BIT_N9(0);
+			N9_ST_BIT(0);
 			kar=com->dictionary[current_pos];
 			LOG_LITERAL(kar);
 			*com->rbuf_current++=(uint8)kar;
@@ -162,19 +182,19 @@ gup_result compress_n9(packstruct *com)
 		else
       {
       	ptr_t ptr;
-			ST_BIT_N9(1);
+			N9_ST_BIT(1);
 			ptr=com->ptr_len[current_pos];
-         store_n9_ptr_val(ptr, com);
-         store_n9_len_val(match, com);
+         n9_store_ptr_val(ptr, com);
+         n9_store_len_val(match, com);
          LOG_PTR_LEN(match, ptr+1);
          bytes_to_do-=match;
          current_pos+=match;
 		}
 	}
 	{ /* schrijf n0 end of file marker */
-		ST_BIT_N9(1); /* pointer comming */
+		N9_ST_BIT(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
-		ST_BIT_N9(1); /* deze combi kan niet voorkomen */
+		N9_ST_BIT(1); /* deze combi kan niet voorkomen */
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -211,14 +231,14 @@ gup_result compress_n9(packstruct *com)
 	return GUP_OK;
 }
 
-gup_result close_n9_stream(packstruct *com)
+gup_result n9_close_stream(packstruct *com)
 {
 	NEVER_USE(com);
 	return GUP_OK;
 }
 
 
-#define GET_N9_BIT(bit)								\
+#define N9_GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
@@ -238,20 +258,20 @@ gup_result close_n9_stream(packstruct *com)
 	bits_in_bitbuf--;									\
 }
 
-#define DECODE_N9_LEN(val)							\
+#define N9_DECODE_LEN(val)							\
 { /* get value 2 - 2^32-1 */						\
 	int bit;												\
 	val=1;												\
 	do														\
 	{														\
-		GET_N9_BIT(bit);								\
+		N9_GET_BIT(bit);								\
 		val+=val+bit;									\
-		GET_N9_BIT(bit);								\
+		N9_GET_BIT(bit);								\
 	} while(bit==0);									\
 }
 
 
-gup_result decode_n9(decode_struct *com)
+gup_result n9_decode(decode_struct *com)
 {
 	uint8* dst=com->buffstart;
 	uint8* dstend;
@@ -290,7 +310,7 @@ gup_result decode_n9(decode_struct *com)
 	for(;;)
 	{
 		int bit;
-		GET_N9_BIT(bit);
+		N9_GET_BIT(bit);
 		if(bit==0)
 		{ /* literal */
 	  		if(com->rbuf_current > com->rbuf_tail)
@@ -333,7 +353,7 @@ gup_result decode_n9(decode_struct *com)
 				}
 			}
 			data=*com->rbuf_current++;
-			GET_N9_BIT(bit);
+			N9_GET_BIT(bit);
 			if(bit==0)
 			{
 				ptr|=data;
@@ -356,7 +376,7 @@ gup_result decode_n9(decode_struct *com)
 				}
 				ptr|=*com->rbuf_current++;
 			}
-			DECODE_N9_LEN(len);
+			N9_DECODE_LEN(len);
 			len++;
 			LOG_PTR_LEN(len, -ptr)
 			src=dst+ptr;

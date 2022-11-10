@@ -85,7 +85,8 @@ extern "C"
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
 #define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
 #define EXPANTIE_SLACK (7*256)         /* space subtracted from MAX_ENTRIES in order to allow ZEEF34 expansions */
-#define MAX_M4_PTR  15871              /* maximale pointer offset + 1 */
+#define M4_MAX_PTR  15871              /* maximale pointer offset + 1 */
+#define M4_MAX_MATCH 258					/* m4 maximum match */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
 #define MAX_PTR   26623                /* arj dictionary is 26k */
@@ -119,8 +120,8 @@ extern "C"
 
 #define FASTLOGBUF 65536UL           /* grootte fastlog buffer */
 void init_fast_log(packstruct *com); /* lookuptable for: int LOG(uint16 x){return x?LOG(x/2)+1:0;} */
-void init_m4_fast_log(packstruct *com);
-void init_n0_fast_log(packstruct *com);
+void m4_init_fast_log(packstruct *com);
+void n0_init_fast_log(packstruct *com);
 void init_n1_fast_log(packstruct *com);
 void init_lzs_fast_log(packstruct *com);
 void init_lz5_fast_log(packstruct *com);
@@ -130,11 +131,20 @@ int32 first_bit_set32(uint32 u);
 gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal bytes in huffblok aan */
 
 
-gup_result compress_n0(packstruct *com);
-gup_result close_n0_stream(packstruct *com);
+gup_result n0_compress(packstruct *com);
+gup_result n0_close_stream(packstruct *com);
 
-gup_result compress_n9(packstruct *com);
-gup_result close_n9_stream(packstruct *com);
+gup_result n9_compress(packstruct *com);
+gup_result n9_close_stream(packstruct *com);
+unsigned long n9_cost_lit(match_t kar);
+unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr);
+
+gup_result m4_compress(packstruct *com);
+gup_result m4_close_stream(packstruct *com);
+unsigned long m4_cost_lit(match_t kar);
+unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr);
+
+
 
 #ifdef __cplusplus
 }

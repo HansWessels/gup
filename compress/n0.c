@@ -24,11 +24,11 @@
 int n0_lit_len(uint32 val);
 int n0_len_len(uint32 val);
 int n0_ptr_len(uint32 val);
-void store_n0_val(uint32 val, packstruct *com);
-void store_n0_len_val(uint32 val, packstruct *com);
-void store_n0_literal_val(uint32 val, packstruct *com);
-void store_n0_ptr_val(int32_t val, packstruct *com);
-unsigned long count_n0_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
+void n0_store_val(uint32 val, packstruct *com);
+void n0_store_len_val(uint32 val, packstruct *com);
+void n0_store_literal_val(uint32 val, packstruct *com);
+void n0_store_ptr_val(int32_t val, packstruct *com);
+unsigned long n0_count_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
                             uint16 entries, /* aantal character die moeten worden gepacked */
                             c_codetype * p, /* pointer naar de karakters     */
                             pointer_type * q);
@@ -50,7 +50,7 @@ int n0_ptr_len(uint32 val)
 	}
 }
 
-#define ST_BIT_N0(bit)												\
+#define N0_ST_BIT(bit)												\
 { /* store a 1 or a 0 */											\
   int val=bit;				                                 \
   LOG_BIT(val);														\
@@ -68,7 +68,7 @@ int n0_ptr_len(uint32 val)
   }																		\
 }
 
-void store_n0_val(uint32 val, packstruct *com)
+void n0_store_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
 	int bits_to_do=first_bit_set32(val)-1;
 	uint32 mask=1<<bits_to_do;
@@ -77,48 +77,48 @@ void store_n0_val(uint32 val, packstruct *com)
 	{
 		if((val&mask)==0)
 		{
-			ST_BIT_N0(0);
+			N0_ST_BIT(0);
 		}
 		else
 		{
-			ST_BIT_N0(1);
+			N0_ST_BIT(1);
 		}
 		mask>>=1;
 		if(mask==0)
 		{
-			ST_BIT_N0(1);
+			N0_ST_BIT(1);
 		}
 		else
 		{
-			ST_BIT_N0(0);
+			N0_ST_BIT(0);
 		}
 	}while(mask!=0);
 }
 
-void store_n0_len_val(uint32 val, packstruct *com)
+void n0_store_len_val(uint32 val, packstruct *com)
 { /* waarde val >=3 */
-	store_n0_val(val-1, com);
+	n0_store_val(val-1, com);
 }
 
-void store_n0_ptr_val(int32_t val, packstruct *com)
+void n0_store_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
 	val++;
 	if(val<=256)
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) (val&0xff);
-		ST_BIT_N0(0);
+		N0_ST_BIT(0);
 	}
 	else
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
-		ST_BIT_N0(1);
+		N0_ST_BIT(1);
 		*com->rbuf_current++ = (uint8) (val&0xff);
 	}
 }
 
-gup_result compress_n0(packstruct *com)
+gup_result n0_compress(packstruct *com)
 {
   /*
    * pointer lengte codering:
@@ -319,7 +319,7 @@ gup_result compress_n0(packstruct *com)
   }
   { /* bereken het aantal bits en bytes van de gecomprimeerde data */
     unsigned long m_size;
-    long bits_comming = count_n0_bits(&m_size, entries, com->chars, com->pointers);
+    long bits_comming = n0_count_bits(&m_size, entries, com->chars, com->pointers);
     {
       gup_result res;
       long bytes_extra=0;
@@ -371,7 +371,7 @@ gup_result compress_n0(packstruct *com)
       
       if (kar < NLIT)
       { /*- store literal */
-      	ST_BIT_N0(0);
+      	N0_ST_BIT(0);
         	if(kar==-1)
         	{
         		kar=*r++;	
@@ -383,7 +383,7 @@ gup_result compress_n0(packstruct *com)
         		kar=*r++;	
      			LOG_LITERAL(kar);
      			*com->rbuf_current++=kar;
-      		ST_BIT_N0(0);
+      		N0_ST_BIT(0);
         		kar=*r++;	
         		r+=2;
         		q++; /* skip pointer */
@@ -393,10 +393,10 @@ gup_result compress_n0(packstruct *com)
       }
       else
       {
-			ST_BIT_N0(1);
+			N0_ST_BIT(1);
          kar += MIN_MATCH - NLIT;
-         store_n0_ptr_val(*q++, com);
-         store_n0_len_val(kar, com);
+         n0_store_ptr_val(*q++, com);
+         n0_store_len_val(kar, com);
          LOG_PTR_LEN(kar, q[-1]+1);
          r+=4; /* skip literals */
       }
@@ -413,7 +413,7 @@ gup_result compress_n0(packstruct *com)
   return GUP_OK;
 }
 
-unsigned long count_n0_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
+unsigned long n0_count_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
                             uint16 entries, /* aantal character die moeten worden gepacked */
                             c_codetype * p, /* pointer naar de karakters     */
                             pointer_type * q  /* pointer naar de pointers    */
@@ -452,7 +452,7 @@ unsigned long count_n0_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
   return bits;
 }
 
-void init_n0_fast_log(packstruct *com)
+void n0_init_fast_log(packstruct *com)
 {
   /*
    * fastlog tabel voor ni mode 1.
@@ -470,7 +470,7 @@ void init_n0_fast_log(packstruct *com)
   }
 }
 
-gup_result close_n0_stream(packstruct *com)
+gup_result n0_close_stream(packstruct *com)
 {
 	long bits_comming=10; /* end of archive marker */
 	long bytes_extra=0;
@@ -497,9 +497,9 @@ gup_result close_n0_stream(packstruct *com)
    com->bits_rest=(int16)(bits_comming&7);
    com->packed_size += bits_comming>>3;
 	{ /* schrijf n0 end of stream marker, een speciaal geformateerde ptr */
-		ST_BIT_N0(1); /* pointer comming */
+		N0_ST_BIT(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
-		ST_BIT_N0(1); /* deze combi kan niet voorkomen */
+		N0_ST_BIT(1); /* deze combi kan niet voorkomen */
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -516,7 +516,7 @@ gup_result close_n0_stream(packstruct *com)
 }
 
 
-#define GET_N0_BIT(bit)								\
+#define N0_GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
@@ -542,14 +542,14 @@ gup_result close_n0_stream(packstruct *com)
 	val=1;												\
 	do														\
 	{														\
-		GET_N0_BIT(bit);								\
+		N0_GET_BIT(bit);								\
 		val+=val+bit;									\
-		GET_N0_BIT(bit);								\
+		N0_GET_BIT(bit);								\
 	} while(bit==0);									\
 }
 
 
-gup_result decode_n0(decode_struct *com)
+gup_result n0_decode(decode_struct *com)
 {
 	uint8* dst=com->buffstart;
 	uint8* dstend;
@@ -588,7 +588,7 @@ gup_result decode_n0(decode_struct *com)
 	for(;;)
 	{
 		int bit;
-		GET_N0_BIT(bit);
+		N0_GET_BIT(bit);
 		if(bit==0)
 		{ /* literal */
 	  		if(com->rbuf_current > com->rbuf_tail)
@@ -631,7 +631,7 @@ gup_result decode_n0(decode_struct *com)
 				}
 			}
 			data=*com->rbuf_current++;
-			GET_N0_BIT(bit);
+			N0_GET_BIT(bit);
 			if(bit==0)
 			{
 				ptr|=data;

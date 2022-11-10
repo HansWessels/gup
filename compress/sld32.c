@@ -151,27 +151,6 @@ uint32_t hash(index_t pos, packstruct* com)
 	return val;
 }
 
-unsigned long cost_ptrlen(match_t match, ptr_t ptr);
-
-unsigned long cost_ptrlen(match_t match, ptr_t ptr)
-{
-	unsigned long res=1;
-	if(match<3)
-	{ /* match < 3 niet mogelijk */
-		return -1UL;
-	}
-	res+=2*(first_bit_set32(match-1)-1);
-	if(ptr<256)
-	{
-		res+=9;
-	}
-	else
-	{
-		res+=17;
-	}
-	return res;
-}
-
 
 void find_dictionary32(index_t pos, packstruct* com)
 {
@@ -205,9 +184,9 @@ void find_dictionary32(index_t pos, packstruct* com)
 				ptr_t ptr;
 				best_match=1;
 				ptr=pos-match_pos-1;
-				if((cost+cost_ptrlen(best_match, ptr))<com->cost[pos+best_match])
+				if((cost+com->cost_ptrlen(best_match, ptr))<com->cost[pos+best_match])
 				{
-					com->cost[pos+best_match]=cost+cost_ptrlen(best_match, ptr);
+					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr);
 					com->match_len[pos+best_match]=best_match;
 					com->ptr_len[pos+best_match]=ptr;
 				}
@@ -227,9 +206,9 @@ void find_dictionary32(index_t pos, packstruct* com)
 				ptr_t ptr;
 				best_match=2;
 				ptr=pos-match_pos-1;
-				if((cost+cost_ptrlen(best_match, ptr))<com->cost[pos+best_match])
+				if((cost+com->cost_ptrlen(best_match, ptr))<com->cost[pos+best_match])
 				{
-					com->cost[pos+best_match]=cost+cost_ptrlen(best_match, ptr);
+					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr);
 					com->match_len[pos+best_match]=best_match;
 					com->ptr_len[pos+best_match]=ptr;
 				}
@@ -276,9 +255,9 @@ void find_dictionary32(index_t pos, packstruct* com)
 						match_t i=com->min_match32;
 						do
 						{
-							if((cost+cost_ptrlen(i, ptr))<com->cost[pos+i])
+							if((cost+com->cost_ptrlen(i, ptr))<com->cost[pos+i])
 							{
-								com->cost[pos+i]=cost+cost_ptrlen(i, ptr);
+								com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr);
 								com->match_len[pos+i]=i;
 								com->ptr_len[pos+i]=ptr;
 							}
@@ -361,9 +340,9 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				ptr_t ptr=pos-match_pos-1;
 				do
 				{
-					if((cost+cost_ptrlen(i, ptr))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+cost_ptrlen(i, ptr);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
 					}
@@ -395,9 +374,9 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				ptr_t ptr=pos-match_pos-1;
 				do
 				{
-					if((cost+cost_ptrlen(i, ptr))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+cost_ptrlen(i, ptr);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
 					}
@@ -431,9 +410,9 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				match_t i=com->min_match32;
 				do
 				{
-					if((cost+cost_ptrlen(i, ptr))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+cost_ptrlen(i, ptr);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
 					}

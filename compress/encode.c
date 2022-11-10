@@ -308,22 +308,17 @@
 /* eerst ff wat definities */
 
 void init_bitbuffer(packstruct *com);
-gup_result close_n0_stream(packstruct *com);
+gup_result n0_close_stream(packstruct *com);
 gup_result close_n1_stream(packstruct *com);
 gup_result close_m1_m7_stream(packstruct *com);
 gup_result store(packstruct *com);
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
-gup_result compress_m4(packstruct *com);
 gup_result compress_n1(packstruct *com);
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
                          unsigned long* packed_bytes, int charct, uint16 entries,
                          uint8* charlen, uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
-unsigned long count_m4_bits(unsigned long* packed_bytes,
-                            packstruct *com,
-                            uint16 entries, c_codetype *chars,
-                            pointer_type *ptrs);
 
 void make_hufftable(uint8* len, uint16* tabel, uint16* freq, uint16 totaalfreq, int nchar, int max_hufflen, packstruct *com); /* maakt huffman tabel */
 void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
@@ -428,16 +423,22 @@ gup_result init_encode(packstruct *com)
       i_fastlog=init_fast_log;
       break;
     case ARJ_MODE_4:
-      com->maxptr= MAX_M4_PTR;
-      com->compress=compress_m4;
-      i_fastlog=init_m4_fast_log;
+		com->use_sld32=1;
+		com->min_match32=3;
+      com->maxptr32=M4_MAX_PTR;
+      com->max_match32=M4_MAX_MATCH;
+      com->compress=m4_compress;
+      com->close_packed_stream=m4_close_stream;
+      com->cost_ptrlen=m4_cost_ptrlen;
+      com->cost_lit=m4_cost_lit;
+      i_fastlog=init_fast_log_empty;
       break;
     case NI_MODE_0:
       com->maxptr= 65534UL;
       com->max_match=MAX_MATCH;
-      com->compress=compress_n0;
-      i_fastlog=init_n0_fast_log;
-      com->close_packed_stream=close_n0_stream; /* close_n0_stream() */
+      com->compress=n0_compress;
+      i_fastlog=n0_init_fast_log;
+      com->close_packed_stream=n0_close_stream; /* close_n0_stream() */
       com->command_byte_ptr=NULL;
       break;
     case NI_MODE_9:
@@ -445,10 +446,12 @@ gup_result init_encode(packstruct *com)
 		com->min_match32=3;
       com->maxptr32= 65536UL;
       com->max_match32=65536;
-      com->compress=compress_n9;
-      i_fastlog=init_fast_log_empty;
-      com->close_packed_stream=close_n9_stream;
+      com->compress=n9_compress;
+      com->close_packed_stream=n9_close_stream;
       com->command_byte_ptr=NULL;
+      com->cost_ptrlen=n9_cost_ptrlen;
+      com->cost_lit=n9_cost_lit;
+      i_fastlog=init_fast_log_empty;
       break;
     case NI_MODE_1:
       com->maxptr= 65534UL;
@@ -2963,393 +2966,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
 #endif
 
 
-#ifndef NOT_USE_STD_compress_m4
-
-gup_result compress_m4(packstruct *com)
-{
-  /*
-   * pointer lengte codering:
-   *
-   * 9  0xxxxxxxxx            0 -   511  10 bits
-   *
-   * 10 10xxxxxxxxxx        512 -  1535  12 bits
-   *
-   * 11 110xxxxxxxxxxx     1536 -  3583  14 bits
-   *
-   * 12 1110xxxxxxxxxxxx   3584 -  7679  16 bits
-   *
-   * 13 1111xxxxxxxxxxxxx  7680 - 15871  17 bits
-   *
-   * len codering:
-   *
-   * 0 0               : literal
-   *
-   * 1 10x             :  3 -   4   3 bits
-   *
-   * 2 110xx           :  5 -   8   5 bits
-   *
-   * 3 1110xxx         :  9 -  16   7 bits
-   *
-   * 4 11110xxxx       : 17 -  32   9 bits
-   *
-   * 5 111110xxxxx     : 33 -  64  11 bits
-   *
-   * 6 1111110xxxxxx   : 65 - 128  13 bits
-   *
-   * 7 1111111xxxxxxx  :129 - 256  14 bits
-  */
-  uint16 entries = (uint16) (com->charp - com->chars);
-  c_codetype *p = com->chars;
-  pointer_type *q = com->pointers;
-  if (entries > com->hufbufsize)
-  {
-    entries = com->hufbufsize;
-  }
-  if (com->matchstring != NULL)
-  {
-    ARJ_Assert(com->backmatch!=NULL);
-    {
-      uint16 pointer_count=0;
-      uint16 i=entries;
-      c_codetype *p = com->chars;
-      do
-      {
-        if(*p++>(NLIT-1))
-        {
-          pointer_count++;
-        }
-      }
-      while (--i!=0);
-      com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over
-                                          de huffmangrens vindt */
-    }
-    {
-      /* 
-        Code die backmatch stringlengtes optimaliseert.
-        Bij een backmatch zijn er twee opeenvolgende matches, waarbij 
-        de laatste match een backmatch waarde groter dan nul heeft.
-        Deze laatste macth kunnen we groter laten worden tenkoste van de 
-        grootte van de match die ervoor ligt...
-      */
-      uint8 *lenp=com->fast_log+32768L; /* len tabel */
-      int redo; /* geeft aan dat er een conversie heeft plaatsgevonden -> nog een iteratie */
-      do
-      {
-        redo=0;
-        {
-          uint8* bp=com->backmatch;
-          c_codetype *p = com->chars;
-          uint16 i = entries;
-          do
-          {
-            c_codetype kar = *p++;
-            if (kar > (NLIT-1))
-            {
-              uint8 len=*bp++;
-              if(len>0)
-              {
-                c_codetype kar_1=p[-2];
-                uint8 offset=1;
-                uint8 optlen=lenp[kar_1]+lenp[kar];
-                do
-                {
-                  if((lenp[kar_1-offset]+lenp[kar+offset])<optlen)
-                  {
-                    redo=1;
-                    bp[-1]-=offset;
-                    p[-2]-=offset;
-                    p[-1]+=offset;
-                    kar+=offset;
-                    kar_1-=offset;
-                    optlen=lenp[kar_1]+lenp[kar];
-                    offset=1;
-                  }
-                  else
-                  {
-                    offset++;
-                  }
-                }
-                while(--len!=0);
-              }
-            }
-          }
-          while (--i!=0);
-        }
-        #if 0
-          { /*- for debugging use */
-            long lentries = (uint16) (com->charp - com->chars);
-            {
-              long i = lentries;
-              c_codetype *cp = com->chars;
-              while (--i!=0)
-              {
-                c_codetype tmp = *cp++;
-                ARJ_Assert(tmp>=0);
-                ARJ_Assert(tmp<=(NLIT-MIN_MATCH+com->max_match))
-                if(tmp<0)
-                {
-                  fprintf(assert_redir_fptr, "te klein!");
-                }
-                if(tmp>(NLIT-MIN_MATCH+com->max_match))
-                {
-                  fprintf(assert_redir_fptr, "te groot!");
-                }
-              }
-            }
-          }
-        #endif
-      }
-      while(com->jm && (redo));
-    }
-  }
-  {
-    unsigned long m_size;
-    long bits_comming = count_m4_bits(&m_size, com, entries, com->chars, com->pointers);
-    if (com->mv_mode)
-    {
-      unsigned long bits;
-      bits=bits_comming+com->mv_bits_left+7;
-      bits >>= 3;                      /* bytes=bits/8 */
-      if (bits > com->mv_bytes_left)
-      { /*- gedonder!, MV break! */
-        uint16 delta_size;
-        uint16 the_size = 1;
-
-        com->mv_next = 1;
-        delta_size=0x8000;
-        while(delta_size>=entries)
-        {
-          delta_size>>=1;
-        }
-        entries -= delta_size;
-
-        do
-        {
-          delta_size >>= 1;
-          bits = count_m4_bits(&m_size, com, entries, com->chars, com->pointers)+
-                 com->mv_bits_left+7;
-          bits >>= 3;                    /* bytes=bits/8 */
-          if (bits > com->mv_bytes_left)
-          {
-            if(delta_size>=entries)
-            {
-              entries=1;
-            }
-            else
-            {
-              entries -= delta_size;
-            }
-          }
-          else
-          {
-            the_size = entries;
-            entries += delta_size;
-          }
-        }
-        while (delta_size!=0);
-        if ((the_size == 1) && (bits > com->mv_bytes_left))
-        {
-          return GUP_OK;
-        }
-        entries = the_size;
-        bits_comming = count_m4_bits(&m_size, com, entries, com->chars, com->pointers);
-      }
-      bits=bits_comming+com->mv_bits_left;
-      com->mv_bits_left = (int16)(bits&7);
-      bits>>=3;
-      com->mv_bytes_left -= bits;
-    }
-    {
-      gup_result res;
-      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
-      {
-        return res;
-      }
-      bits_comming+=com->bits_rest;
-      com->bits_rest=(int16)(bits_comming&7);
-      com->packed_size += bits_comming>>3;
-    }
-    #ifdef PP_AFTER
-    com->print_progres(m_size, com->pp_propagator);
-    #endif
-    com->bytes_packed += m_size;
-  }
-  entries++;
-  while (--entries != 0)
-  {
-    c_codetype kar = *p++;
-
-    if (kar < NLIT)
-    { /*- store literal */
-      ST_BITS(kar, 9);
-      LOG_LITERAL(kar);
-    }
-    else
-    {
-      kar += MIN_MATCH - NLIT;
-      LOG_PTR_LEN(kar, *q);
-      if (kar < 17)
-      {
-        if (kar < 5)
-        {
-          ST_BITS(2, 2);
-          ST_BITS(kar - 3, 1);
-        }
-        else
-        {
-          if (kar < 9)
-          {
-            ST_BITS(6, 3);
-            ST_BITS(kar - 5, 2);
-          }
-          else
-          {
-            ST_BITS(14, 4);
-            ST_BITS(kar - 9, 3);
-          }
-        }
-      }
-      else
-      {
-        if (kar < 65)
-        {
-          if (kar < 33)
-          {
-            ST_BITS(30, 5);
-            ST_BITS(kar - 17, 4);
-          }
-          else
-          {
-            ST_BITS(62, 6);
-            ST_BITS(kar - 33, 5);
-          }
-        }
-        else
-        {
-          if (kar < 129)
-          {
-            ST_BITS(126, 7);
-            ST_BITS(kar - 65, 6);
-          }
-          else
-          {
-            ST_BITS(127, 7);
-            ST_BITS(kar - 129, 7);
-          }
-        }
-      }
-      kar = *q++;
-      if (kar < 1536)
-      {
-        if (kar < 512)
-        {
-          ST_BITS(0, 1);
-          ST_BITS(kar, 9);
-        }
-        else
-        {
-          ST_BITS(2, 2);
-          ST_BITS(kar - 512, 10);
-        }
-      }
-      else
-      {
-        if (kar < 3584)
-        {
-          ST_BITS(6, 3);
-          ST_BITS(kar - 1536, 11);
-        }
-        else
-        {
-          if (kar < 7680)
-          {
-            ST_BITS(14, 4);
-            ST_BITS(kar - 3584, 12);
-          }
-          else
-          {
-            ST_BITS(15, 4);
-            ST_BITS(kar - 7680, 13);
-          }
-        }
-      }
-    }
-  }
-  entries=(uint16)(com->charp-p);
-  #if 0
-  {
-    long i = (com->charp - com->chars) - entries;
-    long ptrctr = s - com->pointers;
-    if (com->matchstring != NULL)
-    {
-      memmove(com->matchstring, s3, i * 4);
-      memmove(com->backmatch, com->backmatch+ptrctr, i);
-      com->msp -= 4 * (long)ptrctr;
-      com->bmp-=ptrctr;
-    }
-    memmove(com->chars, r, i * sizeof (c_codetype));
-    memmove(com->pointers, s, i * sizeof (pointer_type));
-    com->ptrp -= ptrctr;
-    com->charp -= entries;
-    ARJ_Assert_ZEEF34();
-  }
-  #else
-  if (com->matchstring != NULL)
-  {
-    long ptrctr = q - com->pointers;
-    long i = (com->charp - com->chars) - entries;
-    memmove(com->backmatch, com->backmatch+ptrctr, i);
-    com->msp -= 4 * (long)ptrctr;
-    com->bmp-=ptrctr;
-  }
-  com->charp = com->chars+entries;
-  com->ptrp = com->pointers+(com->ptrp-q);
-  memmove(com->chars, p, entries*sizeof(*p));
-  memmove(com->pointers, q, entries*sizeof(*q));
-  #endif
-  return GUP_OK;
-}
-
-#endif
-
-#ifndef NOT_USE_STD_count_m4_bits
-
-unsigned long count_m4_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
-          /* nu de variabelen die nodig zijn voor de berekening */
-                            packstruct *com, /* commadstruct */
-                            uint16 entries, /* aantal character die moeten worden gepacked */
-                            c_codetype * p, /* pointer naar de karakters     */
-                            pointer_type * q  /* pointer naar de pointers    */
-)
-{
-  unsigned long bits = 0;
-  unsigned long bytes = 0;
-
-  entries++;
-  while (--entries != 0)
-  {
-    c_codetype kar = *p++;
-
-    if (kar < NLIT)
-    { /*- store literal */
-      bytes++;
-      bits += 9;
-    }
-    else
-    {
-      uint8 *lenp=com->fast_log+32768L; /* len tabel */
-      bytes += kar + MIN_MATCH - NLIT;
-      bits+=lenp[kar];
-      kar = *q++;
-      bits+=LOG(kar);
-    }
-  }
-  *packed_bytes = bytes;
-  return bits;
-}
-
-#endif
-
 
 
 #ifndef NOT_USE_STD_compress_n1
@@ -4586,73 +4202,6 @@ void init_fast_log(packstruct *com)
 
 #endif
 
-#ifndef NOT_USE_STD_init_m4_fast_log
-
-void init_m4_fast_log(packstruct *com)
-{
-  /*
-   * fastlog tabel voor mode 4.
-   * in de tweede 32k is een len->bitlen tabel.
-   */
-  /*
-   * pointer lengte codering:
-   *
-   * 9  0xxxxxxxxx            0 -   511  10 bits
-   *
-   * 10 10xxxxxxxxxx        512 -  1535  12 bits
-   *
-   * 11 110xxxxxxxxxxx     1536 -  3583  14 bits
-   *
-   * 12 1110xxxxxxxxxxxx   3584 -  7679  16 bits
-   *
-   * 13 1111xxxxxxxxxxxxx  7680 - 15871  17 bits
-   */
-  uint8 *p = com->fast_log;
-  memset(p, 10, 512);
-  p+=512;
-  memset(p, 12, 1024);
-  p+=1024;
-  memset(p, 14, 2048);
-  p+=2048;
-  memset(p, 16, 4096);
-  p+=4096;
-  memset(p, 17, 8192);
-  /*
-   * 0 8               :  literal     9 bits
-   *
-   * 1 10x             :  1 -   2     3
-   *
-   * 2 110xx           :  3 -   6     5
-   *
-   * 3 1110xxx         :  7 -  14     7
-   *
-   * 4 11110xxxx       : 15 -  30     9
-   *
-   * 5 111110xxxxx     : 31 -  62    11
-   *
-   * 6 1111110xxxxxx   : 63 - 126    13
-   *
-   * 7 1111111xxxxxxx  :127 - 254    14
-   */
-  p = com->fast_log+32768L; /* len tabel */
-  memset(p, 32, 256); /* voorkom foute conversies */
-  p+=256;
-  memset(p, 3, 2);
-  p+=2;
-  memset(p, 5, 4);
-  p+=4;
-  memset(p, 7, 8);
-  p+=8;
-  memset(p, 9, 16);
-  p+=16;
-  memset(p, 11, 32);
-  p+=32;
-  memset(p, 13, 64);
-  p+=64;
-  memset(p, 14, 128);
-}
-
-#endif
 
 #ifndef NOT_USE_STD_init_lzs_fast_log
 
