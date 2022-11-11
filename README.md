@@ -19,7 +19,7 @@ GUP is also your primary choice when you're looking for a packer that produces *
 - you are looking for a fast depacker.
 - you are looking for tools which offer specialized enhacements and source code for **embedding the compressed data** and **swiftly depacking it in modern and classic generic *and* embedded hardware systems**. *Did we mention our depacker(s) are coded for both minimum size and maximum speed?*
 - you are looking for tools that wring the very last drop of entropy from your collective data (highly compression-ratio-optimized LZ77+Huffman: better than ARJ/ZIP/RAR/LZH/...)[^1]
-- you are curious what can be achieved with classic evergreen Level-Zempf sliding dictionary compression technology. We never published this stuff as a whitepaper, but, as of 2022AD, our extensive research has not uncovered anyone that does it better[^3] and when we do, be assured we'll be incorporating such cleverness in GUP!
+- you are curious what can be achieved with classic evergreen Lempel-Ziv sliding dictionary compression technology. We never published this stuff as a whitepaper, but, as of 2022AD, our extensive research has not uncovered anyone that does it better[^3] and when we do, be assured we'll be incorporating such cleverness in GUP!
 
 
 ## Which platforms do you support?
