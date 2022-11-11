@@ -133,6 +133,8 @@ gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal
 
 gup_result n0_compress(packstruct *com);
 gup_result n0_close_stream(packstruct *com);
+unsigned long n0_cost_lit(match_t kar);
+unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr);
 
 gup_result n9_compress(packstruct *com);
 gup_result n9_close_stream(packstruct *com);

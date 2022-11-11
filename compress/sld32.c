@@ -10,12 +10,12 @@
 **   e costs_t = uint64_t: geschatte kosten in (fracties van) bits
 **   f node_t = {index_t parent, index_t c_left, index_t c_right, index_t link}: node in de dictionary tree
 **   g NC = 256; Number of Characters, aantal verschillende karaters in uint8
-**   h HASH_SIZE32 = 65536+256; groote van de hash array voor de eerste karakter van een insert, we zouden deze NC*NC*NC kunnen maken dan is het altijd raak...
-**                 de RLE's moeten gefilterd worden, anders bij grote matches zelfs op snelle machines erg traag, aparte insert voor RLE's
+**   h HASH_SIZE32 = 65536; grootte van de hash array voor de eerste karakter van een insert, we zouden deze NC*NC*NC kunnen maken dan is het altijd raak...
+**                   de RLE's moeten gefilterd worden, anders bij grote matches zelfs op snelle machines erg traag, aparte insert voor RLE's
 **     HASH_SIZE_RLE32 = (256*RLE32_DEPTH) 
 **     RLE32_DEPTH = 1024
-** 4 back match lengte
-** 5 match history voor current match.. hoe lang moet deze zijn
+** 4 back match lengte? Niet van belang, de kostenfunctie met complete matchen maakt dit overbodig
+** 5 match history voor current match.. hoe lang moet deze zijn? Niet van belang, de kostenfunctie met complete matchen maakt dit overbodig
 ** 6 zeef 34, gewoon terukijken in de dictionary
 ** 7 de gehele file inladen tot 4 GB en dan?
 **   a maximum block size is gelijk aan dictionary size, daarna reset van de packer

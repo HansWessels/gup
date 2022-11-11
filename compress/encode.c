@@ -425,7 +425,7 @@ gup_result init_encode(packstruct *com)
     case ARJ_MODE_4:
 		com->use_sld32=1;
 		com->min_match32=3;
-      com->maxptr32=M4_MAX_PTR;
+      com->maxptr32=M4_MAX_PTR+1;
       com->max_match32=M4_MAX_MATCH;
       com->compress=m4_compress;
       com->close_packed_stream=m4_close_stream;
@@ -434,17 +434,21 @@ gup_result init_encode(packstruct *com)
       i_fastlog=init_fast_log_empty;
       break;
     case NI_MODE_0:
-      com->maxptr= 65534UL;
-      com->max_match=MAX_MATCH;
+		com->use_sld32=1;
+		com->min_match32=3;
+      com->maxptr32= 65536;
+      com->max_match32=65536;
       com->compress=n0_compress;
-      i_fastlog=n0_init_fast_log;
-      com->close_packed_stream=n0_close_stream; /* n0_close_stream() */
+      com->close_packed_stream=n0_close_stream;
       com->command_byte_ptr=NULL;
+      com->cost_ptrlen=n0_cost_ptrlen;
+      com->cost_lit=n0_cost_lit;
+      i_fastlog=init_fast_log_empty;
       break;
     case NI_MODE_9:
 		com->use_sld32=1;
 		com->min_match32=3;
-      com->maxptr32= 65536UL;
+      com->maxptr32= 65536;
       com->max_match32=65536;
       com->compress=n9_compress;
       com->close_packed_stream=n9_close_stream;
