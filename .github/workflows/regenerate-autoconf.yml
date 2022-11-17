@@ -71,7 +71,19 @@ jobs:
         automake --version
         autoheader --version
         make --version
-      
+    
+    - name: Install latest automake et al
+      run: |
+        sudo apt-get autoremove automake
+        sudo apt-get install automake
+
+    - name: "List the autoconf prerequisites' tool versions"
+      run: |
+        autoconf --version
+        automake --version
+        autoheader --version
+        make --version
+    
     - name: Prep the automake and autoconf tools
       run: |
         ls *.sh
