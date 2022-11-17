@@ -31,7 +31,8 @@ jobs:
       
   regenerate:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    # Seee also: https://github.com/actions/runner-images#github-actions-runner-images
+    runs-on: ubuntu-22.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -65,19 +66,6 @@ jobs:
         # Add repository path as safe.directory for Git global config by running `git config --global --add safe.directory <path>`
         #set-safe-directory: # optional, default is true
     
-    - name: "List the autoconf prerequisites' tool versions"
-      run: |
-        autoconf --version
-        automake --version
-        autoheader --version
-        make --version
-    
-    - name: Install latest automake et al
-      run: |
-        sudo apt update
-        sudo apt-get autoremove automake autoconf autotools-dev
-        sudo apt-get install automake autoconf autotools-dev
-
     - name: "List the autoconf prerequisites' tool versions"
       run: |
         autoconf --version
