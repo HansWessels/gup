@@ -4,6 +4,8 @@
 
 int m4_len_len(match_t match);
 int m4_ptr_len(ptr_t ptr);
+void m4_store_len(match_t match, packstruct *com);
+void m4_store_ptr(ptr_t ptr, packstruct *com);
 unsigned long m4_count_bits(unsigned long* packed_bytes,
                             packstruct *com,
                             uint16 entries, c_codetype *chars,
@@ -27,18 +29,7 @@ unsigned long m4_count_bits(unsigned long* packed_bytes,
 	#define LOG_TEXT(string) /* */
 #endif
 
-
-#ifndef ST_BITS
-
-/*
-  in de generieke versie moet
-    if (bit_count)
-    {
-  zitten, omdat anders er een shift over 32 gedaan kan worden.
-  als een long 32 bits is is dit door ansi c niet gedefinieerd
-  bekende processor dit een long niet over 32 bits kan schuiven is de
-  80x86 serie van intel....
-*/
+#define BITBUFSIZE    (sizeof(unsigned long) * 8)   /* aantal bits in bitbuffer */
 
 /* unsigned long val, int bit_count */
 #define ST_BITS(val_0, bit_count_0)                        \
@@ -72,15 +63,10 @@ unsigned long m4_count_bits(unsigned long* packed_bytes,
   }                                                        \
 }
 
-#endif
 
 unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr)
 {
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
-	if(match<3)
-	{ /* match < 3 niet mogelijk */
-		return -1UL;
-	}
 	res+=m4_len_len(match);
 	res+=m4_ptr_len(ptr);
 	return res;
@@ -94,62 +80,82 @@ unsigned long m4_cost_lit(match_t kar)
 
 int m4_len_len(match_t match)
 {
-	if(match<=4)
+	if(match<3)
 	{
-		return 3;
+		return 255;
 	}
-	else if(match<=8)
+	if(match>128)
 	{
-		return 5;
+		if(match>256)
+		{
+			return 255;
+		}
+		else
+		{
+			return 14;
+		}
 	}
-	else if(match<=16)
-	{
-		return 7;
-	}
-	else if(match<=32)
-	{
-		return 9;
-	}
-	else if(match<=64)
-	{
-		return 11;
-	}
-	else if(match<=128)
-	{
-		return 13;
-	}
-	else if(match<=256)
-	{
-		return 14;
-	}
-	return 256; /*error */
+	return 1+2*(first_bit_set32(match-1)-1);
 }
 
 int m4_ptr_len(ptr_t ptr)
 {
-	if(ptr<=511)
+	if(ptr<512)
 	{
 		return 10;
 	}
-	else if(ptr<=1535)
+	if(ptr>7679)
 	{
-		return 12;
+		if(ptr<=15871)
+		{
+			return 17;
+		}
+		else
+		{
+			return 256; /*error */
+		}
 	}
-	else if(ptr<=3583)
-	{
-		return 14;
-	}
-	else if(ptr<=7679)
-	{
-		return 16;
-	}
-	else if(ptr<=15871)
-	{
-		return 17;
-	}
-	return 256; /*error */
+	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
 }
 
+void m4_store_len(match_t match, packstruct *com)
+{
+	int len;
+	match_t mask;
+	match-=1;
+	len=first_bit_set32(match)-1;
+	mask=1<<len;
+	mask--;
+	ST_BITS(mask, len);
+	if(len!=7)
+	{
+		ST_BITS(0, 1);
+	}
+	ST_BITS(match&mask, len);
+}
+
+void m4_store_ptr(ptr_t ptr, packstruct *com)
+{
+	int len;
+	ptr_t mask;
+	if(ptr<512)
+	{
+		len=0;
+		mask=0;
+	}
+	else
+	{
+		len=first_bit_set32(((ptr-512)>>10)+1);
+		mask=1<<len;
+		mask--;
+		ST_BITS(mask, len);
+	}
+	if(len!=4)
+	{
+		ST_BITS(0, 1);
+	}
+	ST_BITS(ptr-(mask<<9), len+9);
+}
 
 gup_result m4_compress(packstruct *com)
 {
@@ -196,90 +202,9 @@ gup_result m4_compress(packstruct *com)
          bytes_to_do-=match;
          current_pos+=match;
 	      LOG_PTR_LEN(match, ptr);
-	      if(match < 17)
-			{
-				if(match < 5)
-				{
-					ST_BITS(2, 2);
-					ST_BITS(match-3, 1);
-				}
-				else
-				{
-					if(match < 9)
-					{
-						ST_BITS(6, 3);
-						ST_BITS(match - 5, 2);
-					}
-					else
-					{
-						ST_BITS(14, 4);
-						ST_BITS(match - 9, 3);
-					}
-				}
-			}
-			else
-			{
-				if(match < 65)
-				{
-					if(match < 33)
-					{
-						ST_BITS(30, 5);
-						ST_BITS(match - 17, 4);
-					}
-					else
-					{
-						ST_BITS(62, 6);
-						ST_BITS(match - 33, 5);
-					}
-				}
-				else
-				{
-					if(match < 129)
-					{
-						ST_BITS(126, 7);
-						ST_BITS(match - 65, 6);
-					}
-					else
-					{
-						ST_BITS(127, 7);
-						ST_BITS(match - 129, 7);
-					}
-				}
-			}
-			if(ptr < 1536)
-			{
-				if(ptr < 512)
-				{
-					ST_BITS(0, 1);
-					ST_BITS(ptr, 9);
-				}
-				else
-				{
-					ST_BITS(2, 2);
-					ST_BITS(ptr - 512, 10);
-				}
-			}
-			else
-			{
-				if(ptr < 3584)
-				{
-					ST_BITS(6, 3);
-					ST_BITS(ptr - 1536, 11);
-				}
-				else
-				{
-					if(ptr < 7680)
-					{
-						ST_BITS(14, 4);
-						ST_BITS(ptr - 3584, 12);
-					}
-					else
-					{
-						ST_BITS(15, 4);
-						ST_BITS(ptr - 7680, 13);
-					}
-				}
-			}
+			m4_store_len(match, com);
+			m4_store_ptr(ptr, com);
+
 		}
 	}
 	if(com->bits_in_bitbuf>0)
@@ -368,11 +293,212 @@ unsigned long m4_count_bits(unsigned long *packed_bytes,  /* aantal bytes dat ge
 	return bits;
 }
 
-
 gup_result m4_close_stream(packstruct *com)
 {
 	NEVER_USE(com);
 	return GUP_OK;
 	return GUP_OK;
+}
+
+#define TRASHBITS(x)		/* trash  bits from bitbuffer */		\
+{																				\
+	int xbits=(x);															\
+	bib -= xbits;															\
+	if(bib < 0)																\
+	{ /* refill bitbuffer */											\
+		int i;																\
+		unsigned long int newbuf = 0; /* BITBUFSIZE bits groot */ \
+		bitbuf <<= (xbits + bib); /* gooi bits er uit */		\
+		xbits =- bib;														\
+		i = (int)sizeof(bitbuf) - 2;									\
+		while(--i >= 0)													\
+		{																		\
+			if(com->rbuf_current>=com->rbuf_tail)					\
+			{																	\
+				gup_result res;											\
+				if((res=read_data(com))!=GUP_OK)						\
+				{																\
+					return res;												\
+				}																\
+				if(com->rbuf_current>=com->rbuf_tail)				\
+				{ /* We have some trouble */							\
+					bib = INT_MAX;											\
+					newbuf <<= 8*(i+1);									\
+					break;													\
+				}																\
+			}																	\
+			newbuf <<= 8;													\
+			newbuf+=*com->rbuf_current++;								\
+			bib += 8;														\
+		}																		\
+		bitbuf += newbuf;													\
+	}																			\
+	bitbuf <<= xbits;														\
+}
+
+/*-
+** ARJ mode 4 packing
+**
+** (c) 1993 Mr Ni! (the Great) of the TOS-crew
+**
+** codeer schema: [len (literal 8 bits | ptr_code)]
+**
+** len codering: w bits:
+** 0 0               :  literal
+** 1 10x             :  2 -   3
+** 2 110xx           :  4 -   7
+** 3 1110xxx         :  8 -  15
+** 4 11110xxxx       : 16 -  31
+** 5 111110xxxxx     : 32 -  63
+** 6 1111110xxxxxx   : 64 - 127
+** 7 1111111xxxxxxx  :128 - 255
+**
+** Hierbij moet nog een worden opgeteld, dus minimale lengte 3, maximaal
+** 256!!!
+**
+** ptr codering: w bits
+** 9  0xxxxxxxxx            0 -   511
+** 10 10xxxxxxxxxx        512 -  1535
+** 11 110xxxxxxxxxxx     1536 -  3583
+** 12 1110xxxxxxxxxxxx   3584 -  7679
+** 13 1111xxxxxxxxxxxxx  7680 - 15871
+**
+** codering dus van 0 - 15871
+*/
+
+gup_result m4_decode(decode_struct *com)
+{
+	/* aanname origsize>0 */
+	int bib; /* bits in bitbuf */
+	unsigned long int bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	uint8* buff=com->buffstart;
+	uint8* buffend;
+
+	if(com->origsize>(65536L+MAXMATCH))
+	{
+		buffend=com->buffstart+65536L;
+		com->origsize-=65536L;
+	}
+	else
+	{
+		buffend=com->buffstart+com->origsize;
+		com->origsize=0;
+	}
+	bitbuf=0;
+	bib=0;
+	{ /* init bitbuf */
+		int i=(int)sizeof(bitbuf);
+		while(--i>=0)
+		{
+			bitbuf<<=8;
+			bitbuf+=*com->rbuf_current++;
+			if(com->rbuf_current>com->rbuf_tail)
+			{
+				gup_result res;
+				if((res=read_data(com))!=GUP_OK)
+				{
+					return res;
+				}
+			}
+			bib+=8;
+		}
+		bib-=16;
+	}
+
+	for(;;)
+	{ /* decode loop */
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		if((bitbuf&mask)==0)
+		{ /* literal */
+			match_t kar;
+			kar=(uint8)(bitbuf>>(BITBUFSIZE-9));
+			*buff++=kar;
+			LOG_LITERAL(kar);
+			TRASHBITS(9);
+		}
+		else
+		{ /* pointer length combinatie */
+			int i;
+			int tb=7;
+			ptr_t ptr;
+			match_t kar;
+			i=1;
+			do
+			{
+				mask>>=1;
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				i++;
+			} while(i<7);
+			TRASHBITS(tb);
+			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i))+1;
+			TRASHBITS(i);
+			tb=4;
+			i=0;
+			mask=1UL<<(BITBUFSIZE-1);
+			do
+			{
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				mask>>=1;
+				i++;
+			} while(i<4);
+			TRASHBITS(tb);
+			ptr=(((1<<i)-1)<<9)+(ptr_t)(bitbuf>>(BITBUFSIZE-(i+9)));
+			TRASHBITS(i+9);
+			{
+				uint8* q=buff-ptr-1;
+				LOG_PTR_LEN(kar, ptr);
+				do
+				{
+					*buff++=*q++;
+				} 
+				while(--kar>0);
+			}
+		}
+		if(buff>=buffend)
+		{
+			if(com->origsize==0)
+			{
+				unsigned long len;
+				if((len=(buff-com->buffstart))!=0)
+				{
+					gup_result err;
+					com->print_progres(len, com->pp_propagator);
+					if ((err = com->write_crc(len, com->buffstart, com->wc_propagator))!=GUP_OK)
+					{
+						return err;
+					}
+				}
+				return GUP_OK; /* exit succes */
+			}
+			else
+			{
+				gup_result err;
+				com->print_progres(65536UL, com->pp_propagator);
+				if ((err = com->write_crc(65536UL, com->buffstart, com->wc_propagator))!=GUP_OK)
+				{
+					return err;
+				}
+				buff-=65536UL;
+				memmove(com->buffstart-16UL*1024UL, buffend-16UL*1024UL, 16UL*1024UL+MAXMATCH);
+				if(com->origsize>(65536L+MAXMATCH))
+				{
+					com->origsize-=65536UL;
+				}
+				else
+				{
+					buffend=com->buffstart+com->origsize;
+					com->origsize=0;
+				}
+			}
+		}
+	}
 }
 

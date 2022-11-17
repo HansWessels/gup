@@ -85,7 +85,7 @@ extern "C"
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
 #define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
 #define EXPANTIE_SLACK (7*256)         /* space subtracted from MAX_ENTRIES in order to allow ZEEF34 expansions */
-#define M4_MAX_PTR  15871              /* maximale pointer offset + 1 */
+#define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
 #define M4_MAX_MATCH 258					/* m4 maximum match */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */

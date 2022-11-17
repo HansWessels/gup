@@ -33,9 +33,17 @@ void n9_store_ptr_val(int32_t val, packstruct *com);
 unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr)
 {
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
-	if(match<3)
-	{ /* match < 3 niet mogelijk */
-		return -1UL;
+	if(match<2)
+	{ /* match niet mogelijk */
+		return 256;
+	}
+	if((match==2) && (ptr>255))
+	{
+		return 256;
+	}
+	if(ptr<256)
+	{
+		match++;
 	}
 	res+=n9_len_len(match);
 	res+=n9_ptr_len(ptr);
@@ -60,10 +68,11 @@ int n9_ptr_len(ptr_t val)
 	{
 		return 9;
 	}
-	else
+	else if(val<65536)
 	{
-		return 17;
+		return 18;
 	}
+	return 25;
 }
 
 #define N9_ST_BIT(bit)												\
@@ -125,10 +134,20 @@ void n9_store_ptr_val(int32_t val, packstruct *com)
 		*com->rbuf_current++ = (uint8) (val&0xff);
 		N9_ST_BIT(0);
 	}
-	else
+	else if(val<=65536)
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
+		N9_ST_BIT(1);
+		*com->rbuf_current++ = (uint8) (val&0xff);
+		N9_ST_BIT(0);
+	}
+	else
+	{
+		val=-val;
+		*com->rbuf_current++ = (uint8) ~((val>>16)&0xff);
+		N9_ST_BIT(1);
+		*com->rbuf_current++ = (uint8) ((val>>8)&0xff);
 		N9_ST_BIT(1);
 		*com->rbuf_current++ = (uint8) (val&0xff);
 	}
@@ -184,14 +203,22 @@ gup_result n9_compress(packstruct *com)
       	ptr_t ptr;
 			N9_ST_BIT(1);
 			ptr=com->ptr_len[current_pos];
-         n9_store_ptr_val(ptr, com);
-         n9_store_len_val(match, com);
          LOG_PTR_LEN(match, ptr+1);
          bytes_to_do-=match;
          current_pos+=match;
+         n9_store_ptr_val(ptr, com);
+         if(ptr<256)
+         {
+         	match++;
+         }
+         if(ptr>65535)
+         {
+         	match--;
+         }
+         n9_store_len_val(match, com);
 		}
 	}
-	{ /* schrijf n0 end of file marker */
+	{ /* schrijf n9 end of file marker */
 		N9_ST_BIT(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
 		N9_ST_BIT(1); /* deze combi kan niet voorkomen */

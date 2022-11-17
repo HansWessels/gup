@@ -425,7 +425,7 @@ gup_result init_encode(packstruct *com)
     case ARJ_MODE_4:
 		com->use_sld32=1;
 		com->min_match32=3;
-      com->maxptr32=M4_MAX_PTR+1;
+      com->maxptr32=M4_MAX_PTR;
       com->max_match32=M4_MAX_MATCH;
       com->compress=m4_compress;
       com->close_packed_stream=m4_close_stream;
@@ -447,8 +447,8 @@ gup_result init_encode(packstruct *com)
       break;
     case NI_MODE_9:
 		com->use_sld32=1;
-		com->min_match32=3;
-      com->maxptr32= 65536;
+		com->min_match32=2;
+      com->maxptr32= 1<<23;
       com->max_match32=65536;
       com->compress=n9_compress;
       com->close_packed_stream=n9_close_stream;
@@ -3829,7 +3829,7 @@ gup_result close_n1_stream(packstruct *com)
 #ifndef NOT_USE_STD_compress_lzs
 
 gup_result compress_lzs(packstruct *com)
-{ /* LZS and LZ5 compression at: https://github.com/fragglet/lhasa/tree/master/lib */
+{ /* LZS and LZ5 compression at: https://github.com/fragglet/lhasa/tree/master/lib, decode with lhasa */
   uint16 entries = (uint16) (com->charp - com->chars);
   unsigned int i;
   c_codetype *p = com->chars;
