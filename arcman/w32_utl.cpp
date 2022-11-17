@@ -515,12 +515,12 @@ gup_result gup_mkdir(const char *dirname, osmode mode)
 {
 	(void) mode;
 
-#if defined(HAVE_MKDIR) 
-	if (mkdir(dirname) == -1)
+#if defined(HAVE__MKDIR)
+	if (_mkdir(dirname) == -1)
 		return gup_conv_err(errno);
 	else
 		return GUP_OK;
-#elif defined(HAVE__MKDIR)
+#elif defined(HAVE_MKDIR) 
 	if (mkdir(dirname) == -1)
 		return gup_conv_err(errno);
 	else

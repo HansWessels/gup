@@ -71,7 +71,14 @@ typedef uint64_t	uint64;
 /* __EXTENSIONS__. */
 /* #undef __EXTENSIONS__ */
 
+/* Define to 1 if you have the <direct.h> header file. */
 #define HAVE_DIRECT_H 1
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#define HAVE_DIRENT_H 1
+
+/* Define to 1 if you have the <dir.h> header file. */
+// #undef HAVE_DIR_H 
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 /* #undef HAVE_DLFCN_H */
@@ -94,9 +101,6 @@ typedef uint64_t	uint64;
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
-#undef HAVE_MKDIR 
-#define HAVE__MKDIR 1
-
 /* Define to 1 if you have the <io.h> header file. */
 #define HAVE_IO_H 1
 
@@ -105,6 +109,9 @@ typedef uint64_t	uint64;
 
 /* Define to 1 if you have the `localtime_r' function. */
 /* #undef HAVE_LOCALTIME_R */
+
+/* Define to 1 if you have the `mkdir' function. */
+#define HAVE_MKDIR 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 /* #undef HAVE_MMAP */
@@ -142,8 +149,17 @@ typedef uint64_t	uint64;
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the <tos.h> header file. */
+/* #undef HAVE_TOS_H */
+
 /* Define to 1 if you have the <unistd.h> header file. */
 //#define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the <utime.h> header file. */
+// #undef HAVE_UTIME_H 
+
+/* Define to 1 if you have the `_mkdir' function. */
+#define HAVE__MKDIR 1
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
