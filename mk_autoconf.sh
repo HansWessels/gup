@@ -11,4 +11,4 @@ autoheader
 
 ./configure
 
-make test
+make test-minimum

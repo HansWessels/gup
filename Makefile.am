@@ -54,17 +54,25 @@ ni_pack:
 	cd ni_pack
 	make
 
-test: gup ni_pack
+test: gup ni_pack test-cli-help test-cli-pack-calgary test-cli-dump
+
+test-minimum: gup ni_pack test-cli-help
+
+test-cli-help: gup ni_pack
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
 	$(GUP_EXE) -h
+
+test-cli-pack-calgary: gup ni_pack test-cli-help
 	echo "=== compressing Calgary Corpus ==="
 	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
 	echo "=== check size vs. reference ==="
 	./test_check_archive_size.sh  test.arj
+
+test-cli-dump: gup ni_pack test-cli-pack-calgary
 	make testdump
 
 testdump:    testbindump
@@ -116,4 +124,4 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack test-cli-help test-cli-pack-calgary test-cli-dump test-minimum
