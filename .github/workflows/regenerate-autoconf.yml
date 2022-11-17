@@ -37,34 +37,33 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2.5.0
-      with:
+      #with:
         # Repository name with owner. For example, actions/checkout
-        repository: # optional, default is ${{ github.repository }}
+        #repository: # optional, default is ${{ github.repository }}
         # The branch, tag or SHA to checkout. When checking out the repository that triggered a workflow, this defaults to the reference or SHA for that event.  Otherwise, uses the default branch.
-        ref: # optional
+        #ref: # optional
         # Personal access token (PAT) used to fetch the repository. The PAT is configured with the local git config, which enables your scripts to run authenticated git commands. The post-job step removes the PAT.
-        token: # optional, default is ${{ github.token }}
+        #token: # optional, default is ${{ github.token }}
         # SSH key used to fetch the repository. The SSH key is configured with the local git config, which enables your scripts to run authenticated git commands. The post-job step removes the SSH key.
-        ssh-key: # optional
+        #ssh-key: # optional
         # Known hosts in addition to the user and global host key database. The public SSH keys for a host may be obtained using the utility `ssh-keyscan`. For example, `ssh-keyscan github.com`. The public key for github.com is always implicitly added.
-
-        ssh-known-hosts: # optional
+        #ssh-known-hosts: # optional
         # Whether to perform strict host key checking. When true, adds the options `StrictHostKeyChecking=yes` and `CheckHostIP=no` to the SSH command line. Use the input `ssh-known-hosts` to configure additional hosts.
-        ssh-strict: # optional, default is true
+        #ssh-strict: # optional, default is true
         # Whether to configure the token or SSH key with the local git config
-        persist-credentials: # optional, default is true
+        #persist-credentials: # optional, default is true
         # Relative path under $GITHUB_WORKSPACE to place the repository
-        path: # optional
+        #path: # optional
         # Whether to execute `git clean -ffdx && git reset --hard HEAD` before fetching
-        clean: # optional, default is true
+        #clean: # optional, default is true
         # Number of commits to fetch. 0 indicates all history for all branches and tags.
-        fetch-depth: # optional, default is 1
+        #fetch-depth: # optional, default is 1
         # Whether to download Git-LFS files
-        lfs: # optional
+        #lfs: # optional
         # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-        submodules: # optional
+        #submodules: # optional
         # Add repository path as safe.directory for Git global config by running `git config --global --add safe.directory <path>`
-        set-safe-directory: # optional, default is true
+        #set-safe-directory: # optional, default is true
     
     - name: Add & Commit
       # You may pin to the exact commit or the version.
@@ -72,38 +71,38 @@ jobs:
       uses: EndBug/add-and-commit@v9.1.1
       with:
         # Arguments for the git add command
-        add: # optional, default is .
+        #add: # optional, default is .
         # The name of the user that will be displayed as the author of the commit
         author_name: GitHub_Actions
         # The email of the user that will be displayed as the author of the commit
         author_email: gup-regenerate+github-actions[bot]@users.noreply.github.com
         # Additional arguments for the git commit command
-        commit: # optional
+        #commit: # optional
         # The name of the custom committer you want to use
         committer_name: GitHub_Actions
         # The email of the custom committer you want to use
         committer_email: gup-regenerate+github-actions[bot]@users.noreply.github.com
         # The directory where your repository is located. You should use actions/checkout first to set it up
-        cwd: # optional, default is .
+        #cwd: # optional, default is .
         # How the action should fill missing author name or email.
-        default_author: # optional, default is github_actor
+        #default_author: # optional, default is github_actor
         # Arguments for the git fetch command (if 'false', the action won't fetch the repo)
-        fetch: # optional, default is --tags --force
+        #fetch: # optional, default is --tags --force
         # The message for the commit
         message: Regenerated the autoconf scripts
         # The name of the branch to create.
-        new_branch: # optional
+        #new_branch: # optional
         # The way the action should handle pathspec errors from the add and remove commands.
-        pathspec_error_handling: # optional, default is ignore
+        #pathspec_error_handling: # optional, default is ignore
         # Arguments for the git pull command. By default, the action does not pull.
-        pull: # optional
+        #pull: # optional
         # Whether to push the commit and, if any, its tags to the repo. It can also be used to set the git push arguments (more info in the README)
         push: false # optional, default is true
         # Arguments for the git rm command
-        remove: # optional
+        #remove: # optional
         # Arguments for the git tag command (the tag name always needs to be the first word not preceded by a hyphen)
-        tag: # optional
+        #tag: # optional
         # Arguments for the git push --tags command (any additional argument will be added after --tags)
-        tag_push: # optional
+        #tag_push: # optional
         # The token used to make requests to the GitHub API. It's NOT used to make commits and should not be changed.
-        github_token: # optional, default is ${{ github.token }}      
+        #github_token: # optional, default is ${{ github.token }}      
