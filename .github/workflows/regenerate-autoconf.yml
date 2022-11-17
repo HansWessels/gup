@@ -74,8 +74,9 @@ jobs:
     
     - name: Install latest automake et al
       run: |
-        sudo apt-get autoremove automake
-        sudo apt-get install automake
+        sudo apt update
+        sudo apt-get autoremove automake autoconf autotools-dev
+        sudo apt-get install automake autoconf autotools-dev
 
     - name: "List the autoconf prerequisites' tool versions"
       run: |
