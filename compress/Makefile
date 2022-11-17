@@ -113,7 +113,8 @@ am__v_AR_1 =
 libcompress_a_AR = $(AR) $(ARFLAGS)
 am_libcompress_a_OBJECTS = crc.$(OBJEXT) decode.$(OBJEXT) \
 	encode.$(OBJEXT) evaluatr.$(OBJEXT) sld.$(OBJEXT) \
-	sld_indx.$(OBJEXT) sld_med.$(OBJEXT) sld_smll.$(OBJEXT)
+	sld_indx.$(OBJEXT) sld_med.$(OBJEXT) sld_smll.$(OBJEXT) \
+	sld32.$(OBJEXT) n0.$(OBJEXT) n9.$(OBJEXT) arj_m4.$(OBJEXT)
 libcompress_a_OBJECTS = $(am_libcompress_a_OBJECTS)
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
@@ -130,10 +131,12 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/crc.Po ./$(DEPDIR)/decode.Po \
-	./$(DEPDIR)/encode.Po ./$(DEPDIR)/evaluatr.Po \
-	./$(DEPDIR)/sld.Po ./$(DEPDIR)/sld_indx.Po \
-	./$(DEPDIR)/sld_med.Po ./$(DEPDIR)/sld_smll.Po
+am__depfiles_remade = ./$(DEPDIR)/arj_m4.Po ./$(DEPDIR)/crc.Po \
+	./$(DEPDIR)/decode.Po ./$(DEPDIR)/encode.Po \
+	./$(DEPDIR)/evaluatr.Po ./$(DEPDIR)/n0.Po ./$(DEPDIR)/n9.Po \
+	./$(DEPDIR)/sld.Po ./$(DEPDIR)/sld32.Po \
+	./$(DEPDIR)/sld_indx.Po ./$(DEPDIR)/sld_med.Po \
+	./$(DEPDIR)/sld_smll.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -184,16 +187,16 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} '/home/hans/ni_pack/gup/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/runner/work/gup/gup/missing' aclocal-1.16
 AMOSDEPLTOBJS = unix_arj.lo unix_gz.lo unix_lha.lo unix_utl.lo
 AMOSDEPOBJS = unix_arj.o unix_gz.o unix_lha.o unix_utl.o
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
-AUTOCONF = ${SHELL} '/home/hans/ni_pack/gup/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/hans/ni_pack/gup/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/hans/ni_pack/gup/missing' automake-1.16
-AWK = mawk
+AUTOCONF = ${SHELL} '/home/runner/work/gup/gup/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/runner/work/gup/gup/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/runner/work/gup/gup/missing' automake-1.16
+AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -Wall -W -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations
@@ -201,8 +204,8 @@ CPP = gcc -E
 CPPFLAGS = 
 CSCOPE = cscope
 CTAGS = ctags
-CXX = c++
-CXXCPP = c++ -E
+CXX = g++
+CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -Wall -W -Wpointer-arith -Wconversion -Wstrict-prototypes -Wmissing-declarations
 CYGPATH_W = echo
@@ -234,7 +237,7 @@ LN_S = ln -s
 LTLIBOBJS =  ${LIBOBJDIR}strlwr$U.lo
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} '/home/hans/ni_pack/gup/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/runner/work/gup/gup/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 NM = nm
@@ -261,13 +264,13 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 0.0.7
-abs_builddir = /home/hans/ni_pack/gup/compress
-abs_srcdir = /home/hans/ni_pack/gup/compress
-abs_top_builddir = /home/hans/ni_pack/gup
-abs_top_srcdir = /home/hans/ni_pack/gup
+abs_builddir = /home/runner/work/gup/gup/compress
+abs_srcdir = /home/runner/work/gup/gup/compress
+abs_top_builddir = /home/runner/work/gup/gup
+abs_top_srcdir = /home/runner/work/gup/gup
 ac_ct_AR = ar
 ac_ct_CC = gcc
-ac_ct_CXX = c++
+ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
@@ -294,7 +297,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/hans/ni_pack/gup/install-sh
+install_sh = ${SHELL} /home/runner/work/gup/gup/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -320,9 +323,7 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 noinst_LIBRARIES = libcompress.a
-libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c \
-						sld_med.c sld_smll.c
-
+libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c sld_med.c sld_smll.c sld32.c n0.c n9.c arj_m4.c
 libcompress_a_LIBADD = 
 libcompress_a_DEPENDENCIES = $(libcompress_a_LIBADD)
 noinst_HEADERS = decode.h encode.h evaluatr.h
@@ -377,11 +378,15 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/arj_m4.Po # am--include-marker
 include ./$(DEPDIR)/crc.Po # am--include-marker
 include ./$(DEPDIR)/decode.Po # am--include-marker
 include ./$(DEPDIR)/encode.Po # am--include-marker
 include ./$(DEPDIR)/evaluatr.Po # am--include-marker
+include ./$(DEPDIR)/n0.Po # am--include-marker
+include ./$(DEPDIR)/n9.Po # am--include-marker
 include ./$(DEPDIR)/sld.Po # am--include-marker
+include ./$(DEPDIR)/sld32.Po # am--include-marker
 include ./$(DEPDIR)/sld_indx.Po # am--include-marker
 include ./$(DEPDIR)/sld_med.Po # am--include-marker
 include ./$(DEPDIR)/sld_smll.Po # am--include-marker
@@ -547,11 +552,15 @@ clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/crc.Po
+		-rm -f ./$(DEPDIR)/arj_m4.Po
+	-rm -f ./$(DEPDIR)/crc.Po
 	-rm -f ./$(DEPDIR)/decode.Po
 	-rm -f ./$(DEPDIR)/encode.Po
 	-rm -f ./$(DEPDIR)/evaluatr.Po
+	-rm -f ./$(DEPDIR)/n0.Po
+	-rm -f ./$(DEPDIR)/n9.Po
 	-rm -f ./$(DEPDIR)/sld.Po
+	-rm -f ./$(DEPDIR)/sld32.Po
 	-rm -f ./$(DEPDIR)/sld_indx.Po
 	-rm -f ./$(DEPDIR)/sld_med.Po
 	-rm -f ./$(DEPDIR)/sld_smll.Po
@@ -600,11 +609,15 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/crc.Po
+		-rm -f ./$(DEPDIR)/arj_m4.Po
+	-rm -f ./$(DEPDIR)/crc.Po
 	-rm -f ./$(DEPDIR)/decode.Po
 	-rm -f ./$(DEPDIR)/encode.Po
 	-rm -f ./$(DEPDIR)/evaluatr.Po
+	-rm -f ./$(DEPDIR)/n0.Po
+	-rm -f ./$(DEPDIR)/n9.Po
 	-rm -f ./$(DEPDIR)/sld.Po
+	-rm -f ./$(DEPDIR)/sld32.Po
 	-rm -f ./$(DEPDIR)/sld_indx.Po
 	-rm -f ./$(DEPDIR)/sld_med.Po
 	-rm -f ./$(DEPDIR)/sld_smll.Po

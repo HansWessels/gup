@@ -55,52 +55,52 @@
 /* #undef __EXTENSIONS__ */
 
 /* Define to 1 if you have the <direct.h> header file. */
-#define HAVE_DIRECT_H 1
+/* #undef HAVE_DIRECT_H */
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
 
 /* Define to 1 if you have the <dir.h> header file. */
-#define HAVE_DIR_H 1
+/* #undef HAVE_DIR_H */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-/* #undef HAVE_DLFCN_H */
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `getgrgid_r' function. */
-/* #undef HAVE_GETGRGID_R */
+#define HAVE_GETGRGID_R 1
 
 /* Define to 1 if you have the `getgrnam_r' function. */
-/* #undef HAVE_GETGRNAM_R */
+#define HAVE_GETGRNAM_R 1
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getpwnam_r' function. */
-/* #undef HAVE_GETPWNAM_R */
+#define HAVE_GETPWNAM_R 1
 
 /* Define to 1 if you have the `getpwuid_r' function. */
-/* #undef HAVE_GETPWUID_R */
+#define HAVE_GETPWUID_R 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <io.h> header file. */
-#define HAVE_IO_H 1
+/* #undef HAVE_IO_H */
 
 /* Define to 1 if you have the `lchown' function. */
-/* #undef HAVE_LCHOWN */
+#define HAVE_LCHOWN 1
 
 /* Define to 1 if you have the `localtime_r' function. */
-/* #undef HAVE_LOCALTIME_R */
+#define HAVE_LOCALTIME_R 1
 
 /* Define to 1 if you have the `mkdir' function. */
 #define HAVE_MKDIR 1
 
 /* Define to 1 if you have a working `mmap' system call. */
-/* #undef HAVE_MMAP */
+#define HAVE_MMAP 1
 
 /* Define to 1 if you have the <regex.h> header file. */
-/* #undef HAVE_REGEX_H */
+#define HAVE_REGEX_H 1
 
 /* Define to 1 if you have the <rx.h> header file. */
 /* #undef HAVE_RX_H */
@@ -121,7 +121,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strlwr' function. */
-#define HAVE_STRLWR 1
+/* #undef HAVE_STRLWR */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -142,7 +142,7 @@
 #define HAVE_UTIME_H 1
 
 /* Define to 1 if you have the `_mkdir' function. */
-#define HAVE__MKDIR 1
+/* #undef HAVE__MKDIR */
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
@@ -172,7 +172,7 @@
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
