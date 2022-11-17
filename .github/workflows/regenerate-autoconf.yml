@@ -65,6 +65,14 @@ jobs:
         # Add repository path as safe.directory for Git global config by running `git config --global --add safe.directory <path>`
         #set-safe-directory: # optional, default is true
     
+    - name: Prep the automake and autoconf tools
+      run: |
+        autoconf --version
+        ls *.sh
+      
+    - name: Regenerate the autoconf scripts
+      run: ./mk_autoconf.sh
+      
     - name: Add & Commit
       # You may pin to the exact commit or the version.
       # uses: EndBug/add-and-commit@61a88be553afe4206585b31aa72387c64295d08b
