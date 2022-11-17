@@ -157,10 +157,10 @@ am__define_uniq_tagged_files = \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
 DIST_SUBDIRS = $(SUBDIRS)
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/gup.spec.in AUTHORS \
-	COPYING ChangeLog INSTALL NEWS README TODO acconfig.h compile \
-	config.guess config.sub depcomp install-sh ltconfig ltmain.sh \
-	missing
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/gup.spec.in \
+	AUTHORS.md COPYING ChangeLog.md INSTALL.md NEWS.md README.md \
+	acconfig.h compile config.guess config.sub depcomp install-sh \
+	ltconfig ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -205,16 +205,16 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} '/home/hans/ni_pack/gup/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/runner/work/gup/gup/missing' aclocal-1.16
 AMOSDEPLTOBJS = unix_arj.lo unix_gz.lo unix_lha.lo unix_utl.lo
 AMOSDEPOBJS = unix_arj.o unix_gz.o unix_lha.o unix_utl.o
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
-AUTOCONF = ${SHELL} '/home/hans/ni_pack/gup/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/hans/ni_pack/gup/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/hans/ni_pack/gup/missing' automake-1.16
-AWK = mawk
+AUTOCONF = ${SHELL} '/home/runner/work/gup/gup/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/runner/work/gup/gup/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/runner/work/gup/gup/missing' automake-1.16
+AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -Wall -W -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations
@@ -222,8 +222,8 @@ CPP = gcc -E
 CPPFLAGS = 
 CSCOPE = cscope
 CTAGS = ctags
-CXX = c++
-CXXCPP = c++ -E
+CXX = g++
+CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -Wall -W -Wpointer-arith -Wconversion -Wstrict-prototypes -Wmissing-declarations
 CYGPATH_W = echo
@@ -255,7 +255,7 @@ LN_S = ln -s
 LTLIBOBJS =  ${LIBOBJDIR}strlwr$U.lo
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} '/home/hans/ni_pack/gup/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/runner/work/gup/gup/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 NM = nm
@@ -282,13 +282,13 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 0.0.7
-abs_builddir = /home/hans/ni_pack/gup
-abs_srcdir = /home/hans/ni_pack/gup
-abs_top_builddir = /home/hans/ni_pack/gup
-abs_top_srcdir = /home/hans/ni_pack/gup
+abs_builddir = /home/runner/work/gup/gup
+abs_srcdir = /home/runner/work/gup/gup
+abs_top_builddir = /home/runner/work/gup/gup
+abs_top_srcdir = /home/runner/work/gup/gup
 ac_ct_AR = ar
 ac_ct_CC = gcc
-ac_ct_CXX = c++
+ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
@@ -315,7 +315,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/hans/ni_pack/gup/install-sh
+install_sh = ${SHELL} /home/runner/work/gup/gup/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -862,17 +862,25 @@ ni_pack:
 	cd ni_pack
 	make
 
-test: gup ni_pack
+test: gup ni_pack test-cli-help test-cli-pack-calgary test-cli-dump
+
+test-minimum: gup ni_pack test-cli-help
+
+test-cli-help: gup ni_pack
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
 	$(GUP_EXE) -h
+
+test-cli-pack-calgary: gup ni_pack test-cli-help
 	echo "=== compressing Calgary Corpus ==="
 	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
-	echo "check size vs. reference"
+	echo "=== check size vs. reference ==="
 	./test_check_archive_size.sh  test.arj
+
+test-cli-dump: gup ni_pack test-cli-pack-calgary
 	make testdump
 
 testdump:    testbindump
@@ -881,27 +889,27 @@ testcdump: gup
 	-rm test.cdump*
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump $(TEST_DATA_DIR)/src/ 
-	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump
+	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump | head -n 300
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt ; then cp test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt ; fi
-	diff -u test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt
+	diff -q test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt
 
 testasmdump: gup
 	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump $(TEST_DATA_DIR)/src/
-	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump
+	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump | head -n 300
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt ; then cp test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt ; fi
-	diff -u test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt
+	diff -q test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt
 
 testbindump: gup
 	-rm test.bindump*
 	echo "=== testing DUMP MODES: RAW BINARY ==="
 	$(GUP_EXE) a test.bindump $(TEST_DATA_DIR)/src/
-	od -A d -t x1 test.bindump | tee test.bindump.hexdump
+	od -A d -t x1 test.bindump | tee test.bindump.hexdump | head -n 300
 	sed -i -E -e 's/created_at:\s+[0-9]+/created_at: TIMESTAMP/'   test.bindump.meta.nfo
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; then cp test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; fi
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo    ; then cp test.bindump.meta.nfo  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo ; fi
-	diff -u test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt
+	diff -q test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt
 	diff -u test.bindump.meta.nfo  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo
 
 clean:
@@ -924,7 +932,7 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack test-cli-help test-cli-pack-calgary test-cli-dump test-minimum
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

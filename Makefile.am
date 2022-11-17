@@ -54,16 +54,25 @@ ni_pack:
 	cd ni_pack
 	make
 
-test: gup ni_pack
+test: gup ni_pack test-cli-help test-cli-pack-calgary test-cli-dump
+
+test-minimum: gup ni_pack test-cli-help
+
+test-cli-help: gup ni_pack
 	echo "=== show on-line help output ==="
 	$(GUP_EXE) 
 	echo "=== show EXTENDED on-line help output ==="
 	$(GUP_EXE) -h
+
+test-cli-pack-calgary: gup ni_pack test-cli-help
 	echo "=== compressing Calgary Corpus ==="
 	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
+	echo "=== check size vs. reference ==="
 	./test_check_archive_size.sh  test.arj
+
+test-cli-dump: gup ni_pack test-cli-pack-calgary
 	make testdump
 
 testdump:    testbindump
@@ -72,27 +81,27 @@ testcdump: gup
 	-rm test.cdump*
 	echo "=== testing DUMP MODES: C ==="
 	$(GUP_EXE) a test.cdump $(TEST_DATA_DIR)/src/ 
-	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump
+	cat test.cdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.cdump.hexdump | head -n 300
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt ; then cp test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt ; fi
-	diff -u test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt
+	diff -q test.cdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.cdump.hexdump.txt
 
 testasmdump: gup
 	-rm test.asmdump*
 	echo "=== testing DUMP MODES: ASM ==="
 	$(GUP_EXE) a test.asmdump $(TEST_DATA_DIR)/src/
-	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump
+	cat test.asmdump | sed -E -e 's/creation time:\s+[0-9]+/creation time:      <TIMESTAMP>/' | tee test.asmdump.hexdump | head -n 300
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt ; then cp test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt ; fi
-	diff -u test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt
+	diff -q test.asmdump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.asmdump.hexdump.txt
 
 testbindump: gup
 	-rm test.bindump*
 	echo "=== testing DUMP MODES: RAW BINARY ==="
 	$(GUP_EXE) a test.bindump $(TEST_DATA_DIR)/src/
-	od -A d -t x1 test.bindump | tee test.bindump.hexdump
+	od -A d -t x1 test.bindump | tee test.bindump.hexdump | head -n 300
 	sed -i -E -e 's/created_at:\s+[0-9]+/created_at: TIMESTAMP/'   test.bindump.meta.nfo
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; then cp test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt ; fi
 	if ! test -e $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo    ; then cp test.bindump.meta.nfo  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo ; fi
-	diff -u test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt
+	diff -q test.bindump.hexdump  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.hexdump.txt
 	diff -u test.bindump.meta.nfo  $(TEST_DATA_DIR)/ref-out/test.sollwert.bindump.meta.nfo
 
 clean:
@@ -115,4 +124,4 @@ clean_test_sollwerte:
 superclean: clean
 	make distclean
 
-.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack
+.PHONY: gup test dist-hook distall clean distclean superclean testdump testcdump testasmdump testbindump clean_test_sollwerte ni_pack test-cli-help test-cli-pack-calgary test-cli-dump test-minimum

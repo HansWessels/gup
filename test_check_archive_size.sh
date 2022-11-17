@@ -4,7 +4,7 @@
 # checks the size (in bytes) of the arj file produced.
 
 IST=$( stat -L -c '%s' $1 )
-SOLL=1010776
+SOLL=1005611
 
 if [ $IST -eq $SOLL ] ; then
 	cat <<EOF
