@@ -236,6 +236,9 @@
     <ClCompile Include="../../arcman/w32_gz.cpp" />
     <ClCompile Include="../../arcman/w32_lha.cpp" />
     <ClCompile Include="../../arcman/w32_utl.cpp" />
+    <ClCompile Include="..\..\compress\n0.c" />
+    <ClCompile Include="..\..\compress\n9.c" />
+    <ClCompile Include="..\..\compress\sld32.c" />
     <ClInclude Include="../../arjbeta/arj_hdr.c" />
     <ClInclude Include="../../arjbeta/arj_outp.c" />
     <ClInclude Include="../../arjbeta/arjbeta.c" />
@@ -269,6 +272,7 @@
     <ClCompile Include="../../compress/decode.c" />
     <ClCompile Include="../../compress/encode.c" />
     <ClCompile Include="../../compress/evaluatr.c" />
+    <ClCompile Include="..\..\compress\arj_m4.c" />
     <ClCompile Include="..\..\compress\m68000.mot\mot_opti.c" />
     <ClCompile Include="../../compress/m68000/opti.c" />
     <ClCompile Include="../../compress/sld.c" />

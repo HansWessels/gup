@@ -1470,5 +1470,17 @@
     <ClCompile Include="..\..\guplib\dump_hdr.cpp">
       <Filter>Source Files\guplib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\compress\arj_m4.c">
+      <Filter>Source Files\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\compress\n0.c">
+      <Filter>Source Files\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\compress\n9.c">
+      <Filter>Source Files\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\compress\sld32.c">
+      <Filter>Source Files\compress</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
