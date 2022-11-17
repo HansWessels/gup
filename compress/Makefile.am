@@ -1,6 +1,6 @@
 noinst_LIBRARIES = libcompress.a
 
-libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c sld_med.c sld_smll.c sld32.c n0.c n9.c arj_m4.c
+libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c sld_med.c sld_smll.c sld32.c n0.c n1.c n9.c arj_m4.c
 libcompress_a_LIBADD = @OPTMOBJS@
 libcompress_a_DEPENDENCIES = $(libcompress_a_LIBADD)
 
