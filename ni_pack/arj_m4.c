@@ -12,35 +12,34 @@ typedef uint32_t uint32;
 
 #define BITBUFSIZE (sizeof(bitbuf)*8)
 
-#define TRASHBITS(x)    /* trash  bits from bitbuffer */    \
-{                                                           \
-  int xbits=(x);                                            \
-  bib -= xbits;                                             \
-  if (bib < 0)                                              \
-  { /* refill bitbuffer */                                  \
-    int i;                                                  \
-    uint32 newbuf = 0; /* BITBUFSIZE bits groot */           \
-                                                            \
-    bitbuf <<= (xbits + bib);     /* gooi bits er uit */    \
-    xbits =- bib;                                           \
-    i = (int)sizeof(bitbuf) - 2;                            \
-    while(--i >= 0)                                         \
-    {                                                       \
-      newbuf <<= 8;                                         \
-      newbuf+=*data++;                                      \
-      bib += 8;                                             \
-    }                                                       \
-    bitbuf += newbuf;                                       \
-  }                                                         \
-  bitbuf <<= xbits;                                         \
+#define TRASHBITS(x) /* trash  bits from bitbuffer */			\
+{																				\
+	int xbits=(x);															\
+	bib -= xbits;															\
+	if(bib < 0)																\
+	{ /* refill bitbuffer */											\
+		int i;																\
+		unsigned long newbuf = 0; /* BITBUFSIZE bits groot */	\
+		bitbuf <<= (xbits + bib); /* gooi bits er uit */		\
+		xbits =- bib;														\
+		i = (int)sizeof(bitbuf) - 2;									\
+		while(--i >= 0)													\
+		{																		\
+			newbuf <<= 8;													\
+			newbuf+=*data++;												\
+			bib += 8;														\
+		}																		\
+		bitbuf += newbuf;													\
+	}																			\
+	bitbuf <<= xbits;														\
 }
 
 void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 {
   /* aanname origsize>0 */
 
-  int bib;                  /* bits in bitbuf */
-  uint32 bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+  int bib; /* bits in bitbuf */
+  unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
   uint8* buff=dst;
   uint8* buffend;
 
@@ -58,124 +57,64 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
     bib-=16;
   }
 
-  for(;;)
-  { /* decode loop */
-    kartype kar;
-    if((kar=(kartype)(bitbuf>>(BITBUFSIZE-9)))>255)
-    { /* pointer length combinatie */
-      uint16 ptr;
-      
-      if(kar<480)
-      {
-        if(kar<384)
-        {
-          TRASHBITS(2);
-          kar=3+(kartype)(bitbuf>>(BITBUFSIZE-1));
-          TRASHBITS(1);
-        }
-        else
-        {
-          if(kar<448)
-          {
-            TRASHBITS(3);
-            kar=5+(kartype)(bitbuf>>(BITBUFSIZE-2));
-            TRASHBITS(2);
-          }
-          else
-          {
-            TRASHBITS(4);
-            kar=9+(kartype)(bitbuf>>(BITBUFSIZE-3));
-            TRASHBITS(3);
-          }
-        }
-      }
-      else
-      {
-        if(kar<504)
-        {
-          if(kar<496)
-          {
-            TRASHBITS(5);
-            kar=17+(kartype)(bitbuf>>(BITBUFSIZE-4));
-            TRASHBITS(4);
-          }
-          else
-          {
-            TRASHBITS(6);
-            kar=33+(kartype)(bitbuf>>(BITBUFSIZE-5));
-            TRASHBITS(5);
-          }
-        }
-        else
-        {
-          if(kar<508)
-          {
-            TRASHBITS(7);
-            kar=65+(kartype)(bitbuf>>(BITBUFSIZE-6));
-            TRASHBITS(6);
-          }
-          else
-          {
-            TRASHBITS(7);
-            kar=129+(kartype)(bitbuf>>(BITBUFSIZE-7));
-            TRASHBITS(7);
-          }
-        }
-      }
-      if((ptr=(uint16)(bitbuf>>(BITBUFSIZE-4)))<12)
-      {
-        if(ptr<8)
-        {
-          ptr=(uint16)(bitbuf>>(BITBUFSIZE-10));
-          TRASHBITS(10);
-        }
-        else
-        {
-          TRASHBITS(2);
-          ptr=512+(uint16)(bitbuf>>(BITBUFSIZE-10));
-          TRASHBITS(10);
-        }
-      }
-      else
-      {
-        if(ptr<14)
-        {
-          TRASHBITS(3);
-          ptr=1536+(uint16)(bitbuf>>(BITBUFSIZE-11));
-          TRASHBITS(11);
-        }
-        else
-        {
-          TRASHBITS(4);
-          if(ptr<15)
-          {
-            ptr=3584+(uint16)(bitbuf>>(BITBUFSIZE-12));
-            TRASHBITS(12);
-          }
-          else
-          {
-            ptr=7680+(uint16)(bitbuf>>(BITBUFSIZE-13));
-            TRASHBITS(13);
-          }
-        }
-      }
-      {
-        uint8* q=buff-ptr-1;
-        do
-        {
-          *buff++=*q++;
-        } 
-        while(--kar>0);
-      }
-    }
-    else
-    {
-      *buff++=(uint8)kar;
-      TRASHBITS(9);
-    }
-    if(buff>=buffend)
-    {
-    	return;
-    }
-  }
+	for(;;)
+	{ /* decode loop */
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		if((bitbuf&mask)==0)
+		{ /* literal */
+			uint32 kar;
+			kar=(uint8)(bitbuf>>(BITBUFSIZE-9));
+			*buff++=kar;
+			TRASHBITS(9);
+		}
+		else
+		{ /* pointer length combinatie */
+			int i;
+			int tb=7;
+			uint32 ptr;
+			uint32 kar;
+			i=1;
+			do
+			{
+				mask>>=1;
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				i++;
+			} while(i<7);
+			TRASHBITS(tb);
+			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i))+1;
+			TRASHBITS(i);
+			tb=4;
+			i=0;
+			mask=1UL<<(BITBUFSIZE-1);
+			do
+			{
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				mask>>=1;
+				i++;
+			} while(i<4);
+			TRASHBITS(tb);
+			ptr=(((1<<i)-1)<<9)+(uint32)(bitbuf>>(BITBUFSIZE-(i+9)));
+			TRASHBITS(i+9);
+			{
+				uint8* q=buff-ptr-1;
+				do
+				{
+					*buff++=*q++;
+				} 
+				while(--kar>0);
+			}
+		}
+		if(buff>=buffend)
+		{
+			return;
+		}
+	}
 }
