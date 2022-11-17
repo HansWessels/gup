@@ -63,6 +63,7 @@ test: gup ni_pack
 	$(GUP_EXE) a -m7 -jm -e test.arj test/calgary-corpus/[a-z]*
 	echo "=== testing Calgary Corpus ARJ archive ==="
 	$(GUP_EXE) t test.arj
+	echo "=== check size vs. reference ==="
 	./test_check_archive_size.sh  test.arj
 	make testdump
 
