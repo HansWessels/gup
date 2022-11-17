@@ -6,4 +6,4 @@
 	url = https://github.com/GerHobbelt/dirent.git
 [submodule "test-bench-tool"]
 	path = test-bench-tool
-	url = git@github.com:GerHobbelt/gup-tests.git
+	url = https://github.com/GerHobbelt/gup-tests.git
