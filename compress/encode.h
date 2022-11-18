@@ -88,9 +88,9 @@ extern "C"
 #define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
 #define M4_MIN_MATCH 3						/* m4 maximum match */
 #define M4_MAX_MATCH 256					/* m4 maximum match */
-#define N1_MAX_PTR  15872              /* maximale pointer offset + 1 */
+#define N1_MAX_PTR 130560              /* maximale pointer offset + 1 */
 #define N1_MIN_MATCH 2						/* n1 maximum match */
-#define N1_MAX_MATCH 1023					/* n1 maximum match */
+#define N1_MAX_MATCH 65535					/* n1 maximum match */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
 #define MAX_PTR   26623                /* arj dictionary is 26k */
