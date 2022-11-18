@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{00811970-815B-4F64-BC9D-219078102F5B}</ProjectGuid>
-    <RootNamespace>ni_packer</RootNamespace>
+    <RootNamespace>ni_pack</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -88,7 +88,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <DisableSpecificWarnings>4180;4244;4018;4267;5105;4100;4127;4206;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4101;4180;4244;4018;4267;5105;4100;4127;4206;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <SupportJustMyCode>false</SupportJustMyCode>
@@ -118,7 +118,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Custom</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\thirdparty\dirent\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -144,7 +144,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Custom</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\thirdparty\dirent\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRTDBG_MAP_ALLOC;WIN64;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -168,7 +168,7 @@
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\thirdparty\dirent\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -194,7 +194,7 @@
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.;..\..\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\include;..\..\thirdparty\dirent\include;..\..\ms-win;..\..\guplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BUILDING_GUP;GUP_STATICLIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN64;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -217,13 +217,13 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="../../ni_packer/arj_crc.c" />
-    <ClCompile Include="../../ni_packer/arj_m4.c" />
-    <ClCompile Include="../../ni_packer/arj_m7.c" />
-    <ClCompile Include="../../ni_packer/depack_t.c" />
-    <ClCompile Include="../../ni_packer/ni_n0.c" />
-    <ClCompile Include="../../ni_packer/ni_n1.c" />
-    <ClCompile Include="../../ni_packer/unstore.c" />
+    <ClCompile Include="../../ni_pack/arj_crc.c" />
+    <ClCompile Include="../../ni_pack/arj_m4.c" />
+    <ClCompile Include="../../ni_pack/arj_m7.c" />
+    <ClCompile Include="../../ni_pack/depack_t.c" />
+    <ClCompile Include="../../ni_pack/ni_n0.c" />
+    <ClCompile Include="../../ni_pack/ni_n1.c" />
+    <ClCompile Include="../../ni_pack/unstore.c" />
     <ClInclude Include="../../acconfig.h" />
     <ClInclude Include="../../arcman/arc_util.h" />
     <ClInclude Include="../../arcman/arcctl.h" />
@@ -405,11 +405,11 @@
     <Text Include="../../lib/Makefile.in" />
     <Text Include="../../ltmain.sh" />
     <Text Include="../../mk_autoconf.sh" />
-    <Text Include="../../ni_packer/atari_st/arj_crc.s" />
-    <Text Include="../../ni_packer/atari_st/arj_m4.s" />
-    <Text Include="../../ni_packer/atari_st/arj_m7.s" />
-    <Text Include="../../ni_packer/atari_st/ni_n0.s" />
-    <Text Include="../../ni_packer/atari_st/unstore.s" />
+    <Text Include="../../ni_pack/atari_st/arj_crc.s" />
+    <Text Include="../../ni_pack/atari_st/arj_m4.s" />
+    <Text Include="../../ni_pack/atari_st/arj_m7.s" />
+    <Text Include="../../ni_pack/atari_st/ni_n0.s" />
+    <Text Include="../../ni_pack/atari_st/unstore.s" />
     <Text Include="../../spec/archive.txt" />
     <Text Include="../../spec/headers.txt" />
     <Text Include="../../sync_to_Q_network_drive.sh" />

@@ -237,6 +237,7 @@
     <ClCompile Include="../../arcman/w32_lha.cpp" />
     <ClCompile Include="../../arcman/w32_utl.cpp" />
     <ClCompile Include="..\..\compress\n0.c" />
+    <ClCompile Include="..\..\compress\n1.c" />
     <ClCompile Include="..\..\compress\n9.c" />
     <ClCompile Include="..\..\compress\sld32.c" />
     <ClInclude Include="../../arjbeta/arj_hdr.c" />

@@ -219,6 +219,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\compress\arj_m4.c" />
     <ClCompile Include="..\..\compress\n0.c" />
+    <ClCompile Include="..\..\compress\n1.c" />
     <ClCompile Include="..\..\compress\n9.c" />
     <ClCompile Include="..\..\compress\sld32.c" />
     <ClCompile Include="..\..\guplib\dump_arc.cpp" />
