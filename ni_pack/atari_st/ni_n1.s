@@ -1,104 +1,102 @@
+; Ni n1 decode function
+; Size optimized
+; Placed in public domain 1993-2007 Hans Wessels (Mr Ni! (the Great) of the TOS-crew)
 ;
-; ni packer n1 decoder, size optimized
-; 2022 Hans Wessels
-
-;void decode_n0(uint8_t *dst, uint8_t *data)
-; registers
-; D0 = 
-; D1 = bitbuffer
-; D2 = run counter
-; D3 = loop counter
-; D4 = iterator
+; void decode_n1(char* depack_space, char* packed_data)
+; CALL:
+; A0 = ptr to depack space
+; A1 = ptr to packed data, at even adress
 ;
-; A0 = dst
-; A1 = src
-; A2 = copy pointer
-; alternatief pointer 8 of 16 bit, min match = 3
+; Register usage:
+; d0: #bytes to copy
+; d1: temporary register, bitbuf
+; d2: temporary register, pointer offset
+; d3: temporary register
+; d4: temporary register
+; d5: temporary register
+; d6: bitbuf,subbitbuf
+; d7: #bits in subbitbuf
+; a0: depack space
+; a1: rbuf_current
+; a2: source adres for byte copy
+; a3: end address
+; a4: not used
+; a5: not used
+; a6: not used
 
 export decode_n1
 
 decode_n1:
-		movem.l	D3-D4/A2,-(SP)		; save registers
-		moveq	#-128,D1			; bit buffer sentry
-		moveq	#4,D0				; get 5 bit iterator
-		bsr.s	.get_iterator		; D4=#bits in loopcounter, D0 =$0000FFFF, flags: status of D4
-		tst.w	D4
-		beq.s	.single_bit_loop	; D4=0?
-		moveq	#0,D0				; init multi bit
-		subq.w	#1,D4				; 1 bit minder te doen
-.single_bit_loop:
-		addq.w	#1,D0				; D0 =0 for D4 zero, =1 for D4 not zero
-		bsr.s	.get_bits
-		move.l	D0,D3
-.loop:
-		bsr.s	.decode_run			; literal run
-		move.l	D0,D2				; run counter naar D2
-.lit:
-		move.b	(A1)+,(A0)+			; copy
-		subq.l	#1,D2				; nog een literal?
-		bcc.s	.lit				; next literal
-		subq.l	#1,D3				; klaar?
-		bcs.s	.done
-		bsr.s	.decode_run			; ptr_len run
-		move.l	D0,D2				; run counter naar D2
-.ptr_len:
-		moveq	#-1,D0				; D0=$FFFFFFFF
-		addq.w	#4,D0				; get 4 bit iterator, D0=$FFFF0003
-		bsr.s	.get_iterator		; D4=#bits in loopcounter, D0=$FFFFFFFF, flags: status of D4, nope, addx doesn't clear the Z flag
-		tst.w	D4
-		beq.s	.single_bit			; D4=0?
-		subq.w	#1,d4				; 1 bit minder te doen
-		add.w	D0,D0				; maak 0 bit
-.single_bit:
-		bsr.s	.get_bits			; D0 is ptr offset
-		lea		0(D0.l,A0),A2		; pointer offset
-		bsr.s	.get_len			; get len
+     movem.l D3-D7/A2-A3,-(SP) ; save registers
+     move.l  (A1)+,A3        ; orig size
+     add.l   A0,A3           ; end address
+     moveq   #0,D7           ; bitcount = 0
+     move.w  (A1),D6         ; load bit buffer
+.count_loop:                 ; main depack loop
+     move.w  D6,D1           ; evaluate most significant bit bitbuf
+     bmi.s   .start_sld      ; =1 -> sliding dictionary
+     moveq   #9,D3           ; pop bits from bitbuf for literal
+     bsr.s   .getbits        ;
+     move.b  D2,(A0)+        ; push byte in buffer
+.eval_loop:
+     cmp.l   A3,A0           ; end?
+     bls.s   .count_loop     ;
+     movem.l (SP)+,D3-D7/A2-A3 ;
+     rts                     ;
+
+.start_sld:
+     moveq   #6,d4           ;
+     moveq   #6,D2           ; minimum getbits + D4
+     bsr.s   .get_them       ;
+     add.w   D2,D5           ; length
+     move.w  D6,D1           ; bitbuf
+     move.w  D5,D0           ;
+     moveq   #3,D4           ;
+     moveq   #12,D2          ; minimum getbits + D4
+     bsr.s   .get_them       ;
+     ror.w   #7,D5           ;
+     add.w   D5,D2           ; calc pointer
+     neg.w   D2              ; pointer offset negatief
+     lea     -1(A0,D2.w),A2  ; pointer in dictionary
+     move.b  (A2)+,(A0)+     ;
 .copy_loop:
-		move.b	(A2)+,(A0)+			; copy
-		dbra	D0,.copy_loop
-		subq.l	#1,D2				; nog een ptr_len?
-		bcc.s	.ptr_len			; next literal
-		subq.l	#1,D3				; klaar?
-		bcc.s	.loop				; nog een ronde
-.done:
-		movem.l	(SP)+,D3-D4/A2	; restore registers
-		rts
+     move.b  (A2)+,(A0)+     ;
+     dbra    D0,.copy_loop   ;
+     bra.s   .eval_loop      ;
 
-.get_iterator:						; d0 = log(len)
-		moveq	#0,D4				; iterator
-.iterator_loop:
-		bsr.s	.get_bit			; bit
-		addx.w	D4,D4				; schuif bit naar binnen
-		dbra	D0,.iterator_loop	; next
-		rts
-.get_bits:
-		bsr.s	.get_bit			; bit
-		addx.l	D0,D0				; shift in
-		dbra	d4,.get_bits		; next
-		rts
-.decode_run:
-		bsr.s	.get_bit			; klaar?
-		bcc.s	.decode_done		; yep
-		moveq	#1,D0				; result=1
-		bra.s	.nog_een_bit
-.decode_done:
-		moveq	#0,D0				; result = 0
-		rts
+.get_them:
+     moveq   #0,D3           ; fillbits
+     moveq   #0,D5           ; value
+.loop:
+     addq.w  #1,D3           ; extra fill
+     add.w   D1,D1           ; shift bit outside
+     bcc.s   .einde          ; if '1' end decode
+     addx.w  D5,D5           ; value *2+1
+     dbra    D4,.loop
+.einde:
+     sub.w   D4,D2           ; correct D2
+     bsr.s   .fillbits       ; trash bits
+     move.w  D2,D3           ; bits to get
+; no_bits=D3
+; result=D2
+.getbits:
+     move.w  D6,D2
+     swap    D2
+     rol.l   D3,D2
+.fillbits:
+     sub.b   D3,D7
+     bcs.s   .fill
+.no_fill:
+     rol.l   D3,D6
+     rts
+.fill:
+     add.b   #16,D7
+     move.l  (A1),D6
+     addq.l  #2,A1
+     ror.l   D7,D6
+     rts
 
-.get_len:
-		moveq	#1,D0				; init waarde
-.next_bit:
-		bsr.s	.get_bit			; get value bit in x register
-		addx.w	D0,D0				; verdubbel en tel waarde van bit op bij D0
-.nog_een_bit:
-		bsr.s	.get_bit			; nog een bit?
-		bcs.s	.next_bit			; yep
-		rts
+;d0,d1,d2,d3,d4,d5,d6,d7,a0,a1,a2,a3,a4,a5,a6,a7,sp
+********************************************************************************
 
-.get_bit:							; zet bit in x-bit status register
-		add.b	D1,D1				; schuif bit naar buiten
-		bne.s	.get_bit_done		; klaar
-		move.b	(A1)+,D1			; nieuwe bits
-		addx.b	D1,D1				; bit naar buiten, sentry naar binnen
-.get_bit_done:
-		rts
+     END

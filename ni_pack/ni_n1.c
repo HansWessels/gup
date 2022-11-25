@@ -1,5 +1,5 @@
 /*
-** ni packer mode n1 depacker
+** ni packer mode n0 depacker
 ** 2022 Hans Wessels
 */
 
@@ -12,136 +12,115 @@ typedef uint32_t uint32;
 typedef int32_t int32;
 
 
-#define GET_N1_BIT(bit)								\
-{ /* get a bit from the data stream */			\
- 	if(bits_in_bitbuf==0)							\
- 	{ /* fill bitbuf */								\
-  		bitbuf=*data++;								\
-  		bits_in_bitbuf=8;								\
-	}														\
-	bit=(bitbuf&0x80)>>7;							\
-	bitbuf+=bitbuf;									\
-	bits_in_bitbuf--;									\
-}
+#define BITBUFSIZE (sizeof(bitbuf)*8)
 
-#define DECODE_N1_LEN(val)							\
-{ /* get value 2 - 2^32-1 */						\
-	int bit;												\
-	val=1;												\
-	do														\
-	{														\
-		GET_N1_BIT(bit);								\
-		val+=val+bit;									\
-		GET_N1_BIT(bit);								\
-	} while(bit!=0);									\
+#define TRASHBITS(x) /* trash  bits from bitbuffer */			\
+{																				\
+	int xbits=(x);															\
+	bib -= xbits;															\
+	if(bib < 0)																\
+	{ /* refill bitbuffer */											\
+		int i;																\
+		unsigned long newbuf = 0; /* BITBUFSIZE bits groot */	\
+		bitbuf <<= (xbits + bib); /* gooi bits er uit */		\
+		xbits =- bib;														\
+		i = (int)sizeof(bitbuf) - 2;									\
+		while(--i >= 0)													\
+		{																		\
+			newbuf <<= 8;													\
+			newbuf+=*data++;												\
+			bib += 8;														\
+		}																		\
+		bitbuf += newbuf;													\
+	}																			\
+	bitbuf <<= xbits;														\
 }
-
-#define DECODE_N1_PTR(ptr)							\
-{ /* n1 ptr(4) get value -1 - -65536 */		\
-	int len=0;											\
-	int bit;												\
-	int i=4;												\
-	do														\
-	{														\
-		GET_N1_BIT(bit);								\
-		len+=len+bit;									\
-	} while(--i!=0);									\
-	ptr=-1;												\
-	if(len>0)											\
-	{														\
-		ptr+=ptr;										\
-		len--;											\
-	}														\
-	do														\
-	{														\
-		GET_N1_BIT(bit);								\
-		ptr+=ptr+bit;									\
-	} while(len-->0);									\
-}
-
-#define DECODE_N1_COUNTER(val)					\
-{ /* get value 0 - 2^32-1 */						\
-	int bit;												\
-	int i;												\
-	int len=0;											\
-	for(i=0; i<5; i++)								\
-	{														\
-		GET_N1_BIT(bit);								\
-		len+=len+bit;									\
-	}														\
-	if(len==0)											\
-	{														\
-		GET_N1_BIT(bit);								\
-		val=bit;											\
-	}														\
-	else 													\
-	{														\
-		val=1;											\
-		do													\
-		{													\
-			GET_N1_BIT(bit);							\
-			val+=val+bit;								\
-		} while(--len>0);								\
-	}														\
-}
-
-#define DECODE_N1_RUN(val)							\
-{ /* get value 0 - 2^32-1 */						\
-	int bit;												\
-	GET_N1_BIT(bit);									\
-	if(bit==0)											\
-	{														\
-		val=0;											\
-	}														\
-	else													\
-	{														\
-		val=1;											\
-		GET_N1_BIT(bit);								\
-		if(bit==1)										\
-		{													\
-			DECODE_N1_LEN(val);						\
-		}													\
-	}														\
-}
-		
 
 void decode_n1(uint8_t *dst, uint8_t *data)
 {
-	uint8* dstend;
-	uint8 bitbuf=0;
-	int bits_in_bitbuf=0;
-	unsigned long loop;
-	int ptrs=0;
-	unsigned long run;
-	DECODE_N1_COUNTER(loop);
-	do
-	{
-		DECODE_N1_RUN(run);
-		if(ptrs==0)
-		{ /* literal run */
-			do
-			{
-				*dst++=*data++;
-			} while(run-->0);
-			ptrs=1;
+	/* aanname origsize>0 */
+	int bib; /* bits in bitbuf */
+	unsigned long int bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	unsigned long origsize=0;
+	uint8* buffend;
+	bitbuf=0;
+	bib=0;
+	{ /* init bitbuf */
+		int i=(int)sizeof(bitbuf);
+		while(--i>=0)
+		{
+			bitbuf<<=8;
+			bitbuf+=*data++;
+			bib+=8;
+		}
+		bib-=16;
+	}
+   { /* get origsize */
+		origsize=bitbuf>>(BITBUFSIZE-16);
+		origsize<<=16;
+		TRASHBITS(16);
+		origsize+=bitbuf>>(BITBUFSIZE-16);
+		TRASHBITS(16);
+   }
+	buffend=dst+origsize;
+	for(;;)
+	{ /* decode loop */
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		if((bitbuf&mask)==0)
+		{ /* literal */
+			uint32 kar;
+			kar=(uint8)(bitbuf>>(BITBUFSIZE-9));
+			*dst++=kar;
+			TRASHBITS(9);
 		}
 		else
-		{ /* ptr len run */
+		{ /* pointer length combinatie */
+			int i;
+			int tb=15;
+			uint32 ptr;
+			uint32 kar;
+			i=1;
 			do
 			{
-				int32 ptr;
-				uint8* src;
-				int len;
-				DECODE_N1_PTR(ptr);
-				DECODE_N1_LEN(len);
-				len++;
-				src=dst+ptr;
+				mask>>=1;
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				i++;
+			} while(i<15);
+			TRASHBITS(tb);
+			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i));
+			TRASHBITS(i);
+			tb=7;
+			i=0;
+			mask=1UL<<(BITBUFSIZE-1);
+			do
+			{
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				mask>>=1;
+				i++;
+			} while(i<7);
+			TRASHBITS(tb);
+			ptr=(((1<<i)-1)<<9)+(uint32)(bitbuf>>(BITBUFSIZE-(i+9)));
+			TRASHBITS(i+9);
+			{
+				uint8* q=dst-ptr-1;
 				do
 				{
-  					*dst++=*src++;
-				} while(--len!=0);
-			} while(run-->0);
-			ptrs=0;
+					*dst++=*q++;
+				} 
+				while(--kar>0);
+			}
 		}
-	} while(loop-->0);
+		if(dst>=buffend)
+		{
+			return;
+		}
+	}
 }

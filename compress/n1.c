@@ -172,6 +172,10 @@ gup_result n1_compress(packstruct *com)
 	com->rbuf_current=com->compressed_data;
 	com->bits_in_bitbuf=0;
 	com->bitbuf=0;
+	{ /* send original size */
+		ST_BITS((bytes_to_do>>16)&65535, 16);
+		ST_BITS(bytes_to_do&65535, 16);
+	}
 	while(bytes_to_do>0)
 	{
 		match_t match;
@@ -292,52 +296,15 @@ gup_result n1_close_stream(packstruct *com)
 	bitbuf <<= xbits;														\
 }
 
-/*-
-** ARJ mode 4 packing
-**
-** (c) 1993 Mr Ni! (the Great) of the TOS-crew
-**
-** codeer schema: [len (literal 8 bits | ptr_code)]
-**
-** len codering: w bits:
-** 0 0               :  literal
-** 1 10x             :  2 -   3
-** 2 110xx           :  4 -   7
-** 3 1110xxx         :  8 -  15
-** 4 11110xxxx       : 16 -  31
-** 5 111110xxxxx     : 32 -  63
-** 6 1111110xxxxxx   : 64 - 127
-** 7 11111110xxxxxxx :128 - 255
-**
-** Hierbij moet nog een worden opgeteld, dus minimale lengte 3, maximaal
-** 256!!!
-**
-** ptr codering: w bits
-** 9  0xxxxxxxxx            0 -   511
-** 10 10xxxxxxxxxx        512 -  1535
-** 11 110xxxxxxxxxxx     1536 -  3583
-** 12 1110xxxxxxxxxxxx   3584 -  7679
-** 13 1111xxxxxxxxxxxxx  7680 - 15871
-**
-** codering dus van 0 - 15871
-*/
-
 gup_result n1_decode(decode_struct *com)
 {
 	/* aanname origsize>0 */
 	int bib; /* bits in bitbuf */
 	unsigned long int bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	unsigned long origsize;
    uint8* buffer;
 	uint8* buffend;
    uint8* buff;
-	buffer=com->gmalloc(com->origsize, com->gm_propagator);
-  	if(buffer == NULL)
-	{
-		return GUP_NOMEM;
-	}
-	buffend=buffer+com->origsize;
-	buff=buffer;
-	com->origsize=0;
 	bitbuf=0;
 	bib=0;
 	{ /* init bitbuf */
@@ -351,7 +318,6 @@ gup_result n1_decode(decode_struct *com)
 				gup_result res;
 				if((res=read_data(com))!=GUP_OK)
 				{
-					com->gfree(buffer, com->gf_propagator);
 					return res;
 				}
 			}
@@ -359,6 +325,21 @@ gup_result n1_decode(decode_struct *com)
 		}
 		bib-=16;
 	}
+   { /* get origsize */
+		origsize=bitbuf>>(BITBUFSIZE-16);
+		origsize<<=16;
+		TRASHBITS(16);
+		origsize+=bitbuf>>(BITBUFSIZE-16);
+		TRASHBITS(16);
+   }
+	buffer=com->gmalloc(origsize, com->gm_propagator);
+  	if(buffer == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	buffend=buffer+origsize;
+	buff=buffer;
+	com->origsize=0;
 
 	for(;;)
 	{ /* decode loop */

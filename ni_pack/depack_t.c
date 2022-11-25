@@ -121,7 +121,7 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 		decode_n0(dst, data);
 		break;
 	case NI_MODE_1:
-		//decode_n1(dst, data);
+		decode_n1(dst, data);
 		break;
 	default:
 		printf("Unknown method: %X", mode);
