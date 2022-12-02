@@ -92,10 +92,10 @@ int m4_len_len(match_t match)
 		}
 		else
 		{
-			return 14;
+			return 13;
 		}
 	}
-	return 1+2*(first_bit_set32(match-1)-1);
+	return 2*(first_bit_set32(match-1)-1);
 }
 
 int m4_ptr_len(ptr_t ptr)

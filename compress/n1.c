@@ -82,9 +82,9 @@ int n1_len_len(match_t match)
 	}
 	if(match>32767)
 	{
-		return 30;
+		return 29;
 	}
-	return 1+2*(first_bit_set32(match)-1);
+	return 2*(first_bit_set32(match)-1);
 }
 
 int n1_ptr_len(ptr_t ptr)

@@ -29,7 +29,7 @@ export decode_m4
 
 decode_m4:
      movem.l D3-D7/A2-A3,-(SP) ; save registers
-     lea     0(D0.l,A0),A3   ; end address
+     lea     0(A0,D0.l),A3   ; end address
      moveq   #0,D7           ; bitcount = 0
      move.w  A1,D3           ; remove if buffer is at even adress; for checking rbuf_current
      btst    D7,D3           ; remove if buffer is at even adress; does readbuf_current point to an even address?
@@ -52,7 +52,7 @@ decode_m4:
      rts                     ;
 
 .start_sld:
-     moveq   #6,d4           ;
+     moveq   #6,D4           ;
      moveq   #6,D2           ; minimum getbits + D4
      bsr.s   .get_them       ;
      add.w   D2,D5           ; length
