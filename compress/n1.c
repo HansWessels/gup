@@ -76,9 +76,9 @@ unsigned long n1_cost_lit(match_t kar)
 
 int n1_len_len(match_t match)
 {
-	if((match<2) || (match>N1_MAX_MATCH))
+	if((match<N1_MIN_MATCH) || (match>N1_MAX_MATCH))
 	{
-		return 255;
+		return 256; /* error */
 	}
 	if(match>32767)
 	{
@@ -100,8 +100,8 @@ int n1_ptr_len(ptr_t ptr)
 			return 23;
 		}
 		else
-		{
-			return 256; /*error */
+		{ /* can happen with length 2 matches */
+			return 256; /* error */
 		}
 	}
 	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
@@ -357,7 +357,7 @@ gup_result n1_decode(decode_struct *com)
 			int i;
 			int tb=15;
 			ptr_t ptr;
-			match_t kar;
+			match_t len;
 			i=1;
 			do
 			{
@@ -370,7 +370,7 @@ gup_result n1_decode(decode_struct *com)
 				i++;
 			} while(i<15);
 			TRASHBITS(tb);
-			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i));
+			len=(1<<i)+(bitbuf>>(BITBUFSIZE-i));
 			TRASHBITS(i);
 			tb=7;
 			i=0;
@@ -390,12 +390,12 @@ gup_result n1_decode(decode_struct *com)
 			TRASHBITS(i+9);
 			{
 				uint8* q=buff-ptr-1;
-				LOG_PTR_LEN(kar, ptr);
+				LOG_PTR_LEN(len, ptr);
 				do
 				{
 					*buff++=*q++;
 				} 
-				while(--kar>0);
+				while(--len>0);
 			}
 		}
 		if(buff>=buffend)

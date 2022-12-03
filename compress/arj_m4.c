@@ -86,7 +86,7 @@ int m4_len_len(match_t match)
 	}
 	if(match>128)
 	{
-		if(match>256)
+		if(match>M4_MAX_MATCH)
 		{
 			return 255;
 		}
@@ -106,7 +106,7 @@ int m4_ptr_len(ptr_t ptr)
 	}
 	if(ptr>7679)
 	{
-		if(ptr<=15871)
+		if(ptr<M4_MAX_PTR)
 		{
 			return 17;
 		}
