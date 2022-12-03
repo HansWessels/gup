@@ -91,6 +91,9 @@ extern "C"
 #define N1_MAX_PTR 130560              /* maximale pointer offset + 1 */
 #define N1_MIN_MATCH 2						/* n1 maximum match */
 #define N1_MAX_MATCH 65535					/* n1 maximum match */
+#define N2_MAX_PTR (1<<24)              /* maximale pointer offset + 1 */
+#define N2_MIN_MATCH 2						/* n2 maximum match */
+#define N2_MAX_MATCH 65535					/* n2 maximum match */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
 #define MAX_PTR   26623                /* arj dictionary is 26k */
@@ -144,6 +147,11 @@ gup_result n1_compress(packstruct *com);
 gup_result n1_close_stream(packstruct *com);
 unsigned long n1_cost_lit(match_t kar);
 unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr);
+
+gup_result n2_compress(packstruct *com);
+gup_result n2_close_stream(packstruct *com);
+unsigned long n2_cost_lit(match_t kar);
+unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr);
 
 gup_result n9_compress(packstruct *com);
 gup_result n9_close_stream(packstruct *com);

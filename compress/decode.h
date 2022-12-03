@@ -19,6 +19,7 @@ extern "C"
 gup_result read_data(decode_struct *com);
 gup_result n0_decode(decode_struct *com);
 gup_result n1_decode(decode_struct *com);
+gup_result n2_decode(decode_struct *com);
 gup_result n9_decode(decode_struct *com);
 gup_result m4_decode(decode_struct *com);
 

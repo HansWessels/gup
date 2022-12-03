@@ -310,6 +310,9 @@ gup_result decode(decode_struct *com)
   case NI_MODE_1:
     ret=n1_decode(com);
     break;
+  case NI_MODE_2:
+    ret=n2_decode(com);
+    break;
   default:
     ret=GUP_HDR_UNKNOWN_METHOD;
   }

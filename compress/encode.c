@@ -433,6 +433,17 @@ gup_result init_encode(packstruct *com)
       com->cost_lit=n1_cost_lit;
       i_fastlog=init_fast_log_empty;
       break;
+    case NI_MODE_2:
+		com->use_sld32=1;
+		com->min_match32=N2_MIN_MATCH;
+      com->max_match32=N2_MAX_MATCH;
+      com->maxptr32=N2_MAX_PTR;
+      com->compress=n2_compress;
+      com->close_packed_stream=n2_close_stream;
+      com->cost_ptrlen=n2_cost_ptrlen;
+      com->cost_lit=n2_cost_lit;
+      i_fastlog=init_fast_log_empty;
+      break;
     case NI_MODE_9:
 		com->use_sld32=1;
 		com->min_match32=2;
