@@ -1395,6 +1395,7 @@ gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do;
+	unsigned long cost;
 	{ /*- dictionary buffer vullen */
 		long byte_count;
 		if ((byte_count = com->buf_read_crc(com->origsize, com->dictionary+DICTIONARY_START_OFFSET, com->brc_propagator)) < 0)
@@ -1421,7 +1422,6 @@ gup_result encode32(packstruct *com)
 	com->packed_size = 0;
 	while (bytes_to_do)
 	{ /*- hoofd_lus, deze lus zorgt voor al het pack werk */
-		unsigned long cost;
 		cost=com->cost[current_pos-1];
 		cost+=com->cost_lit(com->dictionary[current_pos]);
 		if(cost<com->cost[current_pos])
@@ -1434,8 +1434,16 @@ gup_result encode32(packstruct *com)
 		current_pos++;
 		bytes_to_do--;
 	}
+	{ /*- de laatste stap */
+		cost=com->cost[current_pos-1];
+		cost+=com->cost_lit(com->dictionary[current_pos]);
+		if(cost<com->cost[current_pos])
+		{ /* hier komen met een literal is het goedkoopst */
+			com->match_len[current_pos]=0;
+			com->cost[current_pos]=cost;
+		}
+	}
 	{ /* terug rekenen voor de goedkoopste weg */
-		current_pos--;
 		match_t match;
 		ptr_t ptr;
 		match=com->match_len[current_pos];

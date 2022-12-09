@@ -308,7 +308,7 @@ gup_result n2_compress(packstruct *com)
 	}
 #endif
 
-	{ /* zend gratis literal */
+	{ /* send free literal */
 		match_t kar;
 		kar=com->dictionary[current_pos];
 		LOG_LITERAL(kar);
@@ -316,7 +316,7 @@ gup_result n2_compress(packstruct *com)
 		bytes_to_do--;
 		current_pos++;
 	}
-	{
+	{ /* send main message */
 		ptr_t last_ptr=0;
 		{
 			while(bytes_to_do>0)
@@ -347,6 +347,15 @@ gup_result n2_compress(packstruct *com)
       		}
       	}
 		}
+	}
+	{ /* send end of stream token, 15 zero's makes the 16 bit value 0 */
+		int i;
+		N2_ST_BIT(1); /* pointer is comming */
+		for(i=0; i<29; i++)
+		{
+			N2_ST_BIT(0);
+		}
+		N2_ST_BIT(1);
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -535,6 +544,10 @@ gup_result n2_close_stream(packstruct *com)
 		tmp+=tmp+bit;									\
 		N2_GET_BIT(bit);								\
 	} while(bit==0);									\
+	if(tmp==-65536)									\
+	{ /* eof token */									\
+		break;											\
+	}														\
 	tmp+=3;												\
 	if(tmp==0)											\
 	{														\
@@ -559,7 +572,6 @@ gup_result n2_close_stream(packstruct *com)
 gup_result n2_decode(decode_struct *com)
 {
    uint8* buffer;
-	uint8* buffend;
    uint8* buff;
 	uint8 bitbuf=0;
 	ptr_t last_ptr=0;
@@ -575,7 +587,6 @@ gup_result n2_decode(decode_struct *com)
 	{
 		return GUP_NOMEM;
 	}
-	buffend=buffer+origsize;
 	buff=buffer;
 	com->origsize=0;
 	
@@ -593,22 +604,6 @@ gup_result n2_decode(decode_struct *com)
 		kar=*com->rbuf_current++;
 		*buff++=kar;
 		LOG_LITERAL(kar);
-		if(buff>=buffend)
-		{
-			unsigned long len;
-			if((len=(buff-buffer))!=0)
-			{
-				gup_result err;
-				com->print_progres(len, com->pp_propagator);
-				if ((err = com->write_crc(len, buffer, com->wc_propagator))!=GUP_OK)
-				{
-					com->gfree(buffer, com->gf_propagator);
-					return err;
-				}
-			}
-			com->gfree(buffer, com->gf_propagator);
-			return GUP_OK; /* exit succes */
-		}
 	}
 	for(;;)
 	{
@@ -647,22 +642,20 @@ gup_result n2_decode(decode_struct *com)
 			}
 			last_ptr=ptr;
 		}
-		if(buff>=buffend)
+	}
+	{
+		unsigned long len;
+		if((len=(buff-buffer))!=0)
 		{
-			unsigned long len;
-			if((len=(buff-buffer))!=0)
+			gup_result err;
+			com->print_progres(len, com->pp_propagator);
+			if ((err = com->write_crc(len, buffer, com->wc_propagator))!=GUP_OK)
 			{
-				gup_result err;
-				com->print_progres(len, com->pp_propagator);
-				if ((err = com->write_crc(len, buffer, com->wc_propagator))!=GUP_OK)
-				{
-					com->gfree(buffer, com->gf_propagator);
-					return err;
-				}
+				com->gfree(buffer, com->gf_propagator);
+				return err;
 			}
-			com->gfree(buffer, com->gf_propagator);
-			return GUP_OK; /* exit succes */
 		}
+		com->gfree(buffer, com->gf_propagator);
 	}
 	return GUP_OK; /* exit succes */
 }

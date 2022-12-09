@@ -192,7 +192,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 	max_match=com->max_match32;
 	if(max_match>(com->origsize-pos+DICTIONARY_START_OFFSET))
 	{
-		max_match=(com->origsize-pos+DICTIONARY_START_OFFSET);
+		max_match=com->origsize-pos+DICTIONARY_START_OFFSET;
 	}
 	if(pos>com->maxptr32)
 	{ /* remove node op pos-maxptr32-1 */

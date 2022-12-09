@@ -33,6 +33,7 @@ extern void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_n0(uint8_t *dst, uint8_t *data);
 extern void decode_n1(uint8_t *dst, uint8_t *data);
+extern void decode_n2(uint8_t *dst, uint8_t *data);
 
 extern void make_crc32_table(uint32_t crc_table[]);
 extern uint32_t crc32(unsigned long count, uint8_t *data, uint32_t crc_table[]);
@@ -122,6 +123,9 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 		break;
 	case NI_MODE_1:
 		decode_n1(dst, data);
+		break;
+	case NI_MODE_2:
+		decode_n2(dst, data);
 		break;
 	default:
 		printf("Unknown method: %X", mode);
