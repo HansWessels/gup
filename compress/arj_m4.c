@@ -64,8 +64,10 @@ unsigned long m4_count_bits(unsigned long* packed_bytes,
 }
 
 
-unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr)
+unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
+	NEVER_USE(pos);
+	NEVER_USE(ptr_hist);
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	res+=m4_len_len(match);
 	res+=m4_ptr_len(ptr);

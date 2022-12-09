@@ -60,8 +60,11 @@ void n1_store_ptr(ptr_t ptr, packstruct *com);
 }
 
 
-unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr)
+unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
+	NEVER_USE(pos);
+	NEVER_USE(ptr_hist);
+
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	res+=n1_len_len(match);
 	res+=n1_ptr_len(ptr);

@@ -30,8 +30,11 @@ void n9_store_literal_val(uint32 val, packstruct *com);
 void n9_store_ptr_val(int32_t val, packstruct *com);
 
 
-unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr)
+unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
+	NEVER_USE(pos);
+	NEVER_USE(ptr_hist);
+
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	if(match<2)
 	{ /* match niet mogelijk */

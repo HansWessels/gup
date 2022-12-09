@@ -489,7 +489,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   long (*buf_read_crc)(long count, void *buf, void* brc_propagator); /* read routine for reading the original file */
   void* brc_propagator;
   gup_result (*close_packed_stream)(struct packstruct_t *com); /* output the last bits in bitbuf */
-  unsigned long (*cost_ptrlen)(match_t match, ptr_t ptr); /* costs of pointer len combi */
+  unsigned long (*cost_ptrlen)(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist); /* costs of pointer len combi */
   unsigned long (*cost_lit)(match_t kar); /* costs of a literal */
   uint8 *inmem_output; /* buffer, origsize*2+8 bytes in size, after 8 bytes it shares space with the inmem_input buffer */
   uint8 *inmem_output_cur; /* current position in inmem_ouput buffer */
@@ -508,6 +508,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	index_t *hash_table_rle; /* hash of rle match string */
 	node_t *tree32; /* dictionary tree */
 	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
+	index_t *ptr_hist; /* pointer history */
 	ptr_t maxptr32; /* maximum size of a pointer */
 	match_t min_match32; /* minimum match */
 	match_t max_match32; /* maximum match */

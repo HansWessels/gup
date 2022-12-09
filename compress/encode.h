@@ -141,29 +141,27 @@ gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal
 gup_result n0_compress(packstruct *com);
 gup_result n0_close_stream(packstruct *com);
 unsigned long n0_cost_lit(match_t kar);
-unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr);
+unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 gup_result n1_compress(packstruct *com);
 gup_result n1_close_stream(packstruct *com);
 unsigned long n1_cost_lit(match_t kar);
-unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr);
+unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 gup_result n2_compress(packstruct *com);
 gup_result n2_close_stream(packstruct *com);
 unsigned long n2_cost_lit(match_t kar);
-unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr);
+unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 gup_result n9_compress(packstruct *com);
 gup_result n9_close_stream(packstruct *com);
 unsigned long n9_cost_lit(match_t kar);
-unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr);
+unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 gup_result m4_compress(packstruct *com);
 gup_result m4_close_stream(packstruct *com);
 unsigned long m4_cost_lit(match_t kar);
-unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr);
-
-
+unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 #ifdef __cplusplus
 }

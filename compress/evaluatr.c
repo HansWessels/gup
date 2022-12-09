@@ -1380,6 +1380,17 @@ gup_result encode_big(packstruct *com)
 }
 #endif
 
+void ptr_copy2(ptr_t *src, ptr_t *dst);
+
+void ptr_copy2(ptr_t *src, ptr_t *dst)
+{
+	int i;
+	for(i=0; i<MAX_PTR_HIST; i++)
+	{
+		dst[i]=src[i];
+	}
+}
+
 gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
@@ -1417,6 +1428,7 @@ gup_result encode32(packstruct *com)
 		{ /* hier komen met een literal is het goedkoopst */
 			com->match_len[current_pos]=0;
 			com->cost[current_pos]=cost;
+			ptr_copy2(com->ptr_hist+(current_pos-1)*MAX_PTR_HIST, com->ptr_hist+current_pos*MAX_PTR_HIST);
 		}
       find_dictionary32(current_pos, com);
 		current_pos++;
