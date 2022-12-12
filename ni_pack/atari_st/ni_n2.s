@@ -33,7 +33,7 @@ decode_n2:
 
      moveq   #-$80,D0         ; d0.b = $80 (byte refill flag)
      moveq   #-1,D2
-     moveq   #0,D3           ; last_ptr = 0
+     moveq   #-1,D3           ; last_ptr = 0
      moveq   #2,D4
      movea.w #-1024,A3
 
