@@ -7,6 +7,8 @@ int n2_ptr_len(ptr_t ptr, ptr_t *ptr_hist);
 void n2_store_len(match_t match, ptr_t ptr, packstruct *com);
 void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 
+#define MATCH_2_CUTTOFF 0x400
+
 #if 0
 #define STATISTICS
 	#define LIT_STAT_FINE 300 /* tot LIT_RUN_FINE exact bijhouden, daarboven log */
@@ -49,7 +51,6 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	#define LOG_TEXT(string) /* */
 #endif
 
-#define BITBUFSIZE    (sizeof(unsigned long) * 8)   /* aantal bits in bitbuffer */
 
 /* unsigned long val, int bit_count */
 #define N2_ST_BIT(bit)												\
@@ -70,7 +71,6 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	}																		\
 }
 
-#define MATCH_2_CUTTOFF 1024
 
 unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {

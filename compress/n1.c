@@ -305,7 +305,7 @@ gup_result n1_decode(decode_struct *com)
 	int bib; /* bits in bitbuf */
 	unsigned long int bitbuf; /* shift buffer, BITBUFSIZE bits groot */
 	unsigned long origsize;
-   uint8* buffer;
+   uint8* buffer=NULL;
 	uint8* buffend;
    uint8* buff;
 	bitbuf=0;
