@@ -492,7 +492,7 @@ gup_result n2_close_stream(packstruct *com)
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
-  		if(com->rbuf_current>com->rbuf_tail)	\
+  		if(com->rbuf_current>=com->rbuf_tail)	\
 		{													\
 			gup_result res;							\
 			if((res=read_data(com))!=GUP_OK)		\
@@ -560,7 +560,7 @@ gup_result n2_close_stream(packstruct *com)
 	}														\
 	else													\
 	{														\
-  		if(com->rbuf_current>com->rbuf_tail)	\
+  		if(com->rbuf_current>=com->rbuf_tail)	\
 		{													\
 			gup_result res;							\
 			if((res=read_data(com))!=GUP_OK)		\
@@ -598,7 +598,7 @@ gup_result n2_decode(decode_struct *com)
 	{ /* start met een literal */
 		origsize--;
 		match_t kar;
-  		if(com->rbuf_current > com->rbuf_tail)
+  		if(com->rbuf_current >= com->rbuf_tail)
 		{
 			gup_result res;
 			if((res=read_data(com))!=GUP_OK)
@@ -618,7 +618,7 @@ gup_result n2_decode(decode_struct *com)
 		{ /* literal */
 			origsize--;
 			match_t kar;
-	  		if(com->rbuf_current > com->rbuf_tail)
+	  		if(com->rbuf_current >= com->rbuf_tail)
 			{
 				gup_result res;
 				if((res=read_data(com))!=GUP_OK)
