@@ -113,6 +113,8 @@ gup_result gup_io_flush(buf_fhandle_t *file)
 	else
 		count = file->current - file->start;
 	TRACE_ME_EX("flush count: %ld", count);
+	ARJ_Assert(count >= 0);
+	ARJ_Assert(file->start <= file->end);
 
 	if (count == 0)
 		return GUP_OK;
@@ -253,6 +255,7 @@ buf_fhandle_t *gup_io_open(const char *name, unsigned char *buf_start,
 		}
 #endif
 	}
+	ARJ_Assert(com->xfile_buffer.start <= com->xfile_buffer.end);
 
 	*result = GUP_OK;
 
@@ -274,6 +277,8 @@ gup_result gup_io_close(buf_fhandle_t *file)
 	TRACE_ME();
 	file_struct *com = (void *) file;
 	gup_result result = GUP_OK;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (com->flags & FSF_WRITE)
 	{
@@ -334,6 +339,8 @@ gup_result gup_io_seek(buf_fhandle_t *file, long offset, int seekmode,
 {
 	TRACE_ME_EX("seek offset: %ld, mode: %d", offset, seekmode);
 	file_struct *com = (void *) file;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (com->flags & FSF_WRITE)
 	{
@@ -466,6 +473,8 @@ gup_result gup_io_tell(buf_fhandle_t *file, long *fpos)
 {
 	file_struct *com = (void *) file;
 
+	ARJ_Assert(file->start <= file->end);
+
 	*fpos = com->pos + (file->current - file->start);
 
 	TRACE_ME_EX("offset: %ld", *fpos);
@@ -495,6 +504,8 @@ gup_result gup_io_write(buf_fhandle_t *file, const void *buffer, unsigned long c
 	unsigned long bytes_left, cnt;
 	char *buf = (char *) buffer;
 	file_struct *com = (void *) file;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (!(com->flags & FSF_WRITE))
 		return GUP_INTERNAL;
@@ -557,6 +568,8 @@ gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 	unsigned long bytes_left, cnt;
 	char *buf = (char *) buffer;
 	file_struct *com = (void *) file;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (com->flags & FSF_WRITE)
 		return GUP_INTERNAL;
@@ -634,6 +647,8 @@ gup_result gup_io_read(buf_fhandle_t *file, void *buffer, unsigned long count,
 gup_result gup_io_write_announce(buf_fhandle_t *file, unsigned long count)
 {
 	TRACE_ME_EX("announce count: %lu bytes (buffer allocated size: %lu)", count, (unsigned long)(file->end - file->start));
+	ARJ_Assert(file->start <= file->end);
+
 	if (count >= (unsigned long) (file->end - file->current))
 	{
 		gup_result result;
@@ -687,6 +702,8 @@ gup_result gup_io_fill(buf_fhandle_t *file)
 	file_struct *com = (void *) file;
 	long count, real_count;
 
+	ARJ_Assert(file->start <= file->end);
+
 	if (com->flags & FSF_WRITE)
 		return GUP_INTERNAL;
 
@@ -696,6 +713,7 @@ gup_result gup_io_fill(buf_fhandle_t *file)
 #endif
 
 	count = file->end - file->current;	/* Number of bytes left in buffer. */
+	ARJ_Assert(count >= 0);
 	if (count > 0)
 		memmove(file->start, file->current, (size_t) count);	/* Move to start of buffer. */
 	com->pos += file->current - file->start;	/* New position in file of start of buffer. */
@@ -782,6 +800,8 @@ gup_result gup_io_reload(buf_fhandle_t *file, uint8_t *dstbuf, unsigned long dst
 		dstbufsize -= real_count;
 	} while ((dstbufsize > 0) && (real_count != 0));
 
+	ARJ_Assert(file->start <= file->end);
+
 	lseek(com->handle, file_pos, SEEK_SET);
 
 	if (actual_bytes_read)
@@ -811,6 +831,8 @@ uint8 *gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
 	TRACE_ME();
 	*bytes_left = file->end - file->current;
 
+	ARJ_Assert(file->start <= file->end);
+
 	return file->current;
 }
 
@@ -828,6 +850,8 @@ uint8 *gup_io_get_current(buf_fhandle_t *file, unsigned long *bytes_left)
 void gup_io_set_current(buf_fhandle_t *file, uint8 *new_pos)
 {
 	TRACE_ME();
+	ARJ_Assert(file->start <= file->end);
+
 	if ((new_pos >= file->start) && (new_pos < file->end))
 		file->current = new_pos;
 }
@@ -856,6 +880,8 @@ void gup_io_set_position(buf_fhandle_t *file, long position)
 	TRACE_ME_EX("position: %ld", position);
 	file_struct *com = (void *) file;
 
+	ARJ_Assert(file->start <= file->end);
+
 	if (com->flags & FSF_WRITE)
 	{
 		if ((position >= com->pos) &&
@@ -872,6 +898,8 @@ gup_result gup_io_switch_to_read_mode(buf_fhandle_t* file)
 	TRACE_ME();
 	file_struct* com = (void*)file;
 	gup_result result = GUP_OK;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (com->flags & FSF_WRITE)
 	{
@@ -912,6 +940,8 @@ gup_result gup_io_switch_to_write_mode(buf_fhandle_t* file)
 	TRACE_ME();
 	file_struct* com = (void*)file;
 	gup_result result = GUP_OK;
+
+	ARJ_Assert(file->start <= file->end);
 
 	if (!(com->flags & FSF_WRITE))
 	{

@@ -17,13 +17,6 @@
 #include "encode.h"
 #include "evaluatr.h"
 
-#ifndef NDEBUG
-#undef ARJ_Assert
-#define ARJ_Assert(expr)   __ARJ_Assert(expr)
-#else
-#define ARJ_Assert( expr )
-#endif
-
 #define STARTMATCH 3                   /* Matches van STARTMATCH en kleiner worden niet bekeken op bitafstand */
 
 #define NO_NODE   0xffff

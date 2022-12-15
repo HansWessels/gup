@@ -11,6 +11,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
 
 #include <string>
 #include <algorithm>
@@ -627,9 +630,115 @@ static const char *mk_basename(const char* path)
 	return path;
 }
 
+#ifdef _MSC_VER
+
+static int trigger_debugger = 1;
+
+/*
+ * Define our own reporting function.
+ * We'll hook it into the debug reporting
+ * process later using _CrtSetReportHook.
+ */
+int crm_dbg_report_function(int report_type, char* usermsg, int* retval)
+{
+	/*
+	 * By setting retVal to zero, we are instructing _CrtDbgReport
+	 * to continue with normal execution after generating the report.
+	 * If we wanted _CrtDbgReport to start the debugger, we would set
+	 * retVal to one.
+	 */
+	*retval = !!trigger_debugger;
+
+	/*
+	 * When the report type is for an ASSERT,
+	 * we'll report some information, but we also
+	 * want _CrtDbgReport to get called -
+	 * so we'll return TRUE.
+	 *
+	 * When the report type is a WARNing or ERROR,
+	 * we'll take care of all of the reporting. We don't
+	 * want _CrtDbgReport to get called -
+	 * so we'll return FALSE.
+	 */
+	switch (report_type)
+	{
+	default:
+	case _CRT_WARN:
+	case _CRT_ERROR:
+	case _CRT_ERRCNT:
+		fputs(usermsg, stderr);
+		fflush(stderr);
+		return FALSE;
+
+	case _CRT_ASSERT:
+		fputs(usermsg, stderr);
+		fflush(stderr);
+		break;
+	}
+	return TRUE;
+}
+
+#endif
+
 int main(int argc, char *argv[])
 {
 	int error = 0;
+
+#ifdef _MSC_VER
+	// Get current flag
+	int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+
+	tmpFlag |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF;
+
+	// Set flag to the new value.
+	_CrtSetDbgFlag(tmpFlag); 
+
+	/*
+	 * Hook in our client-defined reporting function.
+	 * Every time a _CrtDbgReport is called to generate
+	 * a debug report, our function will get called first.
+	 */
+	_CrtSetReportHook(crm_dbg_report_function);
+
+	/*
+	 * Define the report destination(s) for each type of report
+	 * we are going to generate.  In this case, we are going to
+	 * generate a report for every report type: _CRT_WARN,
+	 * _CRT_ERROR, and _CRT_ASSERT.
+	 * The destination(s) is defined by specifying the report mode(s)
+	 * and report file for each report type.
+	 */
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+
+	// Get the current bits
+	int c = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+
+	// Set the debug-heap flag so that freed blocks are kept on the
+	// linked list, to catch any inadvertent use of freed memory
+#if 0
+	c |= _CRTDBG_DELAY_FREE_MEM_DF;
+#endif
+
+	// Set the debug-heap flag so that memory leaks are reported when
+	// the process terminates. Then, exit.
+	//c |= _CRTDBG_LEAK_CHECK_DF;
+
+	// Clear the upper 16 bits and OR in the desired freqency
+	//c = (c & 0x0000FFFF) | _CRTDBG_CHECK_EVERY_16_DF;
+
+	c |= _CRTDBG_CHECK_ALWAYS_DF;
+
+	// Set the new bits
+	_CrtSetDbgFlag(c);
+
+	// set a malloc marker we can use it in the leak dump at the end of the program:
+	(void)_calloc_dbg(1, 1, _CLIENT_BLOCK, __FILE__, __LINE__);
+#endif
 
 	for (;;)
 	{

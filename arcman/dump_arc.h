@@ -12,7 +12,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <assert.h>
 
 #include "arj_hdr.h"
 #include "arj_arc.h"
@@ -67,7 +66,7 @@ public:
 
     size_t get_remaining_usable_size()
     {
-        assert(alloc_size > used_length);  // still some space left to fill? no? then barf!
+        ARJ_Assert(alloc_size > used_length);  // still some space left to fill? no? then barf!
         return alloc_size - used_length;
     }
 
@@ -75,22 +74,22 @@ public:
     // you tell how much useful stuff you appended to the buffer space:
     void set_appended_length(size_t len) 
     {
-        assert(used_length + len <= alloc_size);
+        ARJ_Assert(used_length + len <= alloc_size);
         used_length += len;
     }
 
     void append_string(const char *str) 
     {
-        assert(str);
+        ARJ_Assert(str);
         size_t len = strlen(str);
-        assert(len < get_remaining_usable_size());  // still some space left to fill? no? then barf!
+        ARJ_Assert(len < get_remaining_usable_size());  // still some space left to fill? no? then barf!
         memmove(get_append_ref(), str, len);
 		set_appended_length(len);
     }
 
     void set_total_used_length(size_t len) 
     {
-        assert(len <= alloc_size);
+        ARJ_Assert(len <= alloc_size);
         used_length = len;
     }
 

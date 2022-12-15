@@ -987,7 +987,7 @@ dump_output_bufptr_t bindump_archive::generate_file_content(const uint8_t *data,
     dump_output_bufptr_t buf(new dump_output_buffer(datasize + 1));
 
     size_t dstsize = buf->get_remaining_usable_size();
-    assert(dstsize == datasize + 1);
+    ARJ_Assert(dstsize == datasize + 1);
     memcpy(buf->get_append_ref(), data, datasize);
 
     buf->set_appended_length(datasize);

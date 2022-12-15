@@ -139,9 +139,6 @@
 #endif
 
 #ifndef NDEBUG
-#undef ARJ_Assert
-#define ARJ_Assert(expr)   __ARJ_Assert(expr)
-
 #define ARJ_Assert_ZEEF34()     \
   if (((com->msp - com->matchstring) < 0)\
       || ((com->msp - com->matchstring) >= ((com->hufbufsize+4UL)*4))\
@@ -162,7 +159,6 @@
     abort();\
   }
 #else
-#define ARJ_Assert( expr )
 #define ARJ_Assert_ZEEF34()
 #endif
 

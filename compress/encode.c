@@ -321,13 +321,6 @@ void init_fast_log_empty(packstruct *com);
   #define ALIGN_BUFP(x) /* */
 #endif
 
-#ifndef NDEBUG
-#undef ARJ_Assert
-#define ARJ_Assert(expr)   __ARJ_Assert(expr)
-#else
-#define ARJ_Assert(expr)
-#endif
-
 #ifndef NOT_USE_STD_free_encode
 void free_encode(packstruct *com)
 {
