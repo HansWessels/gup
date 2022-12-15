@@ -224,6 +224,7 @@
     <ClCompile Include="../../ni_pack/ni_n0.c" />
     <ClCompile Include="../../ni_pack/ni_n1.c" />
     <ClCompile Include="../../ni_pack/unstore.c" />
+    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\ni_pack\ni_n2.c" />
     <ClInclude Include="../../acconfig.h" />
     <ClInclude Include="../../arcman/arc_util.h" />
     <ClInclude Include="../../arcman/arcctl.h" />
