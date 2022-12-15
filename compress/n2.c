@@ -305,6 +305,9 @@ gup_result n2_compress(packstruct *com)
 				}
 			}
 		}
+		total_size+=30; /* eof token - gratis 1e byte bit */
+		total_size+=7;
+		total_size&=~7; /* rond af op hele bytes */
 	}
 #endif
 
@@ -356,6 +359,7 @@ gup_result n2_compress(packstruct *com)
 			N2_ST_BIT(0);
 		}
 		N2_ST_BIT(1);
+		LOG_TEXT("EOF token\n");			\
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -546,6 +550,7 @@ gup_result n2_close_stream(packstruct *com)
 	} while(bit==0);									\
 	if(tmp==-65536)									\
 	{ /* eof token */									\
+		LOG_TEXT("EOF token\n");					\
 		break;											\
 	}														\
 	tmp+=3;												\
