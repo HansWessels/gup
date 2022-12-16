@@ -201,9 +201,7 @@ gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 		if (dir)						  /* if there's something in front of wildcard */
 			*(wild - 1) = 0;
 	}
-
-	// Windows, for one, doesn't like trailing directory delimiters when we call gup_lstat() with such a path:
-	if (dir == arg)
+	else
 	{
 		// trim trailing / off the dir path:
 		size_t dlen = strlen(arg);
@@ -213,17 +211,6 @@ gup_result pack_arg(archive *archive, char *arg, OPTIONS *opts)
 
 	if (!dir || (*dir == 0))
 		dir = ".";
-
-	dir = "C:\\TEMP\\gup\\win32\\msvc2022\\x64\\Debug\\..\\..\\..\\..\\test\\calgary-corpus\\";
-	ret = gup_lstat(dir, &stat);
-	dir = "C:\\TEMP\\gup\\win32\\msvc2022\\x64\\Debug\\..\\..\\..\\..\\test\\calgary-corpus";
-	ret = gup_lstat(dir, &stat);
-	dir = "C:\\TEMP\\gup\\test\\calgary-corpus\\";
-	ret = gup_lstat(dir, &stat);
-	dir = "C:\\TEMP\\gup\\test\\calgary-corpus";
-	ret = gup_lstat(dir, &stat);
-	dir = "C:\\";
-	ret = gup_lstat(dir, &stat);
 
 	if ((ret = gup_lstat(dir, &stat)) != GUP_OK)
 		return ret;
