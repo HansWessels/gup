@@ -512,6 +512,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	ptr_t maxptr32; /* maximum size of a pointer */
 	match_t min_match32; /* minimum match */
 	match_t max_match32; /* maximum match */
+	int max_hist; /* number of history pointers */
 } packstruct;
 #endif
 
@@ -519,6 +520,8 @@ gup_result encode32(packstruct *com);
 gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
 void find_dictionary32(index_t pos, packstruct* com);
+void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst);
+
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
 uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */

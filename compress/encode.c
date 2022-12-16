@@ -397,6 +397,7 @@ gup_result init_encode(packstruct *com)
 		com->min_match32=M4_MIN_MATCH;
       com->maxptr32=M4_MAX_PTR;
       com->max_match32=M4_MAX_MATCH;
+      com->max_hist=M4_MAX_HIST;
       com->compress=m4_compress;
       com->close_packed_stream=m4_close_stream;
       com->cost_ptrlen=m4_cost_ptrlen;
@@ -405,9 +406,10 @@ gup_result init_encode(packstruct *com)
       break;
     case NI_MODE_0:
 		com->use_sld32=1;
-		com->min_match32=3;
-      com->maxptr32= 65536;
-      com->max_match32=65536;
+		com->min_match32=N0_MIN_MATCH;
+      com->max_match32=N0_MAX_MATCH;
+      com->maxptr32=N0_MAX_PTR;
+      com->max_hist=N0_MAX_HIST;
       com->compress=n0_compress;
       com->close_packed_stream=n0_close_stream;
       com->command_byte_ptr=NULL;
@@ -420,6 +422,7 @@ gup_result init_encode(packstruct *com)
 		com->min_match32=N1_MIN_MATCH;
       com->max_match32=N1_MAX_MATCH;
       com->maxptr32=N1_MAX_PTR;
+      com->max_hist=N1_MAX_HIST;
       com->compress=n1_compress;
       com->close_packed_stream=n1_close_stream;
       com->cost_ptrlen=n1_cost_ptrlen;
@@ -431,6 +434,7 @@ gup_result init_encode(packstruct *com)
 		com->min_match32=N2_MIN_MATCH;
       com->max_match32=N2_MAX_MATCH;
       com->maxptr32=N2_MAX_PTR;
+      com->max_hist=N2_MAX_HIST;
       com->compress=n2_compress;
       com->close_packed_stream=n2_close_stream;
       com->cost_ptrlen=n2_cost_ptrlen;
@@ -442,6 +446,7 @@ gup_result init_encode(packstruct *com)
 		com->min_match32=2;
       com->maxptr32= 1<<23;
       com->max_match32=65536;
+      com->max_hist=0;
       com->compress=n9_compress;
       com->close_packed_stream=n9_close_stream;
       com->command_byte_ptr=NULL;

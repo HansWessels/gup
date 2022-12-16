@@ -244,7 +244,7 @@ gup_result n0_close_stream(packstruct *com)
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
-  		if(com->rbuf_current>com->rbuf_tail)	\
+  		if(com->rbuf_current>=com->rbuf_tail)	\
 		{													\
 			gup_result res;							\
 			if((res=read_data(com))!=GUP_OK)		\
@@ -286,7 +286,7 @@ gup_result n0_decode(decode_struct *com)
 	}
 	{ /* start met een literal */
 		com->origsize--;
-  		if(com->rbuf_current > com->rbuf_tail)
+  		if(com->rbuf_current >= com->rbuf_tail)
 		{
 			gup_result res;
 			if((res=read_data(com))!=GUP_OK)
@@ -315,7 +315,7 @@ gup_result n0_decode(decode_struct *com)
 		N0_GET_BIT(bit);
 		if(bit==0)
 		{ /* literal */
-	  		if(com->rbuf_current > com->rbuf_tail)
+	  		if(com->rbuf_current >= com->rbuf_tail)
 			{
 				gup_result res;
 				if((res=read_data(com))!=GUP_OK)
@@ -346,7 +346,7 @@ gup_result n0_decode(decode_struct *com)
 			int len;
 			ptr=-1;
 			ptr<<=8;
-	  		if(com->rbuf_current > com->rbuf_tail)
+	  		if(com->rbuf_current >= com->rbuf_tail)
 			{
 				gup_result res;
 				if((res=read_data(com))!=GUP_OK)
@@ -368,7 +368,7 @@ gup_result n0_decode(decode_struct *com)
 				}
 				ptr|=~data;
 				ptr<<=8;
-		  		if(com->rbuf_current > com->rbuf_tail)
+		  		if(com->rbuf_current >= com->rbuf_tail)
 				{
 					gup_result res;
 					if((res=read_data(com))!=GUP_OK)

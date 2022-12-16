@@ -88,12 +88,19 @@ extern "C"
 #define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
 #define M4_MIN_MATCH 3						/* m4 maximum match */
 #define M4_MAX_MATCH 256					/* m4 maximum match */
+#define M4_MAX_HIST 0						/* m4 does not use history pointers */
+#define N0_MAX_PTR  65536              /* maximale pointer offset + 1 */
+#define N0_MIN_MATCH 3						/* n0 maximum match */
+#define N0_MAX_MATCH 65536					/* n0 maximum match */
+#define N0_MAX_HIST 0						/* n0 does not use history pointers */
 #define N1_MAX_PTR 130560              /* maximale pointer offset + 1 */
 #define N1_MIN_MATCH 2						/* n1 maximum match */
 #define N1_MAX_MATCH 65535					/* n1 maximum match */
+#define N1_MAX_HIST 0						/* n1 does not use history pointers */
 #define N2_MAX_PTR (1<<24)              /* maximale pointer offset + 1 */
 #define N2_MIN_MATCH 2						/* n2 maximum match */
 #define N2_MAX_MATCH 65535					/* n2 maximum match */
+#define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
 #define MAX_PTR   26623                /* arj dictionary is 26k */

@@ -1387,10 +1387,46 @@ void ptr_copy2(ptr_t *src, ptr_t *dst)
 	}
 }
 
+void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst)
+{
+	int i;
+	int j=0;
+	dst[0]=ptr;
+	for(i=1; i<MAX_PTR_HIST; i++)
+	{
+		if(src[j]==ptr)
+		{
+			j++;
+		}
+		dst[i]=src[j];
+		j++;
+	}
+}
+
+void ptr_insert(ptr_t ptr, ptr_t *src);
+
+void ptr_insert(ptr_t ptr, ptr_t *src)
+{
+	int i;
+	ptr_t old_ptr;
+	ptr_t new_ptr=ptr;
+	for(i=0; i<MAX_PTR_HIST; i++)
+	{
+		old_ptr=src[i];
+		if(old_ptr==ptr)
+		{
+			break;
+		}
+		src[i]=new_ptr;
+		new_ptr=old_ptr;
+	}
+}
+
 gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do;
+	unsigned long orig_size;
 	unsigned long cost;
 	{ /*- dictionary buffer vullen */
 		long byte_count;
@@ -1413,7 +1449,8 @@ gup_result encode32(packstruct *com)
 			com->print_progres(byte_count, com->pp_propagator);
 			#endif
 		}
-		bytes_to_do = byte_count;
+		orig_size = byte_count;
+		bytes_to_do = orig_size;
 	}
 	com->packed_size = 0;
 	while (bytes_to_do)
@@ -1439,12 +1476,21 @@ gup_result encode32(packstruct *com)
 			com->cost[current_pos]=cost;
 		}
 	}
-	{ /* terug rekenen voor de goedkoopste weg */
+	{	/* De pointer geschiedenis omdraaien zodat we een laatste ronde kunnen doen op zoek naar matches met toekomstige pointers */
+		int j;
+		for(j=0; j<MAX_PTR_HIST; j++)
+		{
+			com->ptr_hist[j]=~0;
+		}
+	}
+	{	/* terug rekenen voor de goedkoopste weg */
 		match_t match;
 		ptr_t ptr;
+		index_t literal_count;
 		match=com->match_len[current_pos];
 		ptr=com->ptr_len[current_pos];
 		com->match_len[current_pos]=0;
+		literal_count=0;
 		while(current_pos>DICTIONARY_START_OFFSET)
 		{
 			if(match==0)
@@ -1453,6 +1499,43 @@ gup_result encode32(packstruct *com)
 				match=com->match_len[current_pos];
 				ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=0;
+				literal_count++;
+				if(literal_count>=com->min_match32)
+				{ /* op zoek naar mogelijke matches met de pointer history */
+					int i;
+					for(i=0; i<com->max_hist; i++)
+					{
+						ptr_t hist_ptr=com->ptr_hist[i];
+						if(hist_ptr<(current_pos-DICTIONARY_START_OFFSET))
+						{ /* hist_ptr ligt binnen bereik */
+							match_t len=0;
+							do
+							{
+								if(com->dictionary[current_pos+len]!=com->dictionary[current_pos-hist_ptr-1+len])
+								{
+									break;
+								}
+								len++;
+							} while(len<literal_count);
+							if(len>=com->min_match32)
+							{ /* mogelijke vervanging */
+								match_t j=len;
+								unsigned long cost=0;
+								do
+								{
+									j--;
+									cost+=com->cost_lit(com->dictionary[current_pos+j]);
+								} while(j>0);
+								if(cost >= com->cost_ptrlen(len, hist_ptr, current_pos, com->ptr_hist))
+								{ /* ja, een vervaning */
+									com->ptr_len[current_pos]=hist_ptr;
+									com->match_len[current_pos]=len;
+									ptr_insert(hist_ptr, com->ptr_hist);
+								}
+							}
+						}
+					}
+				}
 			}
 			else
 			{
@@ -1463,6 +1546,36 @@ gup_result encode32(packstruct *com)
 				new_ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=match;
 				com->ptr_len[current_pos]=ptr;
+				{ /* probeer ptr te vervangen door een pointer hystory match */
+					int i;
+					for(i=0; i<com->max_hist; i++)
+					{
+						ptr_t hist_ptr=com->ptr_hist[i];
+						if((hist_ptr!=ptr) && (hist_ptr<(current_pos-DICTIONARY_START_OFFSET)))
+						{ /* hist_ptr ligt binnen bereik en is ongelijk aan de huidige pointer */
+							match_t match_len=match;
+							do
+							{
+								match_len--;
+								if(com->dictionary[current_pos+match_len]!=com->dictionary[current_pos-hist_ptr-1+match_len])
+								{
+									match_len++;
+									break;
+								}
+							} while(match_len>0);
+							if(match_len==0)
+							{ /* mogelijke vervanging */
+								if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist+current_pos*MAX_PTR_HIST) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist))
+								{ /* ja, een vervaning */
+									ptr=hist_ptr;
+									com->ptr_len[current_pos]=ptr;
+								}
+							}
+						}
+					}
+				}
+				literal_count=0;
+				ptr_insert(ptr, com->ptr_hist);
 				match=new_match;
 				ptr=new_ptr;
 			}
