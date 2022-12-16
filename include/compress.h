@@ -512,6 +512,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	ptr_t maxptr32; /* maximum size of a pointer */
 	match_t min_match32; /* minimum match */
 	match_t max_match32; /* maximum match */
+	int max_hist; /* number of history pointers */
 } packstruct;
 #endif
 
