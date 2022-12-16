@@ -127,7 +127,9 @@ gup_result traverse_dirs(DSTACK *dir, const char *pattern,
 					if (pattern)
 					{
 						if (match_pattern(new_dir->name, pattern))
+						{
 							result = dothing(archive, new_dir->name, &new_dir->stat, opts);
+						}
 					}
 					else
 						result = dothing(archive, new_dir->name, &new_dir->stat, opts);

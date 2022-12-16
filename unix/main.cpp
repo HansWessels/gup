@@ -581,6 +581,14 @@ void doexit(void)
 	{
 		free(opts.args);
 	}
+	if (opts.programname != NULL)
+	{
+		free((void *)opts.programname);
+	}
+
+#ifdef _MSC_VER
+	_CrtDumpMemoryLeaks();
+#endif
 }
 
 /* duplicate the files in the array - just to be on the safe side
@@ -688,7 +696,7 @@ int main(int argc, char *argv[])
 	// Get current flag
 	int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 
-	tmpFlag |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF;
+	tmpFlag |= _CRTDBG_ALLOC_MEM_DF | /* _CRTDBG_DELAY_FREE_MEM_DF | */ _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF;
 
 	// Set flag to the new value.
 	_CrtSetDbgFlag(tmpFlag); 
