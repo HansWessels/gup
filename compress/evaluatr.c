@@ -1391,10 +1391,27 @@ void ptr_copy2(ptr_t *src, ptr_t *dst)
 	}
 }
 
+void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst)
+{
+	int i;
+	int j=0;
+	dst[0]=ptr;
+	for(i=1; i<MAX_PTR_HIST; i++)
+	{
+		if(src[j]==ptr)
+		{
+			j++;
+		}
+		dst[i]=src[j];
+		j++;
+	}
+}
+
 gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do;
+	unsigned long orig_size;
 	unsigned long cost;
 	{ /*- dictionary buffer vullen */
 		long byte_count;
@@ -1417,7 +1434,8 @@ gup_result encode32(packstruct *com)
 			com->print_progres(byte_count, com->pp_propagator);
 			#endif
 		}
-		bytes_to_do = byte_count;
+		orig_size = byte_count;
+		bytes_to_do = orig_size;
 	}
 	com->packed_size = 0;
 	while (bytes_to_do)
@@ -1443,12 +1461,22 @@ gup_result encode32(packstruct *com)
 			com->cost[current_pos]=cost;
 		}
 	}
-	{ /* terug rekenen voor de goedkoopste weg */
+	{	/* De pointer geschiedenis omdraaien zodat we een laatste ronde kunnen doen op zoek naar matches met toekomstige pointers */
+		int j;
+		for(j=0; j<MAX_PTR_HIST; j++)
+		{
+			com->ptr_hist[current_pos*MAX_PTR_HIST+j]=~0;
+		}
+	}
+	{	/* terug rekenen voor de goedkoopste weg */
 		match_t match;
 		ptr_t ptr;
+		index_t literal_count;
+		ptr_t last_ptr=~0;
 		match=com->match_len[current_pos];
 		ptr=com->ptr_len[current_pos];
 		com->match_len[current_pos]=0;
+		literal_count=0;
 		while(current_pos>DICTIONARY_START_OFFSET)
 		{
 			if(match==0)
@@ -1457,6 +1485,8 @@ gup_result encode32(packstruct *com)
 				match=com->match_len[current_pos];
 				ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=0;
+				ptr_copy(last_ptr, com->ptr_hist+(current_pos+1)*MAX_PTR_HIST, com->ptr_hist+current_pos*MAX_PTR_HIST);
+				literal_count++;
 			}
 			else
 			{
@@ -1467,6 +1497,37 @@ gup_result encode32(packstruct *com)
 				new_ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=match;
 				com->ptr_len[current_pos]=ptr;
+				ptr_copy(last_ptr, com->ptr_hist+(current_pos+match)*MAX_PTR_HIST, com->ptr_hist+current_pos*MAX_PTR_HIST);
+				{ /* probeer ptr te vervangen door een pointer hystory match */
+					int i;
+					for(i=0; i<1; i++)
+					{
+						ptr_t hist_ptr=com->ptr_hist[current_pos*MAX_PTR_HIST+i];
+						if((hist_ptr!=ptr) && (hist_ptr<(current_pos+DICTIONARY_START_OFFSET-1)))
+						{ /* hist_ptr ligt binnen bereik en is ongelijk aan de huidige pointer */
+							match_t match_len=match;
+							do
+							{
+								match_len--;
+								if(com->dictionary[current_pos+match_len]!=com->dictionary[current_pos-hist_ptr-1+match_len])
+								{
+									match_len++;
+									break;
+								}
+							} while(match_len>0);
+							if(match_len==0)
+							{ /* mogelijke vervanging */
+								if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist+current_pos*MAX_PTR_HIST) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist+current_pos*MAX_PTR_HIST))
+								{ /* ja, een vervaning */
+									ptr=hist_ptr;
+									com->ptr_len[current_pos]=ptr;
+								}
+							}
+						}
+					}
+				}
+				literal_count=0;
+				last_ptr=ptr;
 				match=new_match;
 				ptr=new_ptr;
 			}

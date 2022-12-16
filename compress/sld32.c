@@ -55,7 +55,6 @@ void free_dictionary32(packstruct *com);
 uint32_t hash(index_t pos, packstruct* com);
 void find_dictionary32(index_t pos, packstruct* com);
 void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com);
-void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst);
 
 gup_result init_dictionary32(packstruct *com)
 {
@@ -155,23 +154,6 @@ void free_dictionary32(packstruct *com)
 	com->gfree(com->cost, com->gf_propagator);
 	com->gfree(com->ptr_hist, com->gf_propagator);
 }
-
-void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst)
-{
-	int i;
-	int j=0;
-	dst[0]=ptr;
-	for(i=1; i<MAX_PTR_HIST; i++)
-	{
-		if(src[j]==ptr)
-		{
-			j++;
-		}
-		dst[i]=src[j];
-		j++;
-	}
-}
-
 
 uint32_t hash(index_t pos, packstruct* com)
 { /* bereken de positie in de hash table en geef deze positie terug */

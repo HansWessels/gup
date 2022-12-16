@@ -519,6 +519,8 @@ gup_result encode32(packstruct *com);
 gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
 void find_dictionary32(index_t pos, packstruct* com);
+void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst);
+
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
 uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
