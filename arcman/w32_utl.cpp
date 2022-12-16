@@ -342,22 +342,21 @@ ftype gup_file_type(const osstat *stat)
 
 gup_result gup_stat(const char *name, osstat *st)
 {
-	HANDLE handle;
-	WIN32_FIND_DATAA data;
+	WIN32_FILE_ATTRIBUTE_DATA attrs;
+	BOOL rv = GetFileAttributesExA(name, GetFileExInfoStandard, &attrs);
+	if (rv)
+	{
+		st->length = (unsigned long)attrs.nFileSizeLow;	/* File length. */
 
-	if ((handle = FindFirstFileA(name, &data)) == INVALID_HANDLE_VALUE)
-		return gup_conv_win32_err(GetLastError());
+		st->file_mode.mode = attrs.dwFileAttributes;	/* File attributes. */
+		st->ctime.time = attrs.ftCreationTime;	/* Creation time. */
+		st->atime.time = attrs.ftLastAccessTime;	/* Last access time. */
+		st->mtime.time = attrs.ftLastWriteTime;	/* Modification time. */
 
-	FindClose(handle);
+		return GUP_OK;
+	}
+	return gup_conv_win32_err(GetLastError());
 
-	st->length = (unsigned long) data.nFileSizeLow;	/* File length. */
-
-	st->file_mode.mode = data.dwFileAttributes;	/* File attributes. */
-	st->ctime.time = data.ftCreationTime;	/* Creation time. */
-	st->atime.time = data.ftLastAccessTime;	/* Last access time. */
-	st->mtime.time = data.ftLastWriteTime;	/* Modification time. */
-
-	return GUP_OK;
 }
 
 /*
