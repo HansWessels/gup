@@ -353,6 +353,10 @@ gup_result gup_stat(const char *name, osstat *st)
 		st->atime.time = attrs.ftLastAccessTime;	/* Last access time. */
 		st->mtime.time = attrs.ftLastWriteTime;	/* Modification time. */
 
+		// report directory length always as: zero.
+		if (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			st->length = 0;
+
 		return GUP_OK;
 	}
 	return gup_conv_win32_err(GetLastError());
