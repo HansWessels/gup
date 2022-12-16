@@ -96,7 +96,7 @@ NM="nm"
 LN_S="ln -s"
 
 # What is the maximum length of a command?
-max_cmd_len=3145728
+max_cmd_len=1572864
 
 # Object file suffix (normally "o").
 objext=o
@@ -281,10 +281,10 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/usr/lib/gcc/x86_64-linux-gnu/11 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu /lib "
+sys_lib_search_path_spec="/opt/AMD/aocc-compiler-2.3.0/lib /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/11 /lib/x86_64-linux-gnu /lib /opt/AMD/aocc-compiler-2.3.0/lib32 /usr/lib64 /usr/lib32 "
 
 # Detected run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/x86_64-linux-gnu/libfakeroot /usr/local/lib /usr/local/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/local/lib /usr/local/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 "
 
 # Explicit LT_SYS_LIBRARY_PATH set during ./configure time.
 configure_time_lt_sys_library_path=""
@@ -11670,7 +11670,7 @@ reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
 
 # A language specific compiler.
-CC="g++"
+CC="c++"
 
 # Is the compiler the GNU compiler?
 with_gcc=yes
@@ -11791,17 +11791,17 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
-compiler_lib_search_dirs="/usr/lib/gcc/x86_64-linux-gnu/11 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib /lib/x86_64-linux-gnu /lib/../lib /usr/lib/x86_64-linux-gnu /usr/lib/../lib /usr/lib/gcc/x86_64-linux-gnu/11/../../.."
+compiler_lib_search_dirs="/usr/bin/../lib/gcc/x86_64-linux-gnu/11 /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../lib64 /lib/x86_64-linux-gnu /lib/../lib64 /usr/lib/x86_64-linux-gnu /usr/lib/../lib64 /usr/lib/llvm-14/bin/../lib /lib /usr/lib /opt/AMD/aocc-compiler-2.3.0/lib /opt/AMD/aocc-compiler-2.3.0/lib32 /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib32 /usr/lib ."
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
-predep_objects="/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o"
-postdep_objects="/usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o"
+predep_objects="/lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/11/crtbeginS.o"
+postdep_objects="/usr/bin/../lib/gcc/x86_64-linux-gnu/11/crtendS.o /lib/x86_64-linux-gnu/crtn.o"
 predeps=""
-postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
+postdeps="-lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.."
+compiler_lib_search_path="-L/usr/bin/../lib/gcc/x86_64-linux-gnu/11 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/llvm-14/bin/../lib -L/lib -L/usr/lib -L/opt/AMD/aocc-compiler-2.3.0/lib -L/opt/AMD/aocc-compiler-2.3.0/lib32 -L/usr/lib/x86_64-linux-gnu -L/usr/lib64 -L/usr/lib32 -L/usr/lib -L."
 
 # ### END LIBTOOL TAG CONFIG: CXX
