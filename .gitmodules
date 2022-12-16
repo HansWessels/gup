@@ -1,6 +1,7 @@
 [submodule "test/calgary-corpus"]
 	path = test/calgary-corpus
 	url = https://github.com/HansWessels/calgary.git
+	ignore = dirty
 [submodule "thirdparty/dirent"]
 	path = thirdparty/dirent
 	url = https://github.com/GerHobbelt/dirent.git
