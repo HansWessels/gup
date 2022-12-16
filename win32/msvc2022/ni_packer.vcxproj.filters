@@ -908,7 +908,7 @@
     <ClInclude Include="..\..\include\compiler_intrinsics.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
-    <ClCompile Include="Q:\nyh\Atari\e\pc\gup\ni_pack\ni_n2.c">
+    <ClCompile Include="../../ni_pack/ni_n2.c">
       <Filter>Source Files\ni_pack</Filter>
     </ClCompile>
   </ItemGroup>
