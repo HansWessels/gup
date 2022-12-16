@@ -113,6 +113,11 @@
       <FileType>Makefile</FileType>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\gup.vcxproj">
+      <Project>{00811970-815b-4f64-bc9d-219078100f5b}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
