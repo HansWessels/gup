@@ -58,7 +58,7 @@
            , filename                                             \
            , lineno                                               \
            );                                                     \
-    abort();                                                      \
+    ARJ_Assert(!#condition);                                      \
   }
 
 static int32 __genece_dic_init(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)

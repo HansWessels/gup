@@ -48,7 +48,6 @@ uint8 bufget_byte(buf_fhandle_t* buf);
 void buf_close_read(buf_fhandle_t* buf);
 
 #ifdef __cplusplus
-extern "C"
 }
 #endif
 #endif

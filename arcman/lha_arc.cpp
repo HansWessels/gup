@@ -171,6 +171,7 @@ static uint8 calc_checksum(uint8 *buffer, unsigned long len)
 lha_archive::lha_archive(void)
 {
 	lha_hdr_level = 2;
+	header_pos = 0;
 }
 
 lha_archive::~lha_archive(void)
@@ -379,6 +380,7 @@ static gup_result conv_method_to_str(int method, char *str)
 	{
 		const char *src = method_strings[i].method_str;
 
+		ARJ_Assert(src != NULL);
 		while (*src)
 			*str++ = *src++;
 

@@ -26,6 +26,11 @@
 
 #ifdef _MSC_VER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 static uint32_t inline __builtin_ctz(uint32_t value)
 {
     DWORD trailing_zero = 0;
@@ -55,5 +60,9 @@ static uint32_t inline __builtin_clz(uint32_t value)
         return 32;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _MSC_VER

@@ -194,6 +194,9 @@ arj_archive::arj_archive(void)
 	TRACE_ME();
 	cur_main_hdr = NULL;
 	last_volume = 1;					/* Default archive is not multiple volume. */
+
+	arj_suff = 0;
+	header_pos = 0;
 }
 
 arj_archive::~arj_archive(void)
