@@ -29,3 +29,9 @@ stamp-h1
 /win32/msvc2019/obj/
 /win32/msvc2022/bin/
 /win32/msvc2022/obj/
+
+# gup release script scratch directory:
+/__gup_release_tmpdir__/
+*.zip
+/ni_pack/windows/msvc2022/bin/
+/ni_pack/windows/msvc2022/obj/

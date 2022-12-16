@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03fd328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files">
+      <UniqueIdentifier>{b1798409-2031-413d-9df7-70b0202ddd98}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Misc Files\ni_pack">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Files\ni_pack\atari_st">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0079}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ni_pack">
+      <UniqueIdentifier>{d2a97047-4937-4f7a-ab2f-4485e03f0145}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../arj_crc.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../arj_m4.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../arj_m7.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../depack_t.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../ni_n0.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../ni_n1.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <ClCompile Include="../../unstore.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+    <Text Include="../../atari_st/arj_crc.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
+    </Text>
+    <Text Include="../../atari_st/arj_m4.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
+    </Text>
+    <Text Include="../../atari_st/arj_m7.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
+    </Text>
+    <Text Include="../../atari_st/ni_n0.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
+    </Text>
+    <Text Include="../../atari_st/unstore.s">
+      <Filter>Misc Files\ni_pack\atari_st</Filter>
+    </Text>
+    <ClCompile Include="../../ni_n2.c">
+      <Filter>Source Files\ni_pack</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -6,7 +6,7 @@
 
 ## What's this, doc?
 
-GUP is an packer, which can archive (= store a bundle of files & directories in a *compressed* container file). It can be used as an alternative for ARJ, RAR, ZIP, LZH (LHarc), ...
+GUP is a packer, which can archive (= store a bundle of files & directories in a *compressed* container file). It can be used as an alternative for ARJ, RAR, ZIP, LZH (LHarc), ...
 
 GUP is also your primary choice when you're looking for a packer that produces **tight packs** (a.k.a. high compression ratio), while also delivering **fast & *small* depacker code**.
 

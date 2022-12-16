@@ -7,7 +7,7 @@
   call:
   void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
   size       = original size
-  dst        = destenestion to depack to
+  dst        = destination to depack to
   data       = packed data
 */
 
@@ -45,7 +45,7 @@ typedef int16_t kartype;   /* signed 16 bit */
     while(--i>=0)                                           \
     {                                                       \
       newbuf<<=8;                                           \
-      newbuf+=*data++;                                       \
+      newbuf+=*data++;                                      \
       bib+=8;                                               \
     }                                                       \
     bitbuf+=newbuf;                                         \

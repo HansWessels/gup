@@ -1,9 +1,19 @@
+/*-
+  GUP N1 decode routines memory to memory (an augmented M4 style depacker)
+  (c) 2022 Mr Ni! (the Great of the TOS-crew) a.k.a. Hans Wessels
+*/
+
 /*
-** ni packer mode n0 depacker
-** 2022 Hans Wessels
+  call:
+  void decode_n1(uint8_t *dst, uint8_t *data)
+  dst        = destination to depack to
+  data       = packed data
+  
+  Note: original data size is included in the packed input data (first 4 bytes, Big Endian encoded)
 */
 
 #include <stdint.h>
+#include <limits.h>
 
 typedef uint8_t uint8;         /* unsigned 8 bit */
 typedef uint16_t uint16;    /* unsigned 16 bit */
@@ -12,28 +22,28 @@ typedef uint32_t uint32;
 typedef int32_t int32;
 
 
-#define BITBUFSIZE (sizeof(bitbuf)*8)
+#define BITBUFSIZE (int)(sizeof(unsigned long int)*CHAR_BIT)  /* number of bits in bitbuffer */
 
-#define TRASHBITS(x) /* trash  bits from bitbuffer */			\
-{																				\
-	int xbits=(x);															\
-	bib -= xbits;															\
-	if(bib < 0)																\
-	{ /* refill bitbuffer */											\
-		int i;																\
-		unsigned long newbuf = 0; /* BITBUFSIZE bits groot */	\
-		bitbuf <<= (xbits + bib); /* gooi bits er uit */		\
-		xbits =- bib;														\
-		i = (int)sizeof(bitbuf) - 2;									\
-		while(--i >= 0)													\
-		{																		\
-			newbuf <<= 8;													\
-			newbuf+=*data++;												\
-			bib += 8;														\
-		}																		\
-		bitbuf += newbuf;													\
-	}																			\
-	bitbuf <<= xbits;														\
+#define TRASHBITS(x)    /* trash  bits from bitbuffer */    \
+{                                                           \
+  int xbits=(x);                                            \
+  bib-=xbits;                                               \
+  if(bib<0)                                                 \
+  { /* refill bitbuffer */                                  \
+    int i;                                                  \
+    unsigned long int newbuf=0; /* BITBUFSIZE bits big */   \
+    bitbuf<<=(xbits+bib);        /* trash bits */           \
+    xbits=-bib;                                             \
+    i=(int)sizeof(bitbuf)-2;                                \
+    while(--i>=0)                                           \
+    {                                                       \
+      newbuf<<=8;                                           \
+      newbuf+=*data++;                                      \
+      bib+=8;                                               \
+    }                                                       \
+    bitbuf+=newbuf;                                         \
+  }                                                         \
+  bitbuf<<=xbits;                                           \
 }
 
 void decode_n1(uint8_t *dst, uint8_t *data)
