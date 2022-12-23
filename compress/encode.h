@@ -97,7 +97,7 @@ extern "C"
 #define N1_MIN_MATCH 2						/* n1 maximum match */
 #define N1_MAX_MATCH 65535					/* n1 maximum match */
 #define N1_MAX_HIST 0						/* n1 does not use history pointers */
-#define N2_MAX_PTR (1<<24)              /* maximale pointer offset + 1 */
+#define N2_MAX_PTR 0xFFFC00            /* maximale pointer offset + 1 */
 #define N2_MIN_MATCH 2						/* n2 maximum match */
 #define N2_MAX_MATCH 65535					/* n2 maximum match */
 #define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
