@@ -29,22 +29,9 @@ export decode_n1
 decode_n1:
      movem.l D3-D7/A2-A3,-(SP) ; save registers
      moveq   #0,D7            ; bitcount = 0
-     move.w  A1,D3            ; remove if buffer is at even adress; for checking rbuf_current
-     btst    D7,D3            ; remove if buffer is at even adress; does readbuf_current point to an even address?
-     beq.s   .cont            ; remove if buffer is at even adress; yes
-     addq.l  #1,A1            ; remove if buffer is at even adress;
-     moveq   #8,D7            ; remove if buffer is at even adress; 8 bits in subbitbuf
-.cont:
-     move.l  -2(A1),D6        ; replace with move.w (A1),D6 if buffer is at even adress; fill bitbuf
-     ror.l   D7,D6            ; remove if buffer is at even adress;
-     moveq   #16,D3           ; 16 bits for packed size
-     bsr.s   .getbits         ; first 16 bits
-     move.w  D2,D0            ;
-     moveq   #16,D3           ; 16 bits for packed size
-     swap    D0
-     bsr.s   .getbits         ; second 16 bits
-     move.w  D2,D0            ;
+     move.l  (A1)+,D0         ; original size
      lea     0(A0,D0.l),A3    ; end address
+     move.w  (A1),D6          ; fill bitbuf
 .count_loop:                  ; main depack loop
      move.w  D6,D1            ; evaluate most significant bit bitbuf
      bmi.s   .start_sld       ; =1 -> sliding dictionary

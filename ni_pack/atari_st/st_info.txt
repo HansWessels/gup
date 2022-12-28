@@ -1,0 +1,14 @@
+Depack speed and depacker size:
+
+packer   bytes time [s] packed size
+ni_n0       62    31.40     1109027
+ni_n0_f     96    18.77     1109027
+ni_n1      146    48.22     1075939
+ni_n1_e    120    48.22     1075939
+ni_n2      100    50.55     1053663
+ni_n2_f    152    26.98     1053663
+
+arj_m4     132    49.24     1157561
+arj_m4_e   118    49.24     1157561
+arj_m7     738    41.03     1006902
+arj_m7_e   724    41.03     1006902
