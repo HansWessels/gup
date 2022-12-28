@@ -14,7 +14,7 @@ extern "C"
 
 #define DICTIONARY_START_OFFSET 2  /* eerste 2 posities in de dictionary zijn voor speciaal gebruik, laatste twee ook */
 #define DICTIONARY_END_OFFSET 2
-#define MAX_PTR_HIST 1 // official but slow: 8
+#define MAX_PTR_HIST 8 // official but slow: 8
 
 typedef uint32_t	match_t; /* bevat de lengte van de match, is nul bij geen match */
 typedef uint32_t	ptr_t;	/* relatieve offset van de match, geinverteerd, 0 is 1 karakter terug */

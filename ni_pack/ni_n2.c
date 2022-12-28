@@ -63,7 +63,7 @@ typedef int32_t int32;
 		tmp+=tmp+bit;									\
 		N2_GET_BIT(bit);								\
 	} while(bit==0);									\
-	if(tmp==-65536)									\
+	if(tmp<=-65537)									\
 	{ /* eof token */									\
 		return;											\
 	}														\

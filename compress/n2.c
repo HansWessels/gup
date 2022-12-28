@@ -32,8 +32,8 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	static unsigned long ptr_copy[LAST_PTR_COUNT]={0};
 	static unsigned long total_size=0;
 #endif
-
-#if 0
+        
+#if 0   
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
@@ -351,13 +351,15 @@ gup_result n2_compress(packstruct *com)
       	}
 		}
 	}
-	{ /* send end of stream token, 15 zero's makes the 16 bit value 0 */
+	{ /* send end of stream token, 16 one's makes the 16 bit value -1 */
 		int i;
 		N2_ST_BIT(1); /* pointer is comming */
-		for(i=0; i<29; i++)
+		for(i=0; i<15; i++)
 		{
+			N2_ST_BIT(1);
 			N2_ST_BIT(0);
 		}
+		N2_ST_BIT(1);
 		N2_ST_BIT(1);
 		LOG_TEXT("EOF token\n");			\
 	}
@@ -548,7 +550,7 @@ gup_result n2_close_stream(packstruct *com)
 		tmp+=tmp+bit;									\
 		N2_GET_BIT(bit);								\
 	} while(bit==0);									\
-	if(tmp==-65536)									\
+	if(tmp<=-65537)									\
 	{ /* eof token */									\
 		LOG_TEXT("EOF token\n");					\
 		break;											\
