@@ -16,7 +16,8 @@ atari_st\arj_m7e.s
 atari_st\ni_n0.s
 ;atari_st\ni_n0_f.s
 ;atari_st\ni_n1.s
-atari_st\ni_n1_e.s
+;atari_st\ni_n1_e.s
+atari_st\ni_n1_f.s
 atari_st\ni_n2.s
 ;atari_st\ni_n2_f.s
 atari_st\unstore.s

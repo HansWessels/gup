@@ -45,10 +45,10 @@ decode_n1:
      bsr.s   .getbits         ; second 16 bits
      move.w  D2,D0            ;
      lea     0(A0,D0.l),A3    ; end address
+     moveq   #9,D3            ; pop bits from bitbuf for literal
 .count_loop:                  ; main depack loop
      move.w  D6,D1            ; evaluate most significant bit bitbuf
      bmi.s   .start_sld       ; =1 -> sliding dictionary
-     moveq   #9,D3            ; pop bits from bitbuf for literal
      bsr.s   .getbits         ;
      move.b  D2,(A0)+         ; push byte in buffer
 .eval_loop:
@@ -67,11 +67,12 @@ decode_n1:
      moveq   #6,D4            ;
      moveq   #15,D2           ; minimum getbits + D4
      bsr.s   .get_them        ;
-     moveq   #9,D1
-     lsl.l   D1,D5            ;
-     add.l   D5,D2            ; calc pointer
-     neg.l   D2               ; pointer offset negatief
-     lea     -1(A0,D2.l),A2   ; pointer in dictionary
+     moveq   #9,D3
+     lsl.l   D3,D5            ;
+     lea     -1(a0),A2
+     move.w  D2,D4            ; clear high word
+     sub.l   D4,A2
+     sub.l   D5,A2
 .copy_loop:
      move.b  (A2)+,(A0)+      ;
      dbra    D0,.copy_loop    ;
