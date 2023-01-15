@@ -89,40 +89,54 @@ uint32_t get_long(unsigned char *p)
 static unsigned long error_count=0;
 static unsigned long total_compressed_size=0;
 static unsigned long total_original_size=0;
+
+char *mode_to_str(int mode)
+{
+	char * str;
+	switch(mode)
+	{
+	case STORE:
+		str="m0";
+		break;
+	case ARJ_MODE_1:
+		str="m1";
+		break;
+	case ARJ_MODE_2:
+		str="m2";
+		break;
+	case ARJ_MODE_3:
+		str="m3";
+		break;
+	case GNU_ARJ_MODE_7:
+		str="m7";
+		break;
+	case ARJ_MODE_4:
+		str="m4";
+		break;
+	case NI_MODE_0:
+		str="n0";
+		break;
+	case NI_MODE_1:
+		str="n1";
+		break;
+	case NI_MODE_2:
+		str="n2";
+		break;
+	default:
+		str="";
+		break;
+	}
+	return str;
+}
+
 char *make_outfile_name(char *original_name, int mode)
 {
 	char* name=malloc(strlen(original_name+4));
 	char* extension;
 	if(name!=NULL)
 	{
-		switch(mode)
-		{
-		case STORE:
-			extension="m0";
-			break;
-		case ARJ_MODE_1:
-		case ARJ_MODE_2:
-		case ARJ_MODE_3:
-		case GNU_ARJ_MODE_7:
-			extension="m7";
-			break;
-		case ARJ_MODE_4:
-			extension="m4";
-			break;
-		case NI_MODE_0:
-			extension="n0";
-			break;
-		case NI_MODE_1:
-			extension="n1";
-			break;
-		case NI_MODE_2:
-			extension="n2";
-			break;
-		default:
-			extension="";
-			break;
-		}
-		sprintf(name, "%s.%s", original_name, extension);
+		
+		sprintf(name, "%s.%s", original_name, mode_to_str(mode));
 	}
 	return name;
 }
@@ -136,7 +150,7 @@ int decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	if(dst==NULL)
 	{
 		printf("Malloc error, %lu bytes\n", size+1024);
-		return;
+		return -1;
 	}
 	switch(mode)
 	{
@@ -270,7 +284,7 @@ int main(int argc, char *argv[])
 			printf("%-20s", naam+file_naam_pos);
 			printf(" %12lu ", original_size);
 			printf(" %12lu ", compressed_size);
-			printf(" %2X ", method);
+			printf(" %2s ", mode_to_str(method));
 			printf(" %08lX ", (unsigned long)crc32);
 
 			total_compressed_size+=compressed_size;
@@ -292,8 +306,32 @@ int main(int argc, char *argv[])
 				printf("Unexpected end of data reached, aborting\n");
 				break;
 			}
-			decode(method, original_size, crc32, data+offset);
-			printf("\n");
+			if(decode(method, original_size, crc32, data+offset)==0)
+			{
+				char *outfile;
+				printf("\n");
+				outfile=make_outfile_name(naam+file_naam_pos, method);
+				if(outfile!=NULL)
+				{
+					FILE* g;
+					g=fopen(outfile, "wb");
+					if(g!=NULL)
+					{
+						printf("Dump: %s\n", outfile);
+						fwrite(data+offset, compressed_size, 1, g);
+						fclose(g);
+					}
+					else
+					{
+						printf("File open error: %s\n", outfile);
+					}
+					free(outfile);
+				}
+			}
+			else
+			{
+				printf("\n");
+			}
 			offset+=compressed_size;
 		}
 		else
