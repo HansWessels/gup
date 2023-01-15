@@ -27,15 +27,11 @@ export decode_n2
 
 decode_n2:
      movem.l D3-D4/A2-A3,-(SP)
-; ------------- setup constants -----------
-
      moveq   #-$80,D0         ; d0.b = $80 (byte refill flag)
      moveq   #-1,D2
      moveq   #-1,D3           ; last_ptr = 0
      moveq   #2,D4
      movea.w #-1024,A3        ; max len 2 ptr
-
-; ------------- DECOMPRESSION -------------
 decompr_literal:
      move.b  (A1)+,(A0)+      ; copy literal
 

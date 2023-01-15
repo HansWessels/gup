@@ -1,6 +1,6 @@
-; ARJ mode4 decode function
+; Ni mode 1 decode function
 ; Size optimized
-; Placed in public domain 1993-2007 Hans Wessels (Mr Ni! (the Great) of the TOS-crew)
+; Placed in public domain 2022 Hans Wessels (Mr Ni! (the Great) of the TOS-crew)
 ;
 ; void decode_n1(char* depack_space, char* packed_data)
 ; CALL:
