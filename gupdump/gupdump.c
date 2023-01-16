@@ -135,7 +135,6 @@ char *make_outfile_name(char *original_name, int mode)
 	char* extension;
 	if(name!=NULL)
 	{
-		
 		sprintf(name, "%s.%s", original_name, mode_to_str(mode));
 	}
 	return name;
@@ -193,6 +192,66 @@ int decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	return result;
 }
 
+char *find_extension(char* filenaam)
+{
+	char *p=filenaam+strlen(filenaam)
+	while (p>=filenaam)
+	{
+		if(*p=='.')
+		{
+			return p++;
+		}
+		p--;
+	}
+	return NULL;
+}
+
+unsigned long get_original_size(uint8_t data, unsigned long compressed_size, int mode)
+{
+	return 0;
+}
+
+int depack_on_extension(char* filenaam, uint8_t data, unsigned long compressed_size)
+{
+	char *extension=find_extension(filenaam);
+	int mode;
+	unsigned long original_size;
+	if(extension==NULL)
+	{ /* geen extensie gevonden */
+		return -1;
+	}
+	if(strcmp(extension, "m0")==0)
+	{ /* m0 file */
+		mode=STORE;
+	}
+	else if(strcmp(extension, "m4")==0)
+	{ /* m4 file */
+		mode=ARJ_MODE_4;
+	}
+	else if(strcmp(extension, "m7")==0)
+	{ /* m7 file */
+		mode=GNU_ARJ_MODE_7;
+	}
+	else if(strcmp(extension, "n0")==0)
+	{ /* n0 file */
+		mode=NI_MODE_0;
+	}
+	else if(strcmp(extension, "n1")==0)
+	{ /* n1 file */
+		mode=NI_MODE_1;
+	}
+	else if(strcmp(extension, "n2")==0)
+	{ /* n2 file */
+		mode=NI_MODE_2;
+	}
+	else
+	{
+		return -1;
+	}
+	original_size=get_original_size(data, compressed_size, mode);
+	
+}
+
 int main(int argc, char *argv[])
 {
 	char *filenaam;
@@ -234,7 +293,12 @@ int main(int argc, char *argv[])
 	for(;;)
 	{
 		if(offset>=file_size)
-		{
+		{ /* geen ARJ file? Check extension... */
+			if(depack_on_extension(filenaam, data, file_size)==0)
+			{
+				free(data);
+				return 0;
+			}
 			printf("Unexpected end of data reached, aborting\n");
 			break;
 		}
@@ -310,6 +374,10 @@ int main(int argc, char *argv[])
 			{
 				char *outfile;
 				printf("\n");
+				if((method==ARJ_MODE_1) || (method==ARJ_MODE_2) || (method==ARJ_MODE_3))
+				{
+					method=GNU_ARJ_MODE_7;
+				}
 				outfile=make_outfile_name(naam+file_naam_pos, method);
 				if(outfile!=NULL)
 				{
