@@ -85,3 +85,45 @@ void decode_n0(uint8_t *dst, uint8_t *data)
 	}
 }
 
+unsigned long decode_n0_size(uint8_t *data)
+{
+	uint8 bitbuf=0;
+	unsigned long original_size=0;
+	int bits_in_bitbuf=0;
+	original_size++;
+	for(;;)
+	{
+		int bit;
+		GET_N0_BIT(bit);
+		if(bit==0)
+		{ /* literal */
+			original_size++;
+		}
+		else
+		{ /* ptr len */
+			int32 ptr;
+			uint8* src;
+			uint8 c;
+			int len;
+			ptr=-1;
+			ptr<<=8;
+			c=*data++;
+			GET_N0_BIT(bit);
+			if(bit==0)
+			{
+				ptr|=c;
+			}
+			else
+			{ /* 16 bit pointer */
+				if(c==0)
+				{
+					return original_size; /* end of stream */
+				}
+				ptr|=*data++;
+			}
+			DECODE_N0_LEN(len);
+			len++;
+			original_size+=len;
+		}
+	}
+}

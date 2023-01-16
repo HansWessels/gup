@@ -208,7 +208,35 @@ char *find_extension(char* filenaam)
 
 unsigned long get_original_size(uint8_t data, unsigned long compressed_size, int mode)
 {
-	return 0;
+	unsigned long original_size=0;
+	switch(mode)
+	{
+	case STORE:
+		original_size=unstore_size(compressed_size, data);
+		break;
+	case ARJ_MODE_1:
+	case ARJ_MODE_2:
+	case ARJ_MODE_3:
+	case GNU_ARJ_MODE_7:
+		original_size=decode_m7_size(compressed_size, data);
+		break;
+	case ARJ_MODE_4:
+		original_size=decode_m4_size(compressed_size, data);
+		break;
+	case NI_MODE_0:
+		original_size=decode_n0_size(data);
+		break;
+	case NI_MODE_1:
+		original_size=decode_n1_size(data);
+		break;
+	case NI_MODE_2:
+		original_size=decode_n2_size(data);
+		break;
+	default:
+		printf("Unknown method: %X", mode);
+		break;
+	}
+	return original_size;
 }
 
 int depack_on_extension(char* filenaam, uint8_t data, unsigned long compressed_size)

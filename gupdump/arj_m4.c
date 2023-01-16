@@ -132,3 +132,86 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 		}
 	}
 }
+
+unsigned long decode_m4(unsigned long packed_size, uint8_t *data)
+{
+	/* aanname origsize>0 */
+	unsigned long original_size=0;
+	int bib; /* bits in bitbuf */
+	unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	uint8* buffend;
+
+	buffend=data+packed_size;
+	{ /* make sure there are zero's at the end of the compressed data */
+		int i=(int)2*sizeof(bitbuf);
+		do
+		{
+			buffend[i]=0;
+		}
+		while(--i>=0)
+	}
+	buffend+=sizeof(bitbuf);
+	bitbuf=0;
+	bib=0;
+	{ /* init bitbuf */
+		int i=(int)sizeof(bitbuf);
+		while(--i>=0)
+		{
+			bitbuf<<=8;
+			bitbuf+=*data++;
+			bib+=8;
+		}
+		bib-=16;
+	}
+
+	for(;;)
+	{ /* decode loop */
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		if((bitbuf&mask)==0)
+		{ /* literal */
+			original_size
+			TRASHBITS(9);
+		}
+		else
+		{ /* pointer length combinatie */
+			int i;
+			int tb=7;
+			uint32 ptr;
+			uint32 kar;
+			i=1;
+			do
+			{
+				mask>>=1;
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				i++;
+			} while(i<7);
+			TRASHBITS(tb);
+			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i))+1;
+			TRASHBITS(i);
+			tb=4;
+			i=0;
+			mask=1UL<<(BITBUFSIZE-1);
+			do
+			{
+				if((bitbuf&mask)==0)
+				{
+					tb=i+1;
+					break;
+				}
+				mask>>=1;
+				i++;
+			} while(i<4);
+			TRASHBITS(tb);
+			TRASHBITS(i+9);
+			original_size+=kar;
+		}
+		if((data>=buffend) && (bitbuf==0))
+		{
+			return original_size;
+		}
+	}
+}
