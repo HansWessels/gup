@@ -5,8 +5,7 @@
 
 /*
   call:
-  void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
-  size       = original size
+  void decode_m7(uint8_t *dst, uint8_t *data)
   dst        = destination to depack to
   data       = packed data
 */
@@ -53,7 +52,7 @@ typedef int16_t kartype;   /* signed 16 bit */
   bitbuf<<=xbits;                                           \
 }
 
-void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
+void decode_m7(uint8_t *dst, uint8_t *data)
 {
   int karshlvl;             /* size of character shift */
   int ptrshlvl;             /* size of pointer shift */
@@ -66,14 +65,12 @@ void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
   byte *ptrlen;
   byte *base;
   byte *base_base; /* so I can free it at the end */
-  byte *end;
   base=(byte *)malloc(DEPACK_MALLOC_SIZE);
   if(base==NULL)
   { /* malloc error */
   	 return;
   }
   base_base=base;
-  end=dst+size;
   huff2kar=(void*)base;
   base+=sizeof(kartype)*65536UL;
   karlen=base+CHARS;
@@ -129,11 +126,6 @@ void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
         *dst++=(byte)kar;      /* use lower eight bits of negative number as literal character */
         TRASHBITS(karlen[kar]); /* maximum size of trashbits will be 16, small values (6-9) are more common */
       }
-    }
-    if(dst>=end)
-    {
-    	free(base_base);
-    	return;
     }
     /* end of heavily used main loop */
     { /* read new huffman codes */

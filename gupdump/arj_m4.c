@@ -133,7 +133,7 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 	}
 }
 
-unsigned long decode_m4(unsigned long packed_size, uint8_t *data)
+unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 {
 	/* aanname origsize>0 */
 	unsigned long original_size=0;
@@ -169,7 +169,7 @@ unsigned long decode_m4(unsigned long packed_size, uint8_t *data)
 		unsigned long mask=1UL<<(BITBUFSIZE-1);
 		if((bitbuf&mask)==0)
 		{ /* literal */
-			original_size
+			original_size++;
 			TRASHBITS(9);
 		}
 		else

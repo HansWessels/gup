@@ -114,3 +114,37 @@ void decode_n2(uint8_t *dst, uint8_t *data)
 		}
 	}
 }
+
+
+unsigned long decode_n2__size(uint8_t *data)
+{
+	uint8 bitbuf=0;
+	uint32 last_ptr=0;
+	unsigned long original_size=0;
+	int bits_in_bitbuf=0;
+	{ /* start met een literal */
+		data++;
+		original_size++;
+	}
+	for(;;)
+	{
+		int bit;
+		N2_GET_BIT(bit);
+		if(bit==0)
+		{ /* literal */
+			data++;
+			original_size++;
+		}
+		else
+		{ /* ptr len */
+			uint32 len;
+			uint32 ptr;
+			N2_GET_PTR(ptr);
+			N2_GET_LEN(len);
+			{ /* copy */
+				original_size+=len;
+			}
+			last_ptr=ptr;
+		}
+	}
+}

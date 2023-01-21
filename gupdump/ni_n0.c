@@ -90,6 +90,7 @@ unsigned long decode_n0_size(uint8_t *data)
 	uint8 bitbuf=0;
 	unsigned long original_size=0;
 	int bits_in_bitbuf=0;
+	data++;
 	original_size++;
 	for(;;)
 	{
@@ -97,6 +98,7 @@ unsigned long decode_n0_size(uint8_t *data)
 		GET_N0_BIT(bit);
 		if(bit==0)
 		{ /* literal */
+			data++;
 			original_size++;
 		}
 		else

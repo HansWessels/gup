@@ -415,6 +415,11 @@ int main(int argc, char *argv[])
 					{
 						printf("Dump: %s\n", outfile);
 						fwrite(data+offset, compressed_size, 1, g);
+						if(method==GNU_ARJ_MODE_7)
+						{ /* add two 0 bytes */
+							uint8_t zeroes[]={0,0,0,0};
+							fwrite(zeroes, 2, 1, g);
+						}
 						fclose(g);
 					}
 					else
