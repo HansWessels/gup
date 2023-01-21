@@ -63,23 +63,17 @@ decode_m7:
      lea     -workspacesize(SP),SP ; or supply your own workspace here
      lea     (SP),A2          ; remove if alternative workspace supplied
      moveq   #0,D7            ; bitcount = 0
-     move.w  A1,D3            ; for checking rbuf_current
-     btst    D7,D3            ; does readbuf_current point to an even address?
-     beq.s   .cont            ; yes
-     addq.l  #1,A1
-     moveq   #8,D7            ; 8 bits in subbitbuf
-.cont:
-     move.l  -2(A1),D6        ; fil bitbuf
-     ror.l   D7,D6
+     move.l  (A1),D6          ; fil bitbuf
+     move.w  (A1)+,D1         ; block size
+     subq.w  #1,D1
      lea     c_len-c_table(A2),A5 ;
      lea     avail-c_len(A5),A3
-     bra     .blocksize_zero  ; load a new Hufmann table
 .enter:
      movem.l D1/A0/A2,-(SP)
      clr.w   (A3)             ; reset avail
      moveq   #-2,D1           ; call-values for read_pt_len()
      bsr     .read_pt_len     ; call read_pt_len, a4 = pt_len
-     bsr     .get_them2
+     bsr.s   .get_them2
      movea.l A5,A6
      move.w  D2,D0
      beq.s   .n_is_0          ;
@@ -114,7 +108,14 @@ decode_m7:
      move.w  pt_table-pt_len(A4,D3.w),D2 ; check pt_table
      bge.s   .c_kleiner_NT    ;
      move.b  D6,D3            ; bitbuf
-     bsr     .fidel_no
+.fidel_no:
+     add.b   D3,D3
+.fidel_start:
+     bcc.s   .fidel_links     ;
+     neg.w   D2
+.fidel_links:
+     move.w  0(A3,D2.w),D2    ;
+     bmi.s   .fidel_no        ;
 .c_kleiner_NT:                ;
      move.b  0(A4,D2.w),D3    ;
      bsr     .fillbits
@@ -137,6 +138,10 @@ decode_m7:
      clr.b   (A6)+            ;
      dbra    D2,.loop_5       ;
      bra.s   .loop_3_test     ;
+*******************************************************************************
+.get_them2:
+     moveq   #9,D3            ;
+     bra     .getbits
 *******************************************************************************
 .n_is_0:
      bsr.s   .get_them2
@@ -193,38 +198,57 @@ decode_m7:
      and.w   D6,D2
      lsr.w   #3,D2            ; charactertable is 4096 bytes (=12 bits)
      move.w  0(A2,D2.w),D2    ; pop character
-     bpl.s   .decode_c_cont   ;
-.j_grotergelijk_nc:
-     move.b  D6,D3
-     roxr.b  #4,D3
-     bsr.s   .fidel_start
+     bmi.s   .j_grotergelijk_nc
 .decode_c_cont:               ;
      move.b  0(A5,D2.w),D3    ; pop 'charactersize' bits from buffer
-     bsr.s   .fillbits
+     sub.b   D3,D7
+     bcs.s   .c_fill
+     rol.l   D3,D6
      sub.w   D5,D2            ;
      bcc.s   .sliding_dic     ;
      move.b  D2,(A0)+         ; push character into buffer
-.count_test:
+     dbra    D1,.bnz_cont     ; Hufmann block size > 0?
+     bra.s   .blocksize_zero
+
+.c_fill:
+     add.b   #16,D7
+     move.l  (A1),D6
+     addq.l  #2,A1
+     ror.l   D7,D6
+     sub.w   D5,D2            ;
+     bcc.s   .sliding_dic     ;
+     move.b  D2,(A0)+         ; push character into buffer
      dbra    D1,.bnz_cont     ; Hufmann block size > 0?
 .blocksize_zero:              ; load a new Hufmann table
      dbra    D6,.decode_cont
      lea     workspacesize(SP),SP ; remove if alternative workspace supplied
      movem.l (SP)+,D3-D7/A2-A6 ;
      rts                      ;
+
 *******************************************************************************
-.get_them2:
-     moveq   #9,D3            ;
-     bra.s   .getbits
-*******************************************************************************
-.fidel_no:
+.j_grotergelijk_nc:
+     move.b  D6,D3
+     lsl.b   #4,D3
+.cfidel_no:
      add.b   D3,D3
-.fidel_start:
-     bcc.s   .fidel_links     ;
+.cfidel_start:
+     bcc.s   .cfidel_links     ;
      neg.w   D2
-.fidel_links:
+.cfidel_links:
      move.w  0(A3,D2.w),D2    ;
-     bmi.s   .fidel_no        ;
-     rts
+     bmi.s   .cfidel_no        ;
+     bra.s   .decode_c_cont
+
+.p_j_grotergelijk_np:
+     move.b  D6,D3
+.pfidel_no:
+     add.b   D3,D3
+     bcc.s   .pfidel_links     ;
+     neg.w   D2
+.pfidel_links:
+     move.w  0(A3,D2.w),D2    ;
+     bmi.s   .pfidel_no        ;
+     bra.s   .p_cont
 *******************************************************************************
 .sliding_dic:
      move.w  D2,D4            ;
@@ -232,19 +256,23 @@ decode_m7:
      clr.b   D2               ;
      lsr.w   #7,D2            ;
      move.w  pt_table-pt_len(A4,D2.w),D2 ;
-     bpl.s   .p_cont          ;
-.p_j_grotergelijk_np:
-     move.b  D6,D3
-     bsr.s   .fidel_no
+     bmi.s   .p_j_grotergelijk_np
 .p_cont:
      move.b  0(A4,D2.w),D3    ;
-     bsr.s   .fillbits
+     sub.b   D3,D7
+     bcs.s   .p_fill
+     rol.l   D3,D6
+.p_fill_done:
      move.w  D2,D3            ;
      beq.s   .p_einde         ;
      subq.w  #1,D3            ;
      move.w  D6,D2            ; subbitbuf
      swap    D2               ; high word of D2 was 1
-     bsr.s   .fillbits0
+     rol.l   D3,D2
+     sub.b   D3,D7
+     bcs.s   .p_fill1
+     rol.l   D3,D6
+.p_fill_done1:
      move.w  D2,D3
 .p_einde:
      not.w   D3               ; pointer offset negatief
@@ -256,10 +284,21 @@ decode_m7:
      dbra    D4,.copy_loop_0
      dbra    D1,.bnz_cont     ; Hufmann block size > 0?
      bra.s   .blocksize_zero
+.p_fill:
+     add.b   #16,D7
+     move.l  (A1),D6
+     addq.l  #2,A1
+     ror.l   D7,D6
+     bra.s   .p_fill_done
+.p_fill1:
+     add.b   #16,D7
+     move.l  (A1),D6
+     addq.l  #2,A1
+     ror.l   D7,D6
+     bra.s   .p_fill_done1
 
 ;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
 ********************************************************************************
-
 ; no_bits=D3
 ; result=D2
 .decode_cont:
@@ -286,7 +325,6 @@ decode_m7:
 
 ;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
 *******************************************************************************
-
 .n_is_nul:
      bsr.s   .getbits
      clr.b   0(A4,D2.w)

@@ -9,17 +9,15 @@ e:\pc\lib\original\PCSTART.s          ; startup code
 
 depack_e.c                ;
 atari_st\arj_crc.s
-;atari_st\arj_m4.s
 atari_st\arj_m4e.s
-;atari_st\arj_m7.s
-atari_st\arj_m7e.s
-atari_st\ni_n0.s
-;atari_st\ni_n0_f.s
-;atari_st\ni_n1.s
+;atari_st\arj_m7e.s
+atari_st\arj_m7f.s
+;atari_st\ni_n0.s
+atari_st\ni_n0_f.s
 ;atari_st\ni_n1_e.s
 atari_st\ni_n1_f.s
-atari_st\ni_n2.s
-;atari_st\ni_n2_f.s
+;atari_st\ni_n2.s
+atari_st\ni_n2_f.s
 atari_st\unstore.s
 
 ;PCBGILIB.LIB       ; BGI library

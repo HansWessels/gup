@@ -19,10 +19,9 @@
 ; the minimum amount of bytes required to be reserved before the
 ; packed data block.)
 ;
-;void decode(ulong origsize, char* depack_space, char* packed_data)
+;void decode(char* depack_space, char* packed_data)
 ;
 ; CALL:
-; D0 = original size
 ; A0 = ptr to depack space
 ; A1 = ptr to packed data
 ;
@@ -64,43 +63,20 @@ decode_m7:
      lea     -workspacesize(SP),SP ; or supply your own workspace here
      lea     (SP),A2          ; remove if alternative workspace supplied
      moveq   #0,D7            ; bitcount = 0
-     move.w  (A1),D6          ; fil bitbuf
+     move.l  (A1),D6          ; fil bitbuf
+     move.w  (A1)+,D1         ; block size
+     subq.w  #1,D1
      lea     c_len-c_table(A2),A5 ;
      lea     avail-c_len(A5),A3
-.blocksize_zero:              ; load a new Hufmann table
-     tst.l   D0
-     beq.s   .decode_einde
-     move.w  D6,D1            ; blocksize
-     subq.w  #1,D1            ; adapt blocksize for dbra
-     movem.l D0-D1/A0/A2,-(SP)
-     moveq   #16,D3           ; pop 16 bits
-     bsr     fillbits
+.enter:
+     movem.l D1/A0/A2,-(SP)
      clr.w   (A3)             ; reset avail
-     moveq   #-2,D2           ; call-values for read_pt_len()
-     bsr     read_pt_len      ; call read_pt_len, a4 = pt_len
-     bsr.s   .get_them2
+     moveq   #-2,D1           ; call-values for read_pt_len()
+     bsr     .read_pt_len     ; call read_pt_len, a4 = pt_len
+     bsr     .get_them2
      movea.l A5,A6
      move.w  D2,D0
-     bne.s   .n_niet_nul      ;
-     bsr.s   .get_them2
-     clr.b   0(A6,D2.w)       ; clear table
-     move.w  #$0FFF,D1
-.loop_2:
-     move.w  D2,-(A6)
-     dbra    D1,.loop_2
-     bra.s   .einde
-.decode_einde:
-     lea     workspacesize(SP),SP ; remove if alternative workspace supplied
-     movem.l (SP)+,D3-D7/A2-A6 ;
-     rts                      ;
-
-.get_them2:
-     moveq   #9,D3            ;
-     move.w  D6,D2            ; bitbuf
-     lsr.w   #7,D2            ; shift 'old' bits
-     bra     fillbits
-
-.n_niet_nul:                  ; *******************************
+     beq.s   .n_is_0          ;
 ;
 ; Register usage:
 ;
@@ -132,26 +108,21 @@ decode_m7:
      move.w  pt_table-pt_len(A4,D3.w),D2 ; check pt_table
      bge.s   .c_kleiner_NT    ;
      move.b  D6,D3            ; bitbuf
-.loop_4:                      ;
-     add.b   D3,D3            ;
-     bcc.s   .links           ;
-     neg.w   D2
-.links:                       ;
-     move.w  0(A3,D2.w),D2    ;
-     bmi.s   .loop_4          ;
+     bsr     .fidel_no
 .c_kleiner_NT:                ;
      move.b  0(A4,D2.w),D3    ;
-     bsr     fillbits
-     cmp.w   #2,D2            ;
-     bgt.s   .c_groter_2      ;
-     beq.s   .c_niet_1        ;
-     tst.w   D2               ;
-     beq.s   .loop_5_init     ;
-     moveq   #4,D3
-     bsr     getbits
+     bsr     .fillbits
+     tst.w   D2               ; c=0 -> 1 ptrlen zero
+     beq.s   .loop_5          ;
+     subq.w  #2,D2            ;
+     bgt.s   .c_groter_2      ; c>2 -> 1 ptrlen not zero
+     beq.s   .c_2             ; c=2 -> 20+? ptrlen zero
+     moveq   #4,D3            ; c=1 -> 2+? ptrlen zero
+     bsr     .getbits
      addq.w  #2,D2            ;
      bra.s   .loop_5_init     ;
-.c_niet_1:
+*******************************************************************************
+.c_2:
      bsr.s   .get_them2
      add.w   D4,D2            ;
 .loop_5_init:
@@ -160,8 +131,20 @@ decode_m7:
      clr.b   (A6)+            ;
      dbra    D2,.loop_5       ;
      bra.s   .loop_3_test     ;
+*******************************************************************************
+.n_is_0:
+     bsr.s   .get_them2
+     clr.b   0(A6,D2.w)       ; clear table
+     move.w  #$0FFF,D1
+.loop_2:
+     move.w  D2,-(A6)
+     dbra    D1,.loop_2
+     bra.s   .einde
+*******************************************************************************
+;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
+*******************************************************************************
+
 .c_groter_2:
-     subq.w  #2,D2            ;
      move.b  D2,(A6)+         ;
 .loop_3_test:
      dbra    D0,.loop_3       ;
@@ -170,10 +153,12 @@ decode_m7:
      movea.l A5,A4            ;
      bsr     make_table       ;
 .einde:
-     moveq   #20,D2           ;
-     bsr     read_pt_len      ; a4 = pt_len now
-     movem.l (SP)+,D0-D1/A0/A2
-     move.w  #256,D5
+     moveq   #20,D1           ;
+     bsr     .read_pt_len     ; a4 = pt_len now
+     movem.l (SP)+,D1/A0/A2
+     moveq   #-1,D3           ; D3.h = $FFFF for pointer offsets
+     move.w  #256,D5          ; to differentiate between literals and lengts codes
+     move.l  #$1FFF0,D0       ; for huffmandecoding and pointer calculation
 
 ;***********************
 ;
@@ -198,7 +183,7 @@ decode_m7:
 ; a7 = (sp)
 
 .bnz_cont:
-     moveq   #-16,D2          ; $ffff fff0, we use the $ffff in the high word later
+     move.l  D0,D2            ; $1 fff0, we use the $1 in the high word later
      and.w   D6,D2
      lsr.w   #3,D2            ; charactertable is 4096 bytes (=12 bits)
      move.w  0(A2,D2.w),D2    ; pop character
@@ -209,15 +194,22 @@ decode_m7:
      bsr.s   .fidel_start
 .decode_c_cont:               ;
      move.b  0(A5,D2.w),D3    ; pop 'charactersize' bits from buffer
-     bsr.s   fillbits
+     bsr.s   .fillbits
      sub.w   D5,D2            ;
      bcc.s   .sliding_dic     ;
      move.b  D2,(A0)+         ; push character into buffer
 .count_test:
-     subq.l  #1,D0
      dbra    D1,.bnz_cont     ; Hufmann block size > 0?
-     bra     .blocksize_zero
-
+.blocksize_zero:              ; load a new Hufmann table
+     dbra    D6,.decode_cont
+     lea     workspacesize(SP),SP ; remove if alternative workspace supplied
+     movem.l (SP)+,D3-D7/A2-A6 ;
+     rts                      ;
+*******************************************************************************
+.get_them2:
+     moveq   #9,D3            ;
+     bra.s   .getbits
+*******************************************************************************
 .fidel_no:
      add.b   D3,D3
 .fidel_start:
@@ -227,10 +219,9 @@ decode_m7:
      move.w  0(A3,D2.w),D2    ;
      bmi.s   .fidel_no        ;
      rts
-
+*******************************************************************************
 .sliding_dic:
      move.w  D2,D4            ;
-     addq.w  #2,D4            ;
      move.w  D6,D2            ;
      clr.b   D2               ;
      lsr.w   #7,D2            ;
@@ -241,36 +232,41 @@ decode_m7:
      bsr.s   .fidel_no
 .p_cont:
      move.b  0(A4,D2.w),D3    ;
-     bsr.s   fillbits
+     bsr.s   .fillbits
      move.w  D2,D3            ;
      beq.s   .p_einde         ;
      subq.w  #1,D3            ;
      move.w  D6,D2            ; subbitbuf
-     swap    D2               ; high word of D2 was $ffff
-     addq.w  #2,D2            ; low word of D2 is now 1!
-     bsr.s   fillbits0
+     swap    D2               ; high word of D2 was 1
+     bsr.s   .fillbits0
+     move.w  D2,D3
 .p_einde:
-     moveq   #-1,D3           ;
-     sub.w   D2,D3            ; pointer offset negatief
+     not.w   D3               ; pointer offset negatief
      lea     0(A0,D3.l),A6    ; pointer in dictionary
-     sub.l   D4,D0            ; sub 'bytes to copy' from 'bytes to do' (D4 is 1 too less!), high word D4 should be zero!
+     move.b  (A6)+,(A0)+      ;
+     move.b  (A6)+,(A0)+      ;
 .copy_loop_0:
      move.b  (A6)+,(A0)+      ;
      dbra    D4,.copy_loop_0
-     bra.s   .count_test
+     dbra    D1,.bnz_cont     ; Hufmann block size > 0?
+     bra.s   .blocksize_zero
 
 ;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
 ********************************************************************************
 
 ; no_bits=D3
 ; result=D2
-getbits:
+.decode_cont:
+     move.w  D6,D1            ; blocksize
+     moveq   #16,D3           ; pop 16 bits
+     pea     .enter(PC)
+.getbits:
      move.l  D6,D2
      swap    D2
      clr.w   D2
-fillbits0:
+.fillbits0:
      rol.l   D3,D2
-fillbits:
+.fillbits:
      sub.b   D3,D7
      bcc.s   .no_fill
      add.b   #16,D7
@@ -285,27 +281,26 @@ fillbits:
 ;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
 *******************************************************************************
 
-read_pt_len:
-     movea.w D2,A0
-     moveq   #$05,D3
-     bsr.s   getbits
-     lea     pt_len-c_len(A5),A4
-     lea     pt_table-pt_len(A4),A2
-     move.w  D2,D5
-     bne.s   .n_niet_nula
-     bsr.s   getbits
+.n_is_nul:
+     bsr.s   .getbits
      clr.b   0(A4,D2.w)
-     moveq   #$7F,D3
+     moveq   #127,D3
 .loop_2a:
      move.w  D2,(A2)+
      move.w  D2,(A2)+
      dbra    D3,.loop_2a
      rts
-.n_niet_nula:
+.read_pt_len:
+     moveq   #5,D3
+     bsr.s   .getbits
+     lea     pt_len-c_len(A5),A4
+     lea     pt_table-pt_len(A4),A2
+     move.w  D2,D5
+     beq.s   .n_is_nul
      subq.w  #1,D2
      moveq   #7,D0
      move.w  D2,D4
-     adda.w  D2,A0
+     add.w   D2,D1
      movea.l A4,A6
 .loop_3a:
      move.l  D6,D2
@@ -316,6 +311,7 @@ read_pt_len:
      bne.s   .c_niet_7
      moveq   #12,D3
      bra.s   .loop_4a_test
+*******************************************************************************
 .loop_4a:
      addq.w  #1,D2
 .loop_4a_test:
@@ -329,13 +325,14 @@ read_pt_len:
      add.w   D2,D3
 .endif:
      move.b  D2,(A6)+
-     bsr.s   fillbits
-     cmp.w   A0,D4
+     bsr.s   .fillbits
+     cmp.w   D1,D4
      bne.s   .loop_3a_test
      moveq   #2,D3
-     bsr.s   getbits
+     bsr.s   .getbits
      sub.w   D2,D4
      bra.s   .loop_5a_test
+*******************************************************************************
 .loop_5a:
      clr.b   (A6)+
 .loop_5a_test:
@@ -439,11 +436,13 @@ make_table:
 .j_loop_2:
      move.w  D2,(A0)+
      dbra    D6,.j_loop_2
-.loop_4b_inc_0:
+.loop_4b_inc:
      addq.w  #1,D2
      cmp.w   A6,D2
      blt.s   .loop_4b
-     bra.s   .loop_4b_end
+     lea     $6C(SP),SP
+     movem.l (SP)+,D6-D7/A1/A4
+     rts
 .len_groter_tablebits_j:
      move.w  D5,D7
      lsr.w   D3,D7
@@ -475,14 +474,7 @@ make_table:
      bhi.s   .loop_6b
 .loop_6b_end:
      move.w  D2,(A0)
-.loop_4b_inc:
-     addq.w  #1,D2
-     cmp.w   A6,D2
-     blt.s   .loop_4b
-.loop_4b_end:
-     lea     $6C(SP),SP
-     movem.l (SP)+,D6-D7/A1/A4
-     rts
+     bra.s   .loop_4b_inc
 
 ;D3,d1,d2,D0,d4,d5,d6,d7,a4,a1,a2,a3,a0,a5,a6,a7,sp
 ********************************************************************************

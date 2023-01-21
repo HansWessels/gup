@@ -30,7 +30,7 @@
 
 
 extern void unstore(unsigned long size, uint8_t *dst, uint8_t *data);
-extern void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data);
+extern void decode_m7(uint8_t *dst, uint8_t *data);
 extern void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_n0(uint8_t *dst, uint8_t *data);
 extern void decode_n1(uint8_t *dst, uint8_t *data);
@@ -93,7 +93,7 @@ static unsigned long error_count=0;
 static unsigned long total_compressed_size=0;
 static unsigned long total_original_size=0;
 
-void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data, unsigned long compressed_size)
+void decode(int mode, unsigned long size, unsigned long compressed_size, uint32_t crc, uint8_t *data)
 { /* decode the data pointed to data */
 	uint8_t *dst;
 	uint32_t res_crc=0;
@@ -119,7 +119,16 @@ void decode(int mode, unsigned long size, uint32_t crc, uint8_t *data, unsigned 
 	case ARJ_MODE_2:
 	case ARJ_MODE_3:
 	case GNU_ARJ_MODE_7:
-		decode_m7(size, dst, data);
+		{ /* zero last two bytes */
+			uint8_t temp_bytes[2];
+			temp_bytes[0]=data[compressed_size];
+			temp_bytes[1]=data[compressed_size+1];
+			data[compressed_size]=0;
+			data[compressed_size+1]=0;
+			decode_m7(dst, data);
+			data[compressed_size]=temp_bytes[0];
+			data[compressed_size+1]=temp_bytes[1];
+		}
 		break;
 	case ARJ_MODE_4:
 		decode_m4(size, dst, data);
@@ -241,11 +250,19 @@ int main(int argc, char *argv[])
 			naam=data+offset+header_size_1+4;
 			printf("%-20s", naam+file_naam_pos);
 			printf(" %12lu ", original_size);
-			printf(" %12lu ", compressed_size);
+			if((method==ARJ_MODE_1)||(method==ARJ_MODE_2)||(method==ARJ_MODE_3)||(method==GNU_ARJ_MODE_7))
+			{
+				printf(" %12lu ", compressed_size+2);
+				total_compressed_size+=compressed_size+2;
+			}
+			else
+			{
+				printf(" %12lu ", compressed_size);
+				total_compressed_size+=compressed_size;
+			}
 			printf(" %2X ", method);
 			printf(" %08lX ", (unsigned long)crc32);
 
-			total_compressed_size+=compressed_size;
 			total_original_size+=original_size;
 
 			offset+=header_size+8;
@@ -264,7 +281,7 @@ int main(int argc, char *argv[])
 				printf("Unexpected end of data reached, aborting\n");
 				break;
 			}
-			decode(method, original_size, crc32, data+offset, compressed_size);
+			decode(method, original_size, compressed_size, crc32, data+offset);
 			printf("\n");
 			offset+=compressed_size;
 		}
