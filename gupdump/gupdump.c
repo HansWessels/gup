@@ -34,6 +34,12 @@ extern void decode_n0(uint8_t *dst, uint8_t *data);
 extern void decode_n1(uint8_t *dst, uint8_t *data);
 extern void decode_n2(uint8_t *dst, uint8_t *data);
 
+extern unsigned long decode_m7_size(uint8_t *data);
+extern unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data);
+extern unsigned long decode_n0_size(uint8_t *data);
+extern unsigned long decode_n1_size(uint8_t *data);
+extern unsigned long decode_n2_size(uint8_t *data);
+
 extern void make_crc32_table(uint32_t crc_table[]);
 extern uint32_t crc32(unsigned long count, uint8_t *data, uint32_t crc_table[]);
 
@@ -194,31 +200,31 @@ int decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 
 char *find_extension(char* filenaam)
 {
-	char *p=filenaam+strlen(filenaam)
+	char *p=filenaam+strlen(filenaam);
 	while (p>=filenaam)
 	{
 		if(*p=='.')
 		{
-			return p++;
+			return p+1;
 		}
 		p--;
 	}
 	return NULL;
 }
 
-unsigned long get_original_size(uint8_t data, unsigned long compressed_size, int mode)
+unsigned long get_original_size(uint8_t *data, unsigned long compressed_size, int mode)
 {
 	unsigned long original_size=0;
 	switch(mode)
 	{
 	case STORE:
-		original_size=unstore_size(compressed_size, data);
+		original_size=compressed_size;
 		break;
 	case ARJ_MODE_1:
 	case ARJ_MODE_2:
 	case ARJ_MODE_3:
 	case GNU_ARJ_MODE_7:
-		original_size=decode_m7_size(compressed_size, data);
+		original_size=decode_m7_size(data);
 		break;
 	case ARJ_MODE_4:
 		original_size=decode_m4_size(compressed_size, data);
@@ -239,14 +245,14 @@ unsigned long get_original_size(uint8_t data, unsigned long compressed_size, int
 	return original_size;
 }
 
-int depack_on_extension(char* filenaam, uint8_t data, unsigned long compressed_size)
+void depack_on_extension(char* filenaam, uint8_t *data, unsigned long compressed_size)
 {
 	char *extension=find_extension(filenaam);
 	int mode;
 	unsigned long original_size;
 	if(extension==NULL)
 	{ /* geen extensie gevonden */
-		return -1;
+		return;
 	}
 	if(strcmp(extension, "m0")==0)
 	{ /* m0 file */
@@ -274,59 +280,22 @@ int depack_on_extension(char* filenaam, uint8_t data, unsigned long compressed_s
 	}
 	else
 	{
-		return -1;
+		return;
 	}
 	original_size=get_original_size(data, compressed_size, mode);
-	
+	printf("Origsize of %s = %lu\n", filenaam, original_size);
 }
 
-int main(int argc, char *argv[])
+void dump_arj(char* filenaam, uint8_t *data, unsigned long file_size)
 {
-	char *filenaam;
-	uint8_t *data;
 	unsigned long offset;
-	unsigned long file_size;
-	FILE* f;
-	if(argc==2)
-	{
-		filenaam=argv[1];
-	}
-	else
-	{
-		printf("Usage: %s <file to be dumped>\n", argv[0]);
-		return -1;
-	}
-	f=fopen(filenaam, "rb");
-	if(f==NULL)
-	{
-		printf("File open error %s", filenaam);
-		return -1;
-	}
-	fseek(f, 0, SEEK_END);
-	file_size = ftell(f);
-	data = (uint8_t *)malloc(file_size + 1024);
-	if (data == NULL)
-	{
-		printf("Malloc error voor file data!\n");
-		fclose(f);
-		return -1;
-	}
-	fseek(f, 0, SEEK_SET);
-	(void)!fread(data, 1, file_size, f);
-	fclose(f);
-	make_crc32_table(crc_table);
 	offset=0;
    /*      DATA10.BIN                   7082          2644  10  5944648C */
 	printf("File name:               original        packed mode CRC32\n");
 	for(;;)
 	{
 		if(offset>=file_size)
-		{ /* geen ARJ file? Check extension... */
-			if(depack_on_extension(filenaam, data, file_size)==0)
-			{
-				free(data);
-				return 0;
-			}
+		{
 			printf("Unexpected end of data reached, aborting\n");
 			break;
 		}
@@ -451,7 +420,61 @@ int main(int argc, char *argv[])
 	{
 		printf("CRC Errors = %lu\n", error_count);
 	}
+}
+
+void handle_file(char *filenaam)
+{
+	uint8_t *data;
+	char* extension;
+	unsigned long file_size;
+	FILE* f;
+	f=fopen(filenaam, "rb");
+	if(f==NULL)
+	{
+		printf("File open error %s", filenaam);
+		return;
+	}
+	fseek(f, 0, SEEK_END);
+	file_size = ftell(f);
+	data = (uint8_t *)malloc(file_size + 1024);
+	if (data == NULL)
+	{
+		printf("Malloc error voor file data!\n");
+		fclose(f);
+		return;
+	}
+	fseek(f, 0, SEEK_SET);
+	(void)!fread(data, 1, file_size, f);
+	fclose(f);
+	extension=find_extension(filenaam);
+	if(strcmp(extension, "arj")==0)
+	{ /* dump arj file */
+		dump_arj(filenaam, data, file_size);
+	}
+	else
+	{ /* dump file */
+		depack_on_extension(filenaam, data, file_size);
+	}
 	free(data);
+}
+
+int main(int argc, char *argv[])
+{
+	char *filenaam;
+	int i;
+	if(argc<2)
+	{
+		printf("Usage: %s <files to be dumped>\n", argv[0]);
+		return -1;
+	}
+	i=1;
+	make_crc32_table(crc_table);
+	while(i<argc)
+	{
+		filenaam=argv[i];
+		handle_file(filenaam);
+		i++;
+	}
 	return 0;
 }
 

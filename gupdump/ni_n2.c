@@ -80,6 +80,33 @@ typedef int32_t int32;
 	}														\
 }
 
+#define N2_GET_PTR_SIZE(ptr)						\
+{ /* get pointer from data stream */			\
+	int32 tmp=-2;										\
+	int bit;												\
+	do														\
+	{														\
+		N2_GET_BIT(bit);								\
+		tmp+=tmp+bit;									\
+		N2_GET_BIT(bit);								\
+	} while(bit==0);									\
+	if(tmp<=-65537)									\
+	{ /* eof token */									\
+		return original_size;						\
+	}														\
+	tmp+=3;												\
+	if(tmp==0)											\
+	{														\
+		ptr=last_ptr;									\
+	}														\
+	else													\
+	{														\
+		tmp<<=8;											\
+		tmp|=*data++;									\
+		ptr=~tmp;										\
+	}														\
+}
+
 void decode_n2(uint8_t *dst, uint8_t *data)
 {
 	uint8 bitbuf=0;
@@ -116,7 +143,7 @@ void decode_n2(uint8_t *dst, uint8_t *data)
 }
 
 
-unsigned long decode_n2__size(uint8_t *data)
+unsigned long decode_n2_size(uint8_t *data)
 {
 	uint8 bitbuf=0;
 	uint32 last_ptr=0;
@@ -139,7 +166,7 @@ unsigned long decode_n2__size(uint8_t *data)
 		{ /* ptr len */
 			uint32 len;
 			uint32 ptr;
-			N2_GET_PTR(ptr);
+			N2_GET_PTR_SIZE(ptr);
 			N2_GET_LEN(len);
 			{ /* copy */
 				original_size+=len;

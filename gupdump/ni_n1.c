@@ -135,9 +135,8 @@ void decode_n1(uint8_t *dst, uint8_t *data)
 	}
 }
 
-unsigend long decode_n1_size(uint8_t *data)
+unsigned long decode_n1_size(uint8_t *data)
 { /* original size is first 4 bytes in big endian format */
-	/* aanname origsize>0 */
 	unsigned long origsize;
 	origsize=*data++;
 	origsize<<=8;

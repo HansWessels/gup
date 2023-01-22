@@ -478,7 +478,7 @@ void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data)
   }
 }
 
-unsigned long decode_m7_size(unsigned long packed_size, uint8_t *data)
+unsigned long decode_m7_size(uint8_t *data)
 {
   int karshlvl;             /* size of character shift */
   int ptrshlvl;             /* size of pointer shift */
@@ -509,17 +509,6 @@ unsigned long decode_m7_size(unsigned long packed_size, uint8_t *data)
   bib=0;
   karshlvl=0;
   ptrshlvl=0;
-	{ /* make sure there are zero's at the end of the compressed data */
-	  	uint8* buffend;
-		buffend=data+packed_size;
-		int i=(int)2*sizeof(bitbuf);
-		do
-		{
-			buffend[i]=0;
-		}
-		while(--i>=0)
-	}
-
   { /* init bitbuf */
     int i=(int)sizeof(bitbuf);
     while(--i>=0)
@@ -554,7 +543,7 @@ unsigned long decode_m7_size(unsigned long packed_size, uint8_t *data)
       }
       else
       {
-      	original_size++;
+        original_size++;
         TRASHBITS(karlen[kar]); /* maximum size of trashbits will be 16, small values (6-9) are more common */
       }
     }

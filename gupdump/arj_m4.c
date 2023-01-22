@@ -24,7 +24,7 @@ typedef uint16_t uint16;    /* unsigned 16 bit */
 typedef int16_t kartype;   /* signed 16 bit */
 typedef uint32_t uint32;
 
-#define BITBUFSIZE (int)(sizeof(unsigned long int)*CHAR_BIT)  /* number of bits in bitbuffer */
+#define BITBUFSIZE (int)(sizeof(uint32)*CHAR_BIT)  /* number of bits in bitbuffer */
 
 #define TRASHBITS(x)    /* trash  bits from bitbuffer */    \
 {                                                           \
@@ -33,7 +33,7 @@ typedef uint32_t uint32;
   if(bib<0)                                                 \
   { /* refill bitbuffer */                                  \
     int i;                                                  \
-    unsigned long int newbuf=0; /* BITBUFSIZE bits big */   \
+    uint32 newbuf=0; /* BITBUFSIZE bits big */   				\
     bitbuf<<=(xbits+bib);        /* trash bits */           \
     xbits=-bib;                                             \
     i=(int)sizeof(bitbuf)-2;                                \
@@ -53,7 +53,7 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
   /* aanname origsize>0 */
 
   int bib; /* bits in bitbuf */
-  unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+  uint32 bitbuf; /* shift buffer, BITBUFSIZE bits groot */
   uint8* buff=dst;
   uint8* buffend;
 
@@ -73,7 +73,7 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 
 	for(;;)
 	{ /* decode loop */
-		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		uint32 mask=1<<(BITBUFSIZE-1);
 		if((bitbuf&mask)==0)
 		{ /* literal */
 			uint32 kar;
@@ -138,7 +138,7 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 	/* aanname origsize>0 */
 	unsigned long original_size=0;
 	int bib; /* bits in bitbuf */
-	unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	uint32 bitbuf; /* shift buffer, BITBUFSIZE bits groot */
 	uint8* buffend;
 
 	buffend=data+packed_size;
@@ -148,7 +148,7 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 		{
 			buffend[i]=0;
 		}
-		while(--i>=0)
+		while(--i>=0);
 	}
 	buffend+=sizeof(bitbuf);
 	bitbuf=0;
@@ -166,7 +166,7 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 
 	for(;;)
 	{ /* decode loop */
-		unsigned long mask=1UL<<(BITBUFSIZE-1);
+		uint32 mask=1<<(BITBUFSIZE-1);
 		if((bitbuf&mask)==0)
 		{ /* literal */
 			original_size++;
