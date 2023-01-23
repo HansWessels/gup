@@ -28,7 +28,7 @@
 
 
 extern void unstore(unsigned long size, uint8_t *dst, uint8_t *data);
-extern void decode_m7(unsigned long size, uint8_t *dst, uint8_t *data);
+extern void decode_m7(uint8_t *dst, uint8_t *data);
 extern void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data);
 extern void decode_n0(uint8_t *dst, uint8_t *data);
 extern void decode_n1(uint8_t *dst, uint8_t *data);
@@ -146,7 +146,7 @@ char *make_outfile_name(char *original_name, int mode)
 	return name;
 }
 
-int decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
+int decode(int mode, unsigned long size, unsigned long compressed_size, uint32_t crc, uint8_t *data)
 { /* decode the data pointed to data */
 	int result=-1;
 	uint8_t *dst;
@@ -166,7 +166,16 @@ int decode(int mode, unsigned long size, uint32_t crc, uint8_t *data)
 	case ARJ_MODE_2:
 	case ARJ_MODE_3:
 	case GNU_ARJ_MODE_7:
-		decode_m7(size, dst, data);
+		{ /* zero last two bytes */
+			uint8_t temp_bytes[2];
+			temp_bytes[0]=data[compressed_size];
+			temp_bytes[1]=data[compressed_size+1];
+			data[compressed_size]=0;
+			data[compressed_size+1]=0;
+			decode_m7(dst, data);
+			data[compressed_size]=temp_bytes[0];
+			data[compressed_size+1]=temp_bytes[1];
+		}
 		break;
 	case ARJ_MODE_4:
 		decode_m4(size, dst, data);
@@ -245,6 +254,84 @@ unsigned long get_original_size(uint8_t *data, unsigned long compressed_size, in
 	return original_size;
 }
 
+void dump_on_extension(char* filenaam, uint8_t *data, unsigned long compressed_size, unsigned long size, int mode)
+{ /* decode the data pointed to data */
+	int result=-1;
+	uint8_t *dst;
+	uint32_t res_crc=0;
+	dst=(uint8_t *)malloc(size+1024);
+	if(dst==NULL)
+	{
+		printf("Malloc error, %s: %lu bytes\n", filenaam, size+1024);
+		return;
+	}
+	switch(mode)
+	{
+	case STORE:
+		unstore(size, dst, data);
+		break;
+	case ARJ_MODE_1:
+	case ARJ_MODE_2:
+	case ARJ_MODE_3:
+	case GNU_ARJ_MODE_7:
+		{ /* zero last two bytes */
+			uint8_t temp_bytes[2];
+			temp_bytes[0]=data[compressed_size];
+			temp_bytes[1]=data[compressed_size+1];
+			data[compressed_size]=0;
+			data[compressed_size+1]=0;
+			decode_m7(dst, data);
+			data[compressed_size]=temp_bytes[0];
+			data[compressed_size+1]=temp_bytes[1];
+		}
+		break;
+	case ARJ_MODE_4:
+		decode_m4(size, dst, data);
+		break;
+	case NI_MODE_0:
+		decode_n0(dst, data);
+		break;
+	case NI_MODE_1:
+		decode_n1(dst, data);
+		break;
+	case NI_MODE_2:
+		decode_n2(dst, data);
+		break;
+	default:
+		printf("Unknown method: %X", mode);
+		free(dst);
+		return;
+	}
+	res_crc=crc32(size, dst, crc_table);
+	printf("%s CRC:%08lX\n", filenaam, (unsigned long) res_crc);
+	{
+		FILE* g;
+		char *extension=find_extension(filenaam);
+		if(extension!=NULL)
+		{
+			extension[-1]=0;
+			g=fopen(filenaam, "wb");
+			if(g!=NULL)
+			{
+				printf("Dump: %s\n", filenaam);
+				fwrite(dst, size, 1, g);
+				fclose(g);
+			}
+			else
+			{
+				printf("File open error: %s\n", filenaam);
+			}
+		}
+		else
+		{
+			printf("No extension %s\n", filenaam);
+		}
+	}
+	free(dst);
+	return;
+}
+
+
 void depack_on_extension(char* filenaam, uint8_t *data, unsigned long compressed_size)
 {
 	char *extension=find_extension(filenaam);
@@ -252,6 +339,7 @@ void depack_on_extension(char* filenaam, uint8_t *data, unsigned long compressed
 	unsigned long original_size;
 	if(extension==NULL)
 	{ /* geen extensie gevonden */
+		printf("File has no extension: %s\n", filenaam);
 		return;
 	}
 	if(strcmp(extension, "m0")==0)
@@ -280,10 +368,11 @@ void depack_on_extension(char* filenaam, uint8_t *data, unsigned long compressed
 	}
 	else
 	{
+		printf("Not supported extension: %s\n", extension);
 		return;
 	}
 	original_size=get_original_size(data, compressed_size, mode);
-	printf("Origsize of %s = %lu\n", filenaam, original_size);
+	dump_on_extension(filenaam, data, compressed_size, original_size, mode);
 }
 
 void dump_arj(char* filenaam, uint8_t *data, unsigned long file_size)
@@ -367,7 +456,7 @@ void dump_arj(char* filenaam, uint8_t *data, unsigned long file_size)
 				printf("Unexpected end of data reached, aborting\n");
 				break;
 			}
-			if(decode(method, original_size, crc32, data+offset)==0)
+			if(decode(method, original_size, compressed_size, crc32, data+offset)==0)
 			{
 				char *outfile;
 				printf("\n");
@@ -396,11 +485,13 @@ void dump_arj(char* filenaam, uint8_t *data, unsigned long file_size)
 						printf("File open error: %s\n", outfile);
 					}
 					free(outfile);
+					outfile=NULL;
 				}
 			}
 			else
 			{
 				printf("\n");
+				printf("Skipped due to error: %s\n", naam+file_naam_pos);
 			}
 			offset+=compressed_size;
 		}
@@ -418,7 +509,7 @@ void dump_arj(char* filenaam, uint8_t *data, unsigned long file_size)
 	}
 	else
 	{
-		printf("CRC Errors = %lu\n", error_count);
+		printf("Errors = %lu\n", error_count);
 	}
 }
 
@@ -439,12 +530,15 @@ void handle_file(char *filenaam)
 	data = (uint8_t *)malloc(file_size + 1024);
 	if (data == NULL)
 	{
-		printf("Malloc error voor file data!\n");
+		printf("Malloc error for %s data!\n", filenaam);
 		fclose(f);
 		return;
 	}
 	fseek(f, 0, SEEK_SET);
-	(void)!fread(data, 1, file_size, f);
+	if(fread(data, 1, file_size, f)!=file_size)
+	{
+		printf("Read error %s\n", filenaam);
+	}
 	fclose(f);
 	extension=find_extension(filenaam);
 	if(strcmp(extension, "arj")==0)
