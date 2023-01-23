@@ -558,7 +558,22 @@ int main(int argc, char *argv[])
 	int i;
 	if(argc<2)
 	{
-		printf("Usage: %s <files to be dumped>\n", argv[0]);
+		printf("Usage: %s <files to be dumped>\n\n", argv[0]);
+		printf(
+"gupdump <archive>.arj dumps all the files in the arj archive into separate\n"
+"files. The extension of those files depends on the packing mode:\n"
+"m1, m2, m3 and m7 files get the extension m7, the all can be depacked with\n"
+"    the arj_m7 depack routines.\n"
+"m4 files get the extension m4 they can be depacked with\n"
+"    the arj_m4 depack routines.\n"
+"n0 files get the extension n0\n"
+"n1 files get the extension n1\n"
+"n2 files get the extension n2\n"
+"Those files can be depacked with the n0, n1 and n2 depack routines\n");
+		printf(
+"When you specify a .m4, .m7, .n0, .n1 or .n2 file as input file, gupdump will\n"
+"depack the file and dump the resulting file in a file without the .m4, .m7,\n"
+".n0, .n1 or .n2 extension fiving you the original uncompressed file.\n");		       
 		return -1;
 	}
 	i=1;
