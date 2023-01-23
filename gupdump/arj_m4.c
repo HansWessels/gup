@@ -24,7 +24,7 @@ typedef uint16_t uint16;    /* unsigned 16 bit */
 typedef int16_t kartype;   /* signed 16 bit */
 typedef uint32_t uint32;
 
-#define BITBUFSIZE (int)(sizeof(uint32)*CHAR_BIT)  /* number of bits in bitbuffer */
+#define BITBUFSIZE (int)(sizeof(unsigned long)*CHAR_BIT)  /* number of bits in bitbuffer */
 
 #define TRASHBITS(x)    /* trash  bits from bitbuffer */    \
 {                                                           \
@@ -33,7 +33,7 @@ typedef uint32_t uint32;
   if(bib<0)                                                 \
   { /* refill bitbuffer */                                  \
     int i;                                                  \
-    uint32 newbuf=0; /* BITBUFSIZE bits big */   				\
+    unsigned long newbuf=0; /* BITBUFSIZE bits big */   		\
     bitbuf<<=(xbits+bib);        /* trash bits */           \
     xbits=-bib;                                             \
     i=(int)sizeof(bitbuf)-2;                                \
@@ -48,12 +48,41 @@ typedef uint32_t uint32;
   bitbuf<<=xbits;                                           \
 }
 
+#define TRASHBITS_SIZE(x)    /* trash  bits from bitbuffer */\
+{                                                           \
+  int xbits=(x);                                            \
+  bib-=xbits;                                               \
+  if(bib<0)                                                 \
+  { /* refill bitbuffer */                                  \
+    int i;                                                  \
+    if((bib+16)<0)														\
+    { /* alle bits op, klaar met depacken */						\
+    	return original_size;											\
+    }																			\
+    unsigned long newbuf=0; /* BITBUFSIZE bits big */ 		\
+    bitbuf<<=(xbits+bib);        /* trash bits */           \
+    xbits=-bib;                                             \
+    i=(int)sizeof(bitbuf)-2;                                \
+    while(--i>=0)                                           \
+    {                                                       \
+      newbuf<<=8; 	                                       \
+      if(data<buffend)													\
+      {																		\
+	      newbuf+=*data++;                                   \
+   	   bib+=8;                                            \
+   	}																		\
+    }                                                       \
+    bitbuf+=newbuf;                                         \
+  }                                                         \
+  bitbuf<<=xbits;                                           \
+}
+
 void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 {
   /* aanname origsize>0 */
 
   int bib; /* bits in bitbuf */
-  uint32 bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+  unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
   uint8* buff=dst;
   uint8* buffend;
 
@@ -73,7 +102,7 @@ void decode_m4(unsigned long size, uint8_t *dst, uint8_t *data)
 
 	for(;;)
 	{ /* decode loop */
-		uint32 mask=1<<(BITBUFSIZE-1);
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
 		if((bitbuf&mask)==0)
 		{ /* literal */
 			uint32 kar;
@@ -138,19 +167,10 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 	/* aanname origsize>0 */
 	unsigned long original_size=0;
 	int bib; /* bits in bitbuf */
-	uint32 bitbuf; /* shift buffer, BITBUFSIZE bits groot */
+	unsigned long bitbuf; /* shift buffer, BITBUFSIZE bits groot */
 	uint8* buffend;
 
 	buffend=data+packed_size;
-	{ /* make sure there are zero's at the end of the compressed data */
-		int i=(int)2*sizeof(bitbuf);
-		do
-		{
-			buffend[i]=0;
-		}
-		while(--i>=0);
-	}
-	buffend+=sizeof(bitbuf);
 	bitbuf=0;
 	bib=0;
 	{ /* init bitbuf */
@@ -166,11 +186,11 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 
 	for(;;)
 	{ /* decode loop */
-		uint32 mask=1<<(BITBUFSIZE-1);
+		unsigned long mask=1UL<<(BITBUFSIZE-1);
 		if((bitbuf&mask)==0)
 		{ /* literal */
+			TRASHBITS_SIZE(9);
 			original_size++;
-			TRASHBITS(9);
 		}
 		else
 		{ /* pointer length combinatie */
@@ -189,9 +209,9 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 				}
 				i++;
 			} while(i<7);
-			TRASHBITS(tb);
+			TRASHBITS_SIZE(tb);
 			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i))+1;
-			TRASHBITS(i);
+			TRASHBITS_SIZE(i);
 			tb=4;
 			i=0;
 			mask=1UL<<(BITBUFSIZE-1);
@@ -205,13 +225,9 @@ unsigned long decode_m4_size(unsigned long packed_size, uint8_t *data)
 				mask>>=1;
 				i++;
 			} while(i<4);
-			TRASHBITS(tb);
-			TRASHBITS(i+9);
+			TRASHBITS_SIZE(tb);
+			TRASHBITS_SIZE(i+9);
 			original_size+=kar;
-		}
-		if((data>=buffend) && (bitbuf==0))
-		{
-			return original_size;
 		}
 	}
 }
