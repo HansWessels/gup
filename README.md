@@ -19,7 +19,7 @@ GUP is also your primary choice when you're looking for a packer that produces *
 - you are looking for a fast depacker.
 - you are looking for tools which offer specialized enhancements and source code for **embedding the compressed data** and **swiftly depacking it in modern and classic generic *and* embedded hardware systems**. *Did we mention our depacker(s) are coded for both minimum size and maximum speed?*
 - you are looking for tools that wring the very last drop of entropy from your collective data (highly compression-ratio-optimized LZ77+Huffman: better than ARJ/ZIP/RAR/LZH/...)[^1]
-- you are curious what can be achieved with classic evergreen Lempel-Ziv sliding dictionary compression technology. We never published this stuff as a whitepaper, but, as of 2022AD, our extensive research has not uncovered anyone that does it better[^3] and when we do, be assured we'll be incorporating such cleverness in GUP!
+- you are curious what can be achieved with classic evergreen Lempel-Ziv sliding dictionary compression technology. We never published this stuff as a whitepaper, but, as of 2022AD, our extensive research has not uncovered anyone that does it better[^3] and when we do, be assured we'll be incorporating such cleverness into GUP!
 
 
 ## Which platforms do you support?
@@ -40,20 +40,20 @@ The core decompressor code is available in both highly portable C and MC68K hand
 - **ARJ m4** is the ARJ m4 compression methode using a 16 kB dictionary and unary encoding of the dictionary references.
 - **ARJ m7** is an extension on the **ARJ m1** format. It uses a 64 kB dictionary, a maximum match of 258 bytes and uses huffman encoding. m1, m2, m3 and m7 all can be depacked with the same decompression routine.
 - **n0** is a lz77 packer using a 64 kB dictionary and a maximum match of 64 kB. It was written for a small depacker size and a high decompression speed.
-- **n1** is a lz77 packer using a 128 kB dictionary and a maximum match of 64 kB. It is based on the ARJ m4 packer, using almost the same decompression routine only modified to allow for the larger dictionary size and larger matches.
-- **n2** is a lz77 packer based on the 'nrv2s decompression in pure 68k asm by ross' code. I modified the format to increase depacking speed and compression ratio. It uses an (almost) 16 Mb dictionary. The maximum match is 64 kB.
+- **n1** is a lz77 packer using a 128 kB dictionary and a maximum match of 64 kB. It is based on the ARJ m4 packer, using almostly the same decompression routine only modified to allow for the larger dictionary size and larger matches.
+- **n2** is a lz77 packer based on the 'nrv2s decompression in pure 68k asm by ross' code. I modified the format to increase depacking speed and compression ratio. It uses an (almost) 16 MB dictionary. The maximum match is 64 kB.
 
 ### Compression performance
 
 During development the compression performance is evaluated using multiple test data sets.
 - **Calgary corpus** The [Calgary corpus](https://en.wikipedia.org/wiki/Calgary_corpus). I am using the 'less commonly used 18 file version which include 4 additional text files in UNIX "troff" format, PAPER3 through PAPER6' and it also includes the additional files 'readme', 'sizes' and 'sources' which came with the archive containing the Calgary corpus. The last three are small files and it is interesting to see how the various modes are doing with small files.
-- **atari** a set of files comming from my Atari ST harddisk. It contains a lot of programs (.prg ) and Atari ST picture files (Neochrome and Degas format).
+- **atari** a set of files coming from my Atari ST harddisk. It contains a lot of programs (.prg ) and Atari ST picture files (Neochrome and Degas format).
 - **mame** a large set of Mame ROM dumps.
 - **enwik8** The dataset is based on the [Hutter Prize](http://prize.hutter1.net) and contains the first 10^8 byte of Wikipedia
 
 ```
 Filename:  original         m1         m7         m4         n0         n1         n2
-bib          111261      35032      32722      39784       6288      35360      35661
+bib          111261      35032      32722      39784      36288      35360      35661
 book1        768771     310620     293575     344252     323797     321331     313451
 book2        610856     204854     191955     226013     209978     204206     200727
 geo          102400      67468      67211      70840      73291      70424      68711
@@ -84,7 +84,7 @@ enwik8    100000000   36234895   34422639   39260290   36948297   35888724   320
 
 ### Compression and gup
 
-Using the **gup** compression program which van be found in the **unix** directory when you build the project in a Unix environment, for windows the program can be found in the **win32** directory, ARJ files can be generated with a command line looking like this:  
+Using the **gup** compression program which can be found in the **unix** directory when you build the project in a Unix environment; for windows the program can be found in the **win32** directory. ARJ files can be generated with a command line looking like this:  
 `gup a -<mode> -e -r result.arj <file(s)>`  
 Where **a** means create an ARJ file and **a**dd files to the ARJ file. **\<mode\>** is one of the compression modes: m1, m4, m7, n0, n1 or n2. The **-e** switch excludes the directory names in the ARJ file. The **-r** switch is for recursive directories.  
 `gup l result.arj` will **l**ist the contents of the ARJ file.  
@@ -101,7 +101,7 @@ In de directory **ni-pack** decompression routines written in C can be found for
 
 In the directory **ni_pack/atari_st** are optimized **MC68000** assembly depack routines:
 - **arj_m4.s** a decoder for m4 compressed data.
-- **arj_m4e.s** a smaller m4 decoder but de packed data has to start on an even memory address.
+- **arj_m4e.s** a smaller m4 decoder but the packed data has to start on an even memory address.
 - **arj_m7.s** a decoder for m7 compressed data.
 - **arj_m7e.s** a smaller m7 decoder but the packed data has to start on an even memory address.
 - **arj_m7f.s** a speed optimized m7 decoder, but the decoder is slightly larger and the packed data has to start on an even memory address.
@@ -137,14 +137,14 @@ ni_n2_f.s    152    26.98     1053663
 
 GUP is GPLv2. 
 
-The depacker cores are MIT, so you can always use the packed data in *any* setting: both Open Source 🥳 and Commercial environments. 
+The depacker cores are MIT licensed, so you can always use the packed data in *any* setting: both Open Source 🥳 and Commercial environments. 
 
 
 ### Rationale on License Intent & Commercial Usage
 
 We want GUP to remain Open and Public and hope you will share your derivative works likewise. We also don't want any restrictions on the *use* of GUP; more specifically: the compressed data results.
 
-Hence the choice for MIT for the **depacker**: this allows you, for example, to use the GUP tool in in-house commercial embedded development, write the compressed data *plus* our depacker code in ROM/Flash/... to save space and time and then sell your product. 
+Hence the choice for the MIT license for the **depacker**: this allows you, for example, to use the GUP tool in in-house commercial embedded development, write the compressed data *plus* our depacker code in ROM/Flash/... to save space and time and then sell your product. 
 
 *Ditto* for UPX-style scenarios: you can *pack* your commercial software using GUP as an UPX alternative, for there again, your output is your own propriatary files in *compressed form*, plus our depacker code, to form a new executable that self-extracts and executes your code after depacking.
 
@@ -156,6 +156,6 @@ Meanwhile we want the **compressor** to remain open *forever*, including anyone 
 
 [^1]: LZMA & tANS is considered for our Glorious Future, to exist next to the presently available LZ77 best-of-breeds implementation[^2].
 
-[^2]: we care about compression ratio. GUP/ARJ mode 7 (LZ77+Huffman) and most of the other GUP compression modes' packer/**compressor** cores focus on (1) compression ratio and (2) compression speed; in that order. Meanwhile our depacker/**decompressor** is generally ARJ/LZH compatible and **fast**: we always aimed for Number 1 in the "pack once, depack many times" arena. Which, f.e., is what you need when writing a *scene demo* or other sophisticated software that benefits from both small distribution size and maximum features/content enjoyment.
+[^2]: we care about compression ratio. GUP/ARJ mode 7 (LZ77+Huffman) and most of the other GUP compression modes' packer/**compressor** cores focus on (1) compression ratio and (2) compression speed; in that order. Meanwhile our depacker/**decompressor** is generally ARJ/LZH compatible and **fast**: we always aimed for Number 1 in the "pack once, depack many times" arena. Which is what you need when writing a *scene demo* or other sophisticated software that benefits from both small distribution size and maximum features/content enjoyment.
 
 [^3]: *better* meaning: higher performance in "pack once, depack many times" conditions: packing(=compression) speed is only a *secondary* focus here, while *highest possible compression ratio* is and always has been *primary focus* for GUP: we may be a bit slower when packing, but heck! we're giving you the smallest possible archives.
