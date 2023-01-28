@@ -38,7 +38,7 @@ The core decompressor code is available in both highly portable C and MC68K hand
 
 - **ARJ m1, m2, m3** these all default to **ARJ m1** compression method using a 26 kB dictionary, a maximum match of 258 bytes and huffman encoding. This is compatible to ARJ by Robert K. Jung.
 - **ARJ m4** is the ARJ m4 compression methode using a 16 kB dictionary and unary encoding of the dictionary references.
-- **ARJ m7** is an extension on the **ARJ m1** format, It uses a 64 kB dictionary, a maximum match of 258 bytes and uses huffman encoding. m1, m2, m3 and m7 all can be depacked with the same decompression routine as long as the lager dictionary size is taken into account.
+- **ARJ m7** is an extension on the **ARJ m1** format. It uses a 64 kB dictionary, a maximum match of 258 bytes and uses huffman encoding. m1, m2, m3 and m7 all can be depacked with the same decompression routine.
 - **n0** is a lz77 packer using a 64 kB dictionary and a maximum match of 64 kB. It was written for a small depacker size and a high decompression speed.
 - **n1** is a lz77 packer using a 128 kB dictionary and a maximum match of 64 kB. It is based on the ARJ m4 packer, using almost the same decompression routine only modified to allow for the larger dictionary size and larger matches.
 - **n2** is a lz77 packer based on the 'nrv2s decompression in pure 68k asm by ross' code. I modified the format to increase depacking speed and compression ratio. It uses an (almost) 16 Mb dictionary. The maximum match is 64 kB.
@@ -97,7 +97,7 @@ The **gupdump** program will dump all the compressed files in an ARJ file in bin
 
 ### Decompression
 
-In de directory **ni-pack** decompression routines written in C can be found for all the compression modes. **depack_t.c** is a simple c file showing the usage of the decompression routines and can be used for timing the decompression speed. The ARJ m4 depacker needs 3 parameters, (the original size, a pointer to the depack space and a pointer to the packed data). All other routines need 2 paramteres: (a pointer to the depack space and a pointer to the compressed data).
+In de directory **ni-pack** decompression routines written in C can be found for all the compression modes. **depack_t.c** is a simple c file showing the usage of the decompression routines and can be used for timing the decompression speed. The ARJ m4 depacker needs 3 parameters, (the original size, a pointer to the depack space and a pointer to the packed data). All other routines need 2 parameters: (a pointer to the depack space and a pointer to the compressed data).
 
 In the directory **ni_pack/atari_st** are optimized **MC68000** assembly depack routines:
 - **arj_m4.s** a decoder for m4 compressed data.
