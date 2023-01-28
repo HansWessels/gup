@@ -97,7 +97,41 @@ The **gupdump** program will dump all the compressed files in an ARJ file in bin
 
 ### Decompression
 
-In de directory **ni-pack** decompression routines written in C can be found for all the compression modes. **depack_t.c** is a simple c file showing the usage of the decompression routines and can be used for timing the decompression speed.
+In de directory **ni-pack** decompression routines written in C can be found for all the compression modes. **depack_t.c** is a simple c file showing the usage of the decompression routines and can be used for timing the decompression speed. The ARJ m4 depacker needs 3 parameters, (the original size, a pointer to the depack space and a pointer to the packed data). All other routines need 2 paramteres: (a pointer to the depack space and a pointer to the compressed data).
+
+In the directory **ni_pack/atari_st** are optimized **MC68000** assembly depack routines:
+- **arj_m4.s** a decoder for m4 compressed data.
+- **arj_m4e.s** a smaller m4 decoder but de packed data has to start on an even memory address.
+- **arj_m7.s** a decoder for m7 compressed data.
+- **arj_m7e.s** a smaller m7 decoder but the packed data has to start on an even memory address.
+- **arj_m7f.s** a speed optimized m7 decoder, but the decoder is slightly larger and the packed data has to start on an even memory address.
+- **ni_n0.s** a decoder for n0 compressed data. This is the smallest decoder in this distribution.
+- **ni_n0f.s** a speed optimized decoder for n0 compressed data. This is the fastest decoder in this distribution.
+- **ni_n1.s** a decoder for n1 compressed data.
+- **ni_n1e.s** a smaller n1 decoder but the compressed data has to start on an even address.
+- **ni_n1f.s** a speed optimized n1 decoder, but the decoder is slightly larger and the packed data has to start on an even memory address.
+- **ni_n2.s** a decoder for n2 compressed data.
+- **ni_n2f.s** a speed optimized n2 decoder, the decoder is slightly larger.
+
+This is how the depack routines compare to each other in depack speed, code size and compressed data size:
+```
+depacker   bytes time [s] packed size
+arj_m4.s     132    49.24     1157561
+arj_m4_e.s   118    49.24     1157561
+arj_m7.s     720    38.17     1006944
+arj_m7_e.s   706    38.17     1006944
+arj_m7_f.s   784    32.15     1006944
+ni_n0.s       62    31.40     1109027
+ni_n0_f.s     96    18.77     1109027
+ni_n1.s      148    48.13     1075939
+ni_n1_e.s    122    47.87     1075939
+ni_n1_f.s    210    37.33     1075939
+ni_n2.s      100    50.55     1053663
+ni_n2_f.s    152    26.98     1053663
+```
+**smallest code**: ni_n0.s
+**fastest depacking**: ni_n0f.s
+**best compression**: arj_m7e.s
 
 ## License
 
