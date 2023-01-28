@@ -129,9 +129,9 @@ ni_n1_f.s    210    37.33     1075939
 ni_n2.s      100    50.55     1053663
 ni_n2_f.s    152    26.98     1053663
 ```
-**smallest code**: ni_n0.s
-**fastest depacking**: ni_n0f.s
-**best compression**: arj_m7e.s
+**smallest code**: ni_n0.s, 62 bytes  
+**fastest depacking**: ni_n0f.s, 18.77 s  
+**best compression**: arj_m7, 1006944 bytes  
 
 ## License
 
