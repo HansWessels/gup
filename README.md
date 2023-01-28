@@ -30,7 +30,7 @@ GUP is also your primary choice when you're looking for a packer that produces *
 - AtariST (we've got PureC GmbH (formerly BorlandC on AtariST) project files and hand-optimized high-speed assembly + C sources to go for you)
 - MC68K hand-optimized assembly depackers available
 
-This stuff is actively developed and tested on a Rasberry PI cluster (Linux), a huge AMD Ryzen *beast* (FreeBSD) and a couple of Microsoft Windows 10 desktop boxes (Intel core i7 and AMD Ryzen). The main developer also builds these goodies on classical AtariST hardware and in AtariST emulators.  We know of others using or having used the depacker(s) on AtariST, Amiga, ...
+This stuff is actively developed and tested on a Rasberry PI cluster (Linux), a huge AMD Ryzen *beast* (FreeBSD) and a couple of Microsoft Windows 10 desktop boxes (Intel core i7 and AMD Ryzen). The main developer also builds these goodies on classical AtariST hardware and in AtariST emulators.  We know of others using or having used the depacker(s) on Atari ST, Amiga, ...
 
 The core decompressor code is available in both highly portable C and MC68K hand-optimized source code form; any 32bit or larger CPU should be doing quite well on this.
 
@@ -47,7 +47,7 @@ The core decompressor code is available in both highly portable C and MC68K hand
 
 During development the compression performance is evaluated using multiple test data sets.
 - **Calgary corpus** The [Calgary corpus](https://en.wikipedia.org/wiki/Calgary_corpus). I am using the 'less commonly used 18 file version which include 4 additional text files in UNIX "troff" format, PAPER3 through PAPER6' and it also includes the additional files 'readme', 'sizes' and 'sources' which came with the archive containing the Calgary corpus. The last three are small files and it is interesting to see how the various modes are doing with small files.
-- **atari** a set of files comming from my Atari ST harddisk. It contains a lot of programs (.prg ) and Atari St picture files (Neochrome and Degas format).
+- **atari** a set of files comming from my Atari ST harddisk. It contains a lot of programs (.prg ) and Atari ST picture files (Neochrome and Degas format).
 - **mame** a large set of Mame ROM dumps.
 - **enwik8** The dataset is based on the [Hutter Prize](http://prize.hutter1.net) and contains the first 10^8 byte of Wikipedia
 
@@ -86,10 +86,10 @@ enwik8    100000000   36234895   34422639   39260290   36948297   35888724   320
 
 Using the **gup** compression program which van be found in the **unix** directory when you build the project in a Unix environment, for windows the program can be found in the **win32** directory, ARJ files can be generated with a command line looking like this:  
 `gup a -<mode> -e -r result.arj <file(s)>`  
-Where **a** means create an ARJ file and add files to the ARJ file. **\<mode\>** is one of the compression modes: m1, m4, m7, n0, n1 or n2. The **-e** switch excludes the directory names in the ARJ file. The **-r** switch is for recursive directories.  
-`gup l result.arj` will list the contents of the ARJ file.  
-`gup t result.arj` will test the contents of the ARJ file.  
-`gup x result.arj` will extract the contents of the ARJ file.  
+Where **a** means create an ARJ file and **a**dd files to the ARJ file. **\<mode\>** is one of the compression modes: m1, m4, m7, n0, n1 or n2. The **-e** switch excludes the directory names in the ARJ file. The **-r** switch is for recursive directories.  
+`gup l result.arj` will **l**ist the contents of the ARJ file.  
+`gup t result.arj` will **t**est the contents of the ARJ file.  
+`gup x result.arj` will e**x**tract the contents of the ARJ file.  
 
 ### Dump compressed files
 
