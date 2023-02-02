@@ -2,6 +2,11 @@
 #include "compress.h"
 #include "decode.h"
 
+#define N0_MAX_PTR  65536              /* maximale pointer offset + 1 */
+#define N0_MIN_MATCH 3						/* n0 maximum match */
+#define N0_MAX_MATCH 65536					/* n0 maximum match */
+#define N0_MAX_HIST 0						/* n0 does not use history pointers */
+
 #if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
@@ -20,6 +25,10 @@
 	#define LOG_TEXT(string) /* */
 #endif
 
+gup_result n0_compress(packstruct *com);
+gup_result n0_close_stream(packstruct *com);
+unsigned long n0_cost_lit(match_t kar);
+unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 
 int n0_len_len(match_t val);
@@ -414,4 +423,29 @@ gup_result n0_decode(decode_struct *com)
 		}
 	}
 	return GUP_OK; /* exit succes */
+}
+
+gup_result n0_init(packstruct *com)
+{
+	gup_result res=GUP_OK;
+	com->min_match32=N0_MIN_MATCH;
+	com->max_match32=N0_MAX_MATCH;
+	com->maxptr32=N0_MAX_PTR;
+	com->max_hist=N0_MAX_HIST;
+	com->compress=n0_compress;
+	com->close_packed_stream=n0_close_stream;
+	com->command_byte_ptr=NULL;
+	com->cost_ptrlen=n0_cost_ptrlen;
+	com->cost_lit=n0_cost_lit;
+	res=init_dictionary32(com);
+	com->rbuf_current=com->bw_buf->current;
+	com->rbuf_tail=com->bw_buf->end;
+	com->mv_bits_left=0;
+	if(res==GUP_OK)
+	{
+		res=encode32(com);
+		free_dictionary32(com);
+	}
+	com->bw_buf->current=com->rbuf_current;
+	return res;
 }

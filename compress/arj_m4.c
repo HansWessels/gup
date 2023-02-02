@@ -2,6 +2,16 @@
 #include "compress.h"
 #include "decode.h"
 
+#define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
+#define M4_MIN_MATCH 3						/* m4 maximum match */
+#define M4_MAX_MATCH 256					/* m4 maximum match */
+#define M4_MAX_HIST 0						/* m4 does not use history pointers */
+
+gup_result m4_compress(packstruct *com);
+gup_result m4_close_stream(packstruct *com);
+unsigned long m4_cost_lit(match_t kar);
+unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+
 int m4_len_len(match_t match);
 int m4_ptr_len(ptr_t ptr);
 void m4_store_len(match_t match, packstruct *com);
@@ -504,3 +514,26 @@ gup_result m4_decode(decode_struct *com)
 	}
 }
 
+gup_result m4_init(packstruct *com)
+{
+	gup_result res=GUP_OK;
+	com->min_match32=M4_MIN_MATCH;
+	com->maxptr32=M4_MAX_PTR;
+	com->max_match32=M4_MAX_MATCH;
+	com->max_hist=M4_MAX_HIST;
+	com->compress=m4_compress;
+	com->close_packed_stream=m4_close_stream;
+	com->cost_ptrlen=m4_cost_ptrlen;
+	com->cost_lit=m4_cost_lit;
+	res=init_dictionary32(com);
+	com->rbuf_current=com->bw_buf->current;
+	com->rbuf_tail=com->bw_buf->end;
+	com->mv_bits_left=0;
+	if(res==GUP_OK)
+	{
+		res=encode32(com);
+		free_dictionary32(com);
+	}
+	com->bw_buf->current=com->rbuf_current;
+	return res;
+}

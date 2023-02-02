@@ -2,6 +2,16 @@
 #include "compress.h"
 #include "decode.h"
 
+#define N1_MAX_PTR 130560              /* maximale pointer offset + 1 */
+#define N1_MIN_MATCH 2						/* n1 maximum match */
+#define N1_MAX_MATCH 65535					/* n1 maximum match */
+#define N1_MAX_HIST 0						/* n1 does not use history pointers */
+
+gup_result n1_compress(packstruct *com);
+gup_result n1_close_stream(packstruct *com);
+unsigned long n1_cost_lit(match_t kar);
+unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+
 int n1_len_len(match_t match);
 int n1_ptr_len(ptr_t ptr);
 void n1_store_len(match_t match, packstruct *com);
@@ -420,3 +430,26 @@ gup_result n1_decode(decode_struct *com)
 	}
 }
 
+gup_result n1_init(packstruct *com)
+{
+	gup_result res=GUP_OK;
+	com->min_match32=N1_MIN_MATCH;
+	com->max_match32=N1_MAX_MATCH;
+	com->maxptr32=N1_MAX_PTR;
+	com->max_hist=N1_MAX_HIST;
+	com->compress=n1_compress;
+	com->close_packed_stream=n1_close_stream;
+	com->cost_ptrlen=n1_cost_ptrlen;
+	com->cost_lit=n1_cost_lit;
+	res=init_dictionary32(com);
+	com->rbuf_current=com->bw_buf->current;
+	com->rbuf_tail=com->bw_buf->end;
+	com->mv_bits_left=0;
+	if(res==GUP_OK)
+	{
+		res=encode32(com);
+		free_dictionary32(com);
+	}
+	com->bw_buf->current=com->rbuf_current;
+	return res;
+}

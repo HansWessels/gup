@@ -299,7 +299,6 @@ unsigned long count_bits(unsigned long* header_size, unsigned long* message_size
 
 void make_hufftable(uint8* len, uint16* tabel, uint16* freq, uint16 totaalfreq, int nchar, int max_hufflen, packstruct *com); /* maakt huffman tabel */
 void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
-void init_fast_log_empty(packstruct *com);
 gup_result init_encode_r(packstruct *com);
 void free_encode_r(packstruct *com);
 
@@ -354,12 +353,6 @@ int32 first_bit_set32(uint32 u)
   return ((int32)32 - (int32)__builtin_clz(u));
 }
 
-void init_fast_log_empty(packstruct *com)
-{
-	NEVER_USE(com); /* shut up some compilers */
-	(void)0;
-}
-
 #ifndef NOT_USE_STD_init_encode
 
 /*
@@ -393,7 +386,6 @@ gup_result init_encode_r(packstruct *com)
   com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
   com->use_align=1;              /* use align macro */
   com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
-  com->use_sld32=0;
   switch(com->mode)
   {
     case ARJ_MODE_1:
@@ -404,68 +396,6 @@ gup_result init_encode_r(packstruct *com)
       com->m_ptr_bit=ARJ_PBIT;
       com->maxptr= MAX_PTR;
       i_fastlog=init_fast_log;
-      break;
-    case ARJ_MODE_4:
-		com->use_sld32=1;
-		com->min_match32=M4_MIN_MATCH;
-      com->maxptr32=M4_MAX_PTR;
-      com->max_match32=M4_MAX_MATCH;
-      com->max_hist=M4_MAX_HIST;
-      com->compress=m4_compress;
-      com->close_packed_stream=m4_close_stream;
-      com->cost_ptrlen=m4_cost_ptrlen;
-      com->cost_lit=m4_cost_lit;
-      i_fastlog=init_fast_log_empty;
-      break;
-    case NI_MODE_0:
-		com->use_sld32=1;
-		com->min_match32=N0_MIN_MATCH;
-      com->max_match32=N0_MAX_MATCH;
-      com->maxptr32=N0_MAX_PTR;
-      com->max_hist=N0_MAX_HIST;
-      com->compress=n0_compress;
-      com->close_packed_stream=n0_close_stream;
-      com->command_byte_ptr=NULL;
-      com->cost_ptrlen=n0_cost_ptrlen;
-      com->cost_lit=n0_cost_lit;
-      i_fastlog=init_fast_log_empty;
-      break;
-    case NI_MODE_1:
-		com->use_sld32=1;
-		com->min_match32=N1_MIN_MATCH;
-      com->max_match32=N1_MAX_MATCH;
-      com->maxptr32=N1_MAX_PTR;
-      com->max_hist=N1_MAX_HIST;
-      com->compress=n1_compress;
-      com->close_packed_stream=n1_close_stream;
-      com->cost_ptrlen=n1_cost_ptrlen;
-      com->cost_lit=n1_cost_lit;
-      i_fastlog=init_fast_log_empty;
-      break;
-    case NI_MODE_2:
-		com->use_sld32=1;
-		com->min_match32=N2_MIN_MATCH;
-      com->max_match32=N2_MAX_MATCH;
-      com->maxptr32=N2_MAX_PTR;
-      com->max_hist=N2_MAX_HIST;
-      com->compress=n2_compress;
-      com->close_packed_stream=n2_close_stream;
-      com->cost_ptrlen=n2_cost_ptrlen;
-      com->cost_lit=n2_cost_lit;
-      i_fastlog=init_fast_log_empty;
-      break;
-    case NI_MODE_9:
-		com->use_sld32=1;
-		com->min_match32=2;
-      com->maxptr32= 1<<23;
-      com->max_match32=65536;
-      com->max_hist=0;
-      com->compress=n9_compress;
-      com->close_packed_stream=n9_close_stream;
-      com->command_byte_ptr=NULL;
-      com->cost_ptrlen=n9_cost_ptrlen;
-      com->cost_lit=n9_cost_lit;
-      i_fastlog=init_fast_log_empty;
       break;
     case GNU_ARJ_MODE_7:
       com->n_ptr=ARJ_NPT;
@@ -513,10 +443,6 @@ gup_result init_encode_r(packstruct *com)
       i_fastlog=init_fast_log;
       com->maxptr= 32767UL;
       break;
-  }
-  if(com->use_sld32!=0)
-  {
-    return GUP_OK;
   }
   if (com->mode > 0)
   {
@@ -779,6 +705,78 @@ gup_result encode(packstruct *com)
 {
 	TRACE_ME();
 	gup_result res;
+	switch(com->mode)
+	{
+	default:
+		break;
+	case ARJ_MODE_4:
+		res=m4_init(com);
+		return res;
+	case NI_MODE_0:
+		res=n0_init(com);
+		return res;
+   case NI_MODE_1:
+		res=n1_init(com);
+		return res;
+	case NI_MODE_2:
+		res=n2_init(com);
+		return res;
+//    case ARJ_MODE_1:
+//    case ARJ_MODE_2:
+//    case ARJ_MODE_3:
+//      com->n_ptr=ARJ_NPT;
+//      com->m_ptr_bit=ARJ_PBIT;
+//      com->maxptr= MAX_PTR;
+//      i_fastlog=init_fast_log;
+//      break;
+//    case GNU_ARJ_MODE_7:
+//      com->n_ptr=ARJ_NPT;
+//      com->m_ptr_bit=ARJ_PBIT;
+//      i_fastlog=init_fast_log;
+//      com->maxptr= 65534UL;
+//      /*
+//      // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de 
+//      // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen 
+//      // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
+//      // positie ook gebruiken...
+//      */
+//      break;
+//    case LHA_LZS_:
+//      com->maxptr= MAX_LHA_LZS_PTR;
+//      com->compress=compress_lzs;
+//      com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
+//      i_fastlog=init_lzs_fast_log;
+//      com->use_align=0;             /* do NOT use align macro */
+//      break;
+//    case LHA_LZ5_:
+//    case LHA_AFX_:
+//      com->maxptr= MAX_LHA_LZ5_PTR;
+//      com->compress=compress_lz5;
+//      com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
+//      i_fastlog=init_lz5_fast_log;
+//      com->use_align=0;             /* do NOT use align macro */
+//      break;
+//    case LHA_LH4_:
+//      com->n_ptr=LHA_NPT;
+//      com->m_ptr_bit=LHA_PBIT;
+//      com->maxptr=4095;
+//      i_fastlog=init_fast_log;
+//      break;
+//    case 8:
+//    case LHA_LH5_:
+//      com->n_ptr=LHA_NPT;
+//      com->m_ptr_bit=LHA_PBIT;
+//      com->maxptr=8191;
+//      i_fastlog=init_fast_log;
+//      break;
+//    case LHA_LH6_:
+//      com->n_ptr=ARJ_NPT;
+//      com->m_ptr_bit=ARJ_PBIT;
+//      i_fastlog=init_fast_log;
+//      com->maxptr= 32767UL;
+//      break;
+  }
+
 	res=init_encode_r(com);
 	if(res!=GUP_OK)
 	{
@@ -789,27 +787,11 @@ gup_result encode(packstruct *com)
 	{
 		res=store(com);
 	}
-	else if(com->use_sld32 == 0)
-	{ /* gebruik de originele sld */
-		com->rbuf_current=com->bw_buf->current;
-		com->rbuf_tail=com->bw_buf->end;
-		com->mv_bits_left=0;
-		res=encode_big(com);
-		com->bw_buf->current=com->rbuf_current;
-	}
-	else
-	{
-		res=init_dictionary32(com);
-		com->rbuf_current=com->bw_buf->current;
-		com->rbuf_tail=com->bw_buf->end;
-		com->mv_bits_left=0;
-		if(res==GUP_OK)
-		{
-			res=encode32(com);
-			free_dictionary32(com);
-		}
-		com->bw_buf->current=com->rbuf_current;
-	}
+	com->rbuf_current=com->bw_buf->current;
+	com->rbuf_tail=com->bw_buf->end;
+	com->mv_bits_left=0;
+	res=encode_big(com);
+	com->bw_buf->current=com->rbuf_current;
 	free_encode_r(com);
 	return res;
 }

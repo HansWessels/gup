@@ -85,22 +85,6 @@ extern "C"
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
 #define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
 #define EXPANTIE_SLACK (7*256)         /* space subtracted from MAX_ENTRIES in order to allow ZEEF34 expansions */
-#define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
-#define M4_MIN_MATCH 3						/* m4 maximum match */
-#define M4_MAX_MATCH 256					/* m4 maximum match */
-#define M4_MAX_HIST 0						/* m4 does not use history pointers */
-#define N0_MAX_PTR  65536              /* maximale pointer offset + 1 */
-#define N0_MIN_MATCH 3						/* n0 maximum match */
-#define N0_MAX_MATCH 65536					/* n0 maximum match */
-#define N0_MAX_HIST 0						/* n0 does not use history pointers */
-#define N1_MAX_PTR 130560              /* maximale pointer offset + 1 */
-#define N1_MIN_MATCH 2						/* n1 maximum match */
-#define N1_MAX_MATCH 65535					/* n1 maximum match */
-#define N1_MAX_HIST 0						/* n1 does not use history pointers */
-#define N2_MAX_PTR 0xFFFD00            /* maximale pointer offset + 1 */
-#define N2_MIN_MATCH 2						/* n2 maximum match */
-#define N2_MAX_MATCH 65535					/* n2 maximum match */
-#define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
 #define MAX_PTR   26623                /* arj dictionary is 26k */
@@ -135,8 +119,6 @@ extern "C"
 #define FASTLOGBUF 65536UL           /* grootte fastlog buffer */
 void init_fast_log(packstruct *com); /* lookuptable for: int LOG(uint16 x){return x?LOG(x/2)+1:0;} */
 void m4_init_fast_log(packstruct *com);
-void n0_init_fast_log(packstruct *com);
-void init_n1_fast_log(packstruct *com);
 void init_lzs_fast_log(packstruct *com);
 void init_lz5_fast_log(packstruct *com);
 #define LOG(x) com->fast_log[x]
@@ -144,31 +126,16 @@ void init_lz5_fast_log(packstruct *com);
 int32 first_bit_set32(uint32 u);
 gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal bytes in huffblok aan */
 
-
-gup_result n0_compress(packstruct *com);
-gup_result n0_close_stream(packstruct *com);
-unsigned long n0_cost_lit(match_t kar);
-unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
-
-gup_result n1_compress(packstruct *com);
-gup_result n1_close_stream(packstruct *com);
-unsigned long n1_cost_lit(match_t kar);
-unsigned long n1_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
-
-gup_result n2_compress(packstruct *com);
-gup_result n2_close_stream(packstruct *com);
-unsigned long n2_cost_lit(match_t kar);
-unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+gup_result m4_init(packstruct *com);
+gup_result n0_init(packstruct *com);
+gup_result n1_init(packstruct *com);
+gup_result n2_init(packstruct *com);
 
 gup_result n9_compress(packstruct *com);
 gup_result n9_close_stream(packstruct *com);
 unsigned long n9_cost_lit(match_t kar);
 unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
-gup_result m4_compress(packstruct *com);
-gup_result m4_close_stream(packstruct *com);
-unsigned long m4_cost_lit(match_t kar);
-unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 #ifdef __cplusplus
 }

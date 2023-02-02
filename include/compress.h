@@ -496,7 +496,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   uint16 *inmem_input; /* buffer for origsize 16 bit words */
   uint16 *inmem_input_cur; /* current position in the inmem_input buffer */
 	/* used bij sld32 */
-	int use_sld32; /* set if routine uses sld32 */
 	long origsize; /* size of uncompressed file */
 	match_t *match_len; /* match lengte op iedere positie van de file */
 	ptr_t *ptr_len; /* bij behorende pointer lengte op iedere positie van de file */
