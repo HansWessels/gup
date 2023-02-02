@@ -300,6 +300,8 @@ unsigned long count_bits(unsigned long* header_size, unsigned long* message_size
 void make_hufftable(uint8* len, uint16* tabel, uint16* freq, uint16 totaalfreq, int nchar, int max_hufflen, packstruct *com); /* maakt huffman tabel */
 void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
 void init_fast_log_empty(packstruct *com);
+gup_result init_encode_r(packstruct *com);
+void free_encode_r(packstruct *com);
 
 /*
  * ALIGN is a macro to align elements of a certain size in a malloced
@@ -321,40 +323,35 @@ void init_fast_log_empty(packstruct *com);
   #define ALIGN_BUFP(x) /* */
 #endif
 
-#ifndef NOT_USE_STD_free_encode
 void free_encode(packstruct *com)
+{
+	if (com->buffer_start)
+	{
+		com->gfree(com->buffer_start, com->gf_propagator);
+		com->buffer_start=NULL;
+	}
+	if(com->inmem_output!=NULL)
+	{
+		com->gfree(com->inmem_output, com->gf_propagator);
+		com->inmem_output=NULL;
+		com->inmem_input=NULL;
+	}
+}
+
+void free_encode_r(packstruct *com)
 {
   if (com->bufbase)
   {
     com->gfree(com->bufbase, com->gf_propagator);
     com->bufbase=NULL;
   }
-  if(com->inmem_output!=NULL)
-  {
-    com->gfree(com->inmem_output, com->gf_propagator);
-    com->inmem_output=NULL;
-    com->inmem_input=NULL;
-  }
 }
-#endif
+
 
 int32 first_bit_set32(uint32 u)
 { /* first set bit at... pos 1 .. 32, 0 means no bits set */
   if (u == 0) { return 0; }
   return ((int32)32 - (int32)__builtin_clz(u));
-}
-
-uint8 *get_buf(unsigned long *buflen, packstruct *com) /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
-{
-  if(com->bufbase!=NULL)
-  {
-    *buflen=com->buffer_start-com->dictionary;
-    return com->dictionary;
-  }
-  else
-  {
-    return NULL;
-  }
 }
 
 void init_fast_log_empty(packstruct *com)
@@ -374,6 +371,22 @@ void init_fast_log_empty(packstruct *com)
 */
 
 gup_result init_encode(packstruct *com)
+{
+	unsigned long memneed = 4UL*BIG_HUFFSIZE;
+	com->buffer_start = com->gmalloc(memneed, com->gm_propagator);
+	com->dictionary=NULL;
+	if (com->buffer_start == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	else
+	{
+		com->buffer_size=4UL*BIG_HUFFSIZE;
+	}
+	return GUP_OK;
+}
+
+gup_result init_encode_r(packstruct *com)
 {
   void (*i_fastlog)(packstruct *com);
   com->compress=compress_chars;
@@ -503,20 +516,6 @@ gup_result init_encode(packstruct *com)
   }
   if(com->use_sld32!=0)
   {
-    unsigned long memneed = 65536UL;
-    com->bufbase = com->gmalloc(memneed, com->gm_propagator);
-    com->dictionary=NULL;
-    if (com->bufbase == NULL)
-    {
-      return GUP_NOMEM;
-    }
-    else
-    {
-      uint8 *cp = com->bufbase;
-      com->buffer_start=(void*)cp;
-      com->buffer_size=65536UL;
-      cp += com->buffer_size;
-    }
     return GUP_OK;
   }
   if (com->mode > 0)
@@ -629,12 +628,6 @@ gup_result init_encode(packstruct *com)
 #endif
         }
         ALIGN(base, cp, sizeof(unsigned long)); /* align on unsigned long for output buffer */
-        com->buffer_start=(void*)cp;
-
-        /* de copy buffer loopt tot hier, com->buffer_start is het eind adres */
-        com->buffer_size=4UL*BIG_HUFFSIZE;
-        cp += com->buffer_size;
-        ALIGN(base, cp, sizeof(node_struct));
 #ifndef INDEX_STRUCT
         com->tree.big = (void *)cp;
 #else
@@ -690,25 +683,6 @@ gup_result init_encode(packstruct *com)
         NEVER_USE(cp); /* shut up some compilers */
         return GUP_OK; /* succes */
       }
-    }
-  }
-  else
-  {
-    unsigned long memneed = 65536UL;
-    com->bufbase = com->gmalloc(memneed, com->gm_propagator);
-    com->dictionary=NULL;
-
-    if (com->bufbase == NULL)
-    {
-      return GUP_NOMEM;
-    }
-    else
-    {
-      uint8 *cp = com->bufbase;
-      com->buffer_start=(void*)cp;
-      com->buffer_size=65536UL;
-      cp += com->buffer_size;
-      NEVER_USE(cp); /* shut up some compilers */
     }
   }
   return GUP_OK; /* succes */
@@ -805,6 +779,11 @@ gup_result encode(packstruct *com)
 {
 	TRACE_ME();
 	gup_result res;
+	res=init_encode_r(com);
+	if(res!=GUP_OK)
+	{
+		return res;
+	}
 	com->bytes_packed=0;
 	if((com->mode==STORE) || (com->mode==LHA_LH0_))
 	{
@@ -831,6 +810,7 @@ gup_result encode(packstruct *com)
 		}
 		com->bw_buf->current=com->rbuf_current;
 	}
+	free_encode_r(com);
 	return res;
 }
 
@@ -3286,8 +3266,8 @@ gup_result compress_lz5(packstruct *com)
 */
 gup_result re_crc(unsigned long origsize, packstruct * com)
 {
-  unsigned long buflen;
-  uint8 *buffer=get_buf(&buflen, com);
+  unsigned long buflen=com->buffer_size;
+  uint8 *buffer=com->buffer_start;
   
   if(buffer==NULL)
   {
