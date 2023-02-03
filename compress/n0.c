@@ -25,21 +25,20 @@
 	#define LOG_TEXT(string) /* */
 #endif
 
-gup_result n0_compress(packstruct *com);
-gup_result n0_close_stream(packstruct *com);
-unsigned long n0_cost_lit(match_t kar);
-unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static gup_result compress(packstruct *com);
+static gup_result close_stream(packstruct *com);
+static unsigned long cost_lit(match_t kar);
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 
-int n0_len_len(match_t val);
-int n0_ptr_len(ptr_t val);
-void n0_store_val(uint32 val, packstruct *com);
-void n0_store_len_val(uint32 val, packstruct *com);
-void n0_store_literal_val(uint32 val, packstruct *com);
-void n0_store_ptr_val(int32_t val, packstruct *com);
+static int len_len(match_t val);
+static int ptr_len(ptr_t val);
+static void store_val(uint32 val, packstruct *com);
+static void store_len_val(uint32 val, packstruct *com);
+static void store_ptr_val(int32_t val, packstruct *com);
 
 
-unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
 	NEVER_USE(pos);
 	NEVER_USE(ptr_hist);
@@ -48,24 +47,24 @@ unsigned long n0_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_h
 	{ /* match < 3 niet mogelijk */
 		return -1UL;
 	}
-	res+=n0_len_len(match);
-	res+=n0_ptr_len(ptr);
+	res+=len_len(match);
+	res+=ptr_len(ptr);
 	return res;
 }
 
-unsigned long n0_cost_lit(match_t kar)
+static unsigned long cost_lit(match_t kar)
 {
 	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
 }
 
 
-int n0_len_len(match_t val)
+static int len_len(match_t val)
 { /* bereken de code lengte voor val, 2 <= val <= 2^32 */
 	return 2*(first_bit_set32(val-1)-1);
 }
 
-int n0_ptr_len(ptr_t val)
+static int ptr_len(ptr_t val)
 { /* bereken de code lengte voor val, 0 <= val <= 65536 */
 	if(val<256)
 	{
@@ -77,7 +76,7 @@ int n0_ptr_len(ptr_t val)
 	}
 }
 
-#define N0_ST_BIT(bit)												\
+#define ST_BIT(bit)												\
 { /* store a 1 or a 0 */											\
 	int val=bit;			                                 \
 	LOG_BIT(val);														\
@@ -95,7 +94,7 @@ int n0_ptr_len(ptr_t val)
 	}																		\
 }
 
-void n0_store_val(uint32 val, packstruct *com)
+static void store_val(uint32 val, packstruct *com)
 { /* waarde val >=2 */
 	int bits_to_do=first_bit_set32(val)-1;
 	uint32 mask=1<<bits_to_do;
@@ -104,48 +103,48 @@ void n0_store_val(uint32 val, packstruct *com)
 	{
 		if((val&mask)==0)
 		{
-			N0_ST_BIT(0);
+			ST_BIT(0);
 		}
 		else
 		{
-			N0_ST_BIT(1);
+			ST_BIT(1);
 		}
 		mask>>=1;
 		if(mask==0)
 		{
-			N0_ST_BIT(1);
+			ST_BIT(1);
 		}
 		else
 		{
-			N0_ST_BIT(0);
+			ST_BIT(0);
 		}
 	}while(mask!=0);
 }
 
-void n0_store_len_val(uint32 val, packstruct *com)
+static void store_len_val(uint32 val, packstruct *com)
 { /* waarde val >=3 */
-	n0_store_val(val-1, com);
+	store_val(val-1, com);
 }
 
-void n0_store_ptr_val(int32_t val, packstruct *com)
+static void store_ptr_val(int32_t val, packstruct *com)
 { /* waarde val >=0 <=65535 */
 	val++;
 	if(val<=256)
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) (val&0xff);
-		N0_ST_BIT(0);
+		ST_BIT(0);
 	}
 	else
 	{
 		val=-val;
 		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
-		N0_ST_BIT(1);
+		ST_BIT(1);
 		*com->rbuf_current++ = (uint8) (val&0xff);
 	}
 }
 
-gup_result n0_compress(packstruct *com)
+static gup_result compress(packstruct *com)
 {
 	/*
 	** pointer lengte codering:
@@ -183,7 +182,7 @@ gup_result n0_compress(packstruct *com)
 		if(match==0)
 		{ /* store literal */
 			match_t kar;
-			N0_ST_BIT(0);
+			ST_BIT(0);
 			kar=com->dictionary[current_pos];
 			LOG_LITERAL(kar);
 			*com->rbuf_current++=(uint8)kar;
@@ -193,19 +192,19 @@ gup_result n0_compress(packstruct *com)
 		else
       {
       	ptr_t ptr;
-			N0_ST_BIT(1);
+			ST_BIT(1);
 			ptr=com->ptr_len[current_pos];
-         n0_store_ptr_val(ptr, com);
-         n0_store_len_val(match, com);
+         store_ptr_val(ptr, com);
+         store_len_val(match, com);
          LOG_PTR_LEN(match, ptr+1);
          bytes_to_do-=match;
          current_pos+=match;
 		}
 	}
 	{ /* schrijf n0 end of file marker */
-		N0_ST_BIT(1); /* pointer comming */
+		ST_BIT(1); /* pointer comming */
 		*com->rbuf_current++ = 0; 
-		N0_ST_BIT(1); /* deze combi kan niet voorkomen */
+		ST_BIT(1); /* deze combi kan niet voorkomen */
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -242,14 +241,14 @@ gup_result n0_compress(packstruct *com)
 	return GUP_OK;
 }
 
-gup_result n0_close_stream(packstruct *com)
+static gup_result close_stream(packstruct *com)
 {
 	NEVER_USE(com);
 	return GUP_OK;
 }
 
 
-#define N0_GET_BIT(bit)								\
+#define GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
@@ -269,15 +268,15 @@ gup_result n0_close_stream(packstruct *com)
 	bits_in_bitbuf--;									\
 }
 
-#define N0_DECODE_LEN(val)							\
+#define DECODE_LEN(val)							\
 { /* get value 2 - 2^32-1 */						\
 	int bit;												\
 	val=1;												\
 	do														\
 	{														\
-		N0_GET_BIT(bit);								\
+		GET_BIT(bit);								\
 		val+=val+bit;									\
-		N0_GET_BIT(bit);								\
+		GET_BIT(bit);								\
 	} while(bit==0);									\
 }
 
@@ -321,7 +320,7 @@ gup_result n0_decode(decode_struct *com)
 	for(;;)
 	{
 		int bit;
-		N0_GET_BIT(bit);
+		GET_BIT(bit);
 		if(bit==0)
 		{ /* literal */
 	  		if(com->rbuf_current >= com->rbuf_tail)
@@ -364,7 +363,7 @@ gup_result n0_decode(decode_struct *com)
 				}
 			}
 			data=*com->rbuf_current++;
-			N0_GET_BIT(bit);
+			GET_BIT(bit);
 			if(bit==0)
 			{
 				ptr|=data;
@@ -387,7 +386,7 @@ gup_result n0_decode(decode_struct *com)
 				}
 				ptr|=*com->rbuf_current++;
 			}
-			N0_DECODE_LEN(len);
+			DECODE_LEN(len);
 			len++;
 			LOG_PTR_LEN(len, -ptr)
 			src=dst+ptr;
@@ -432,11 +431,11 @@ gup_result n0_init(packstruct *com)
 	com->max_match32=N0_MAX_MATCH;
 	com->maxptr32=N0_MAX_PTR;
 	com->max_hist=N0_MAX_HIST;
-	com->compress=n0_compress;
-	com->close_packed_stream=n0_close_stream;
+	com->compress=compress;
+	com->close_packed_stream=close_stream;
 	com->command_byte_ptr=NULL;
-	com->cost_ptrlen=n0_cost_ptrlen;
-	com->cost_lit=n0_cost_lit;
+	com->cost_ptrlen=cost_ptrlen;
+	com->cost_lit=cost_lit;
 	res=init_dictionary32(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;

@@ -287,7 +287,6 @@
 /* eerst ff wat definities */
 
 void init_bitbuffer(packstruct *com);
-gup_result n0_close_stream(packstruct *com);
 gup_result close_m1_m7_stream(packstruct *com);
 gup_result store(packstruct *com);
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
@@ -705,6 +704,7 @@ gup_result encode(packstruct *com)
 {
 	TRACE_ME();
 	gup_result res;
+	com->bytes_packed=0;
 	switch(com->mode)
 	{
 	default:
@@ -721,71 +721,15 @@ gup_result encode(packstruct *com)
 	case NI_MODE_2:
 		res=n2_init(com);
 		return res;
-//    case ARJ_MODE_1:
-//    case ARJ_MODE_2:
-//    case ARJ_MODE_3:
-//      com->n_ptr=ARJ_NPT;
-//      com->m_ptr_bit=ARJ_PBIT;
-//      com->maxptr= MAX_PTR;
-//      i_fastlog=init_fast_log;
-//      break;
-//    case GNU_ARJ_MODE_7:
-//      com->n_ptr=ARJ_NPT;
-//      com->m_ptr_bit=ARJ_PBIT;
-//      i_fastlog=init_fast_log;
-//      com->maxptr= 65534UL;
-//      /*
-//      // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de 
-//      // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen 
-//      // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
-//      // positie ook gebruiken...
-//      */
-//      break;
-//    case LHA_LZS_:
-//      com->maxptr= MAX_LHA_LZS_PTR;
-//      com->compress=compress_lzs;
-//      com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
-//      i_fastlog=init_lzs_fast_log;
-//      com->use_align=0;             /* do NOT use align macro */
-//      break;
-//    case LHA_LZ5_:
-//    case LHA_AFX_:
-//      com->maxptr= MAX_LHA_LZ5_PTR;
-//      com->compress=compress_lz5;
-//      com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
-//      i_fastlog=init_lz5_fast_log;
-//      com->use_align=0;             /* do NOT use align macro */
-//      break;
-//    case LHA_LH4_:
-//      com->n_ptr=LHA_NPT;
-//      com->m_ptr_bit=LHA_PBIT;
-//      com->maxptr=4095;
-//      i_fastlog=init_fast_log;
-//      break;
-//    case 8:
-//    case LHA_LH5_:
-//      com->n_ptr=LHA_NPT;
-//      com->m_ptr_bit=LHA_PBIT;
-//      com->maxptr=8191;
-//      i_fastlog=init_fast_log;
-//      break;
-//    case LHA_LH6_:
-//      com->n_ptr=ARJ_NPT;
-//      com->m_ptr_bit=ARJ_PBIT;
-//      i_fastlog=init_fast_log;
-//      com->maxptr= 32767UL;
-//      break;
-  }
-
+	case STORE:
+	case LHA_LH0_:
+		res=store(com);
+		return res;
+	}
 	res=init_encode_r(com);
 	if(res!=GUP_OK)
 	{
 		return res;
-	}
-	com->bytes_packed=0;
-	if((com->mode==STORE) || (com->mode==LHA_LH0_))
-	{
-		res=store(com);
 	}
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;

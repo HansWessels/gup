@@ -8,15 +8,15 @@
 #define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
 #define MATCH_2_CUTTOFF 0x400
 
-gup_result n2_compress(packstruct *com);
-gup_result n2_close_stream(packstruct *com);
-unsigned long n2_cost_lit(match_t kar);
-unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static gup_result compress(packstruct *com);
+static gup_result close_stream(packstruct *com);
+static unsigned long cost_lit(match_t kar);
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
-int n2_len_len(match_t match);
-int n2_ptr_len(ptr_t ptr, ptr_t *ptr_hist);
-void n2_store_len(match_t match, ptr_t ptr, packstruct *com);
-void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
+static int len_len(match_t match);
+static int ptr_len(ptr_t ptr, ptr_t *ptr_hist);
+static void store_len(match_t match, ptr_t ptr, packstruct *com);
+static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 
 
 #if 0
@@ -63,7 +63,7 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 
 
 /* unsigned long val, int bit_count */
-#define N2_ST_BIT(bit)												\
+#define ST_BIT(bit)												\
 { /* store a 1 or a 0 */											\
 	int val=bit;			                                 \
 	LOG_BIT(val);														\
@@ -82,7 +82,7 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 }
 
 
-unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
 	NEVER_USE(pos);
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
@@ -100,18 +100,18 @@ unsigned long n2_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_h
 			match--;
 		}
 	}
-	res+=n2_len_len(match);
-	res+=n2_ptr_len(ptr, ptr_hist);
+	res+=len_len(match);
+	res+=ptr_len(ptr, ptr_hist);
 	return res;
 }
 
-unsigned long n2_cost_lit(match_t kar)
+static unsigned long cost_lit(match_t kar)
 {
 	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
 }
 
-int n2_len_len(match_t match)
+static int len_len(match_t match)
 {
 	if((match<N2_MIN_MATCH) || (match>N2_MAX_MATCH))
 	{
@@ -125,7 +125,7 @@ int n2_len_len(match_t match)
 	return 2+2*(first_bit_set32(match)-1);
 }
 
-int n2_ptr_len(ptr_t ptr, ptr_t *ptr_hist)
+static int ptr_len(ptr_t ptr, ptr_t *ptr_hist)
 {
 	if(ptr==ptr_hist[0])
 	{
@@ -134,7 +134,7 @@ int n2_ptr_len(ptr_t ptr, ptr_t *ptr_hist)
 	return 8+2*(first_bit_set32((ptr>>8)+3)-1);
 }
 
-void n2_store_len(match_t match, ptr_t ptr, packstruct *com)
+static void store_len(match_t match, ptr_t ptr, packstruct *com)
 {
 	if(ptr>=MATCH_2_CUTTOFF)
 	{
@@ -142,24 +142,24 @@ void n2_store_len(match_t match, ptr_t ptr, packstruct *com)
 	}
 	if(match==2)
 	{
-		N2_ST_BIT(0);
-		N2_ST_BIT(0);
+		ST_BIT(0);
+		ST_BIT(0);
 		return;
 	}
 	if(match==3)
 	{
-		N2_ST_BIT(0);
-		N2_ST_BIT(1);
+		ST_BIT(0);
+		ST_BIT(1);
 		return;
 	}
 	if(match==4)
 	{
-		N2_ST_BIT(1);
-		N2_ST_BIT(0);
+		ST_BIT(1);
+		ST_BIT(0);
 		return;
 	}
-	N2_ST_BIT(1);
-	N2_ST_BIT(1);
+	ST_BIT(1);
+	ST_BIT(1);
 	match-=3;
 	{
 		int len;
@@ -170,32 +170,32 @@ void n2_store_len(match_t match, ptr_t ptr, packstruct *com)
 		{ /* stuur bits */
 			if(match&mask)
 			{
-				N2_ST_BIT(1);
+				ST_BIT(1);
 			}
 			else
 			{
-				N2_ST_BIT(0);
+				ST_BIT(0);
 			}
 			mask>>=1;
 			if(mask==0)
 			{
-				N2_ST_BIT(1);
+				ST_BIT(1);
 			}
 			else
 			{
-				N2_ST_BIT(0);
+				ST_BIT(0);
 			}
 		}
 		while(mask!=0);
 	}
 }
 
-void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com)
+static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com)
 {
 	if(ptr==last_ptr)
 	{ /* pointer reuse, send 1 */
-		N2_ST_BIT(1);
-		N2_ST_BIT(1);
+		ST_BIT(1);
+		ST_BIT(1);
 	}
 	else
 	{
@@ -210,20 +210,20 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com)
 		{ /* stuur geinverteerde bits */
 			if(ptr&mask)
 			{
-				N2_ST_BIT(0);
+				ST_BIT(0);
 			}
 			else
 			{
-				N2_ST_BIT(1);
+				ST_BIT(1);
 			}
 			mask>>=1;
 			if(mask==0)
 			{
-				N2_ST_BIT(1);
+				ST_BIT(1);
 			}
 			else
 			{
-				N2_ST_BIT(0);
+				ST_BIT(0);
 			}
 		}
 		while(mask!=0);
@@ -231,7 +231,7 @@ void n2_store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com)
 	}
 }
 
-gup_result n2_compress(packstruct *com)
+static gup_result compress(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do=com->origsize;
@@ -262,7 +262,7 @@ gup_result n2_compress(packstruct *com)
 					len_run_stat[first_bit_set32(len_run)]++;
 					len_run=0;
 				}
-				total_size+=n2_cost_lit(match);
+				total_size+=cost_lit(match);
 				i--;
 				current_pos++;
 			}
@@ -292,7 +292,7 @@ gup_result n2_compress(packstruct *com)
 				}
 				ptr_stat[first_bit_set32(ptr)]++;
 				{
-					total_size+=n2_cost_ptrlen(match, ptr, i, last_ptr);
+					total_size+=cost_ptrlen(match, ptr, i, last_ptr);
 				}
 	         i-=match;
    	      current_pos+=match;
@@ -339,7 +339,7 @@ gup_result n2_compress(packstruct *com)
 				if(match==0)
 				{ /* store literal */
 					match_t kar;
-					N2_ST_BIT(0);
+					ST_BIT(0);
 					kar=com->dictionary[current_pos];
 					LOG_LITERAL(kar);
 					*com->rbuf_current++=(uint8)kar;
@@ -349,10 +349,10 @@ gup_result n2_compress(packstruct *com)
 				else
       		{
 		      	ptr_t ptr;
-					N2_ST_BIT(1);
+					ST_BIT(1);
 					ptr=com->ptr_len[current_pos];
-      		   n2_store_ptr(ptr, last_ptr, com);
-		         n2_store_len(match, ptr, com);
+      		   store_ptr(ptr, last_ptr, com);
+		         store_len(match, ptr, com);
       		   LOG_PTR_LEN(match, ptr);
       		   last_ptr=ptr;
 		         bytes_to_do-=match;
@@ -363,14 +363,14 @@ gup_result n2_compress(packstruct *com)
 	}
 	{ /* send end of stream token, 16 one's makes the 16 bit value -1 */
 		int i;
-		N2_ST_BIT(1); /* pointer is comming */
+		ST_BIT(1); /* pointer is comming */
 		for(i=0; i<15; i++)
 		{
-			N2_ST_BIT(1);
-			N2_ST_BIT(0);
+			ST_BIT(1);
+			ST_BIT(0);
 		}
-		N2_ST_BIT(1);
-		N2_ST_BIT(1);
+		ST_BIT(1);
+		ST_BIT(1);
 		LOG_TEXT("EOF token\n");			\
 	}
 	if (com->bits_in_bitbuf>0)
@@ -407,7 +407,7 @@ gup_result n2_compress(packstruct *com)
 	return GUP_OK;
 }
 
-gup_result n2_close_stream(packstruct *com)
+static gup_result close_stream(packstruct *com)
 {
 	NEVER_USE(com);
 	#ifdef STATISTICS
@@ -500,7 +500,7 @@ gup_result n2_close_stream(packstruct *com)
 	return GUP_OK;
 }
 
-#define N2_GET_BIT(bit)								\
+#define GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
@@ -520,12 +520,12 @@ gup_result n2_close_stream(packstruct *com)
 	bits_in_bitbuf--;									\
 }
 
-#define N2_GET_LEN(len)								\
+#define GET_LEN(len)								\
 { /* get length from data stream */				\
 	int bit;												\
-	N2_GET_BIT(bit);									\
+	GET_BIT(bit);									\
 	len=bit;												\
-	N2_GET_BIT(bit);									\
+	GET_BIT(bit);									\
 	len+=len+bit;										\
 	if(len<3)											\
 	{ /* short len */									\
@@ -536,9 +536,9 @@ gup_result n2_close_stream(packstruct *com)
 		len=1;											\
 		do													\
 		{													\
-			N2_GET_BIT(bit);							\
+			GET_BIT(bit);							\
 			len+=len+bit;								\
-			N2_GET_BIT(bit);							\
+			GET_BIT(bit);							\
 		} while(bit==0);								\
 		len+=3;											\
 	}														\
@@ -550,15 +550,15 @@ gup_result n2_close_stream(packstruct *com)
 			
 
 
-#define N2_GET_PTR(ptr)								\
+#define GET_PTR(ptr)								\
 { /* get pointer from data stream */			\
 	int tmp=-2;											\
 	int bit;												\
 	do														\
 	{														\
-		N2_GET_BIT(bit);								\
+		GET_BIT(bit);								\
 		tmp+=tmp+bit;									\
-		N2_GET_BIT(bit);								\
+		GET_BIT(bit);								\
 	} while(bit==0);									\
 	if(tmp<=-65537)									\
 	{ /* eof token */									\
@@ -625,7 +625,7 @@ gup_result n2_decode(decode_struct *com)
 	for(;;)
 	{
 		int bit;
-		N2_GET_BIT(bit);
+		GET_BIT(bit);
 		if(bit==0)
 		{ /* literal */
 			origsize--;
@@ -646,8 +646,8 @@ gup_result n2_decode(decode_struct *com)
 		{ /* ptr len */
 			match_t len;
 			ptr_t ptr;
-			N2_GET_PTR(ptr);
-			N2_GET_LEN(len);
+			GET_PTR(ptr);
+			GET_LEN(len);
 			{ /* copy */
 				uint8* q=buff-ptr-1;
 				LOG_PTR_LEN(len, ptr);
@@ -684,10 +684,10 @@ gup_result n2_init(packstruct *com)
 	com->max_match32=N2_MAX_MATCH;
 	com->maxptr32=N2_MAX_PTR;
 	com->max_hist=N2_MAX_HIST;
-	com->compress=n2_compress;
-	com->close_packed_stream=n2_close_stream;
-	com->cost_ptrlen=n2_cost_ptrlen;
-	com->cost_lit=n2_cost_lit;
+	com->compress=compress;
+	com->close_packed_stream=close_stream;
+	com->cost_ptrlen=cost_ptrlen;
+	com->cost_lit=cost_lit;
 	res=init_dictionary32(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;

@@ -7,19 +7,15 @@
 #define M4_MAX_MATCH 256					/* m4 maximum match */
 #define M4_MAX_HIST 0						/* m4 does not use history pointers */
 
-gup_result m4_compress(packstruct *com);
-gup_result m4_close_stream(packstruct *com);
-unsigned long m4_cost_lit(match_t kar);
-unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static gup_result compress(packstruct *com);
+static gup_result close_stream(packstruct *com);
+static unsigned long cost_lit(match_t kar);
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
-int m4_len_len(match_t match);
-int m4_ptr_len(ptr_t ptr);
-void m4_store_len(match_t match, packstruct *com);
-void m4_store_ptr(ptr_t ptr, packstruct *com);
-unsigned long m4_count_bits(unsigned long* packed_bytes,
-                            packstruct *com,
-                            uint16 entries, c_codetype *chars,
-                            pointer_type *ptrs);
+static int len_len(match_t match);
+static int ptr_len(ptr_t ptr);
+static void store_len(match_t match, packstruct *com);
+static void store_ptr(ptr_t ptr, packstruct *com);
 
 #if 0
 	/* log literal en pointer len combi's */
@@ -74,23 +70,23 @@ unsigned long m4_count_bits(unsigned long* packed_bytes,
 }
 
 
-unsigned long m4_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
 	NEVER_USE(pos);
 	NEVER_USE(ptr_hist);
 	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
-	res+=m4_len_len(match);
-	res+=m4_ptr_len(ptr);
+	res+=len_len(match);
+	res+=ptr_len(ptr);
 	return res;
 }
 
-unsigned long m4_cost_lit(match_t kar)
+static unsigned long cost_lit(match_t kar)
 {
 	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
 }
 
-int m4_len_len(match_t match)
+static int len_len(match_t match)
 {
 	if(match<3)
 	{
@@ -110,7 +106,7 @@ int m4_len_len(match_t match)
 	return 2*(first_bit_set32(match-1)-1);
 }
 
-int m4_ptr_len(ptr_t ptr)
+static int ptr_len(ptr_t ptr)
 {
 	if(ptr<512)
 	{
@@ -130,7 +126,7 @@ int m4_ptr_len(ptr_t ptr)
 	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
 }
 
-void m4_store_len(match_t match, packstruct *com)
+static void store_len(match_t match, packstruct *com)
 {
 	int len;
 	match_t mask;
@@ -146,7 +142,7 @@ void m4_store_len(match_t match, packstruct *com)
 	ST_BITS(match&mask, len);
 }
 
-void m4_store_ptr(ptr_t ptr, packstruct *com)
+static void store_ptr(ptr_t ptr, packstruct *com)
 {
 	int len;
 	ptr_t mask;
@@ -169,7 +165,7 @@ void m4_store_ptr(ptr_t ptr, packstruct *com)
 	ST_BITS(ptr-(mask<<9), len+9);
 }
 
-gup_result m4_compress(packstruct *com)
+static gup_result compress(packstruct *com)
 {
 	/*
 	** pointer lengte codering:
@@ -214,8 +210,8 @@ gup_result m4_compress(packstruct *com)
          bytes_to_do-=match;
          current_pos+=match;
 	      LOG_PTR_LEN(match, ptr);
-			m4_store_len(match, com);
-			m4_store_ptr(ptr, com);
+			store_len(match, com);
+			store_ptr(ptr, com);
 
 		}
 	}
@@ -271,41 +267,7 @@ gup_result m4_compress(packstruct *com)
 	return GUP_OK;
 }
 
-unsigned long m4_count_bits(unsigned long *packed_bytes,  /* aantal bytes dat gepacked wordt */
-          /* nu de variabelen die nodig zijn voor de berekening */
-                            packstruct *com, /* commandstruct */
-                            uint16 entries, /* aantal characters die moeten worden gepacked */
-                            c_codetype * p, /* pointer naar de karakters     */
-                            pointer_type * q  /* pointer naar de pointers    */
-)
-{
-	NEVER_USE(com);
-	unsigned long bits = 0;
-	unsigned long bytes = 0;
-
-	entries++;
-	while (--entries != 0)
-	{
-		match_t kar = *p++;
-
-		if (kar < NLIT)
-		{ /*- store literal */
-			bytes++;
-			bits += 9;
-		}
-		else
-		{
-			bytes += kar + MIN_MATCH - NLIT;
-			bits+=m4_len_len(kar);
-			kar = *q++;
-			bits+=m4_ptr_len(kar);
-		}
-	}
-	*packed_bytes = bytes;
-	return bits;
-}
-
-gup_result m4_close_stream(packstruct *com)
+static gup_result close_stream(packstruct *com)
 {
 	NEVER_USE(com);
 	return GUP_OK;
@@ -521,10 +483,10 @@ gup_result m4_init(packstruct *com)
 	com->maxptr32=M4_MAX_PTR;
 	com->max_match32=M4_MAX_MATCH;
 	com->max_hist=M4_MAX_HIST;
-	com->compress=m4_compress;
-	com->close_packed_stream=m4_close_stream;
-	com->cost_ptrlen=m4_cost_ptrlen;
-	com->cost_lit=m4_cost_lit;
+	com->compress=compress;
+	com->close_packed_stream=close_stream;
+	com->cost_ptrlen=cost_ptrlen;
+	com->cost_lit=cost_lit;
 	res=init_dictionary32(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
