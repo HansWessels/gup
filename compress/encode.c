@@ -721,6 +721,9 @@ gup_result encode(packstruct *com)
 	case NI_MODE_2:
 		res=n2_init(com);
 		return res;
+	case NI_MODE_9:
+		res=n9_init(com);
+		return res;
 	case STORE:
 	case LHA_LH0_:
 		res=store(com);

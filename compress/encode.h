@@ -130,12 +130,7 @@ gup_result m4_init(packstruct *com);
 gup_result n0_init(packstruct *com);
 gup_result n1_init(packstruct *com);
 gup_result n2_init(packstruct *com);
-
-gup_result n9_compress(packstruct *com);
-gup_result n9_close_stream(packstruct *com);
-unsigned long n9_cost_lit(match_t kar);
-unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
-
+gup_result n9_init(packstruct *com);
 
 #ifdef __cplusplus
 }

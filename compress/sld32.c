@@ -109,7 +109,7 @@ gup_result init_dictionary32(packstruct *com)
 		return GUP_NOMEM;
 	}
 	com->compressed_data=(void*)com->cost;
-	com->ptr_hist=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(index_t)*MAX_PTR_HIST, com->gm_propagator);
+	com->ptr_hist=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(ptr_hist_t), com->gm_propagator);
 	if (com->ptr_hist == NULL)
 	{
 		return GUP_NOMEM;
@@ -132,7 +132,8 @@ gup_result init_dictionary32(packstruct *com)
 				int j;
 				for(j=0; j<MAX_PTR_HIST; j++)
 				{
-					com->ptr_hist[i*MAX_PTR_HIST+j]=j;
+					com->ptr_hist[i].ptr[j]=j;
+					com->ptr_hist[i].pos[j]=DICTIONARY_START_OFFSET;
 				}
 			}
 		}
@@ -191,7 +192,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 		match_t best_match=com->min_match32-1;
 		for(i=0; i<MAX_PTR_HIST; i++)
 		{
-			index_t match_pos=pos-com->ptr_hist[pos*MAX_PTR_HIST+i]-1;
+			index_t match_pos=pos-com->ptr_hist[pos].ptr[i]-1;
 			if((match_pos<pos) && (match_pos>DICTIONARY_START_OFFSET))
 			{
 				match_t p=pos;
@@ -211,12 +212,12 @@ void find_dictionary32(index_t pos, packstruct* com)
 						match_t i=com->min_match32;
 						do
 						{
-							if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+i])
+							if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 							{
-								com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+								com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr);
 								com->match_len[pos+i]=i;
 								com->ptr_len[pos+i]=ptr;
-								ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+i)*MAX_PTR_HIST);
+								ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+(pos+i));
 							}
 						} while(i++<best_match);
 					}
@@ -241,12 +242,12 @@ void find_dictionary32(index_t pos, packstruct* com)
 				ptr_t ptr;
 				best_match=1;
 				ptr=pos-match_pos-1;
-				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+best_match])
+				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
 				{
-					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
 					com->match_len[pos+best_match]=best_match;
 					com->ptr_len[pos+best_match]=ptr;
-					ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+best_match)*MAX_PTR_HIST);
+					ptr_copy(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
 			}
 		}
@@ -264,12 +265,12 @@ void find_dictionary32(index_t pos, packstruct* com)
 				ptr_t ptr;
 				best_match=2;
 				ptr=pos-match_pos-1;
-				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+best_match])
+				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
 				{
-					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
 					com->match_len[pos+best_match]=best_match;
 					com->ptr_len[pos+best_match]=ptr;
-					ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+best_match)*MAX_PTR_HIST);
+					ptr_copy(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
 			}
 		}
@@ -314,12 +315,12 @@ void find_dictionary32(index_t pos, packstruct* com)
 						match_t i=com->min_match32;
 						do
 						{
-							if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+i])
+							if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 							{
-								com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+								com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr);
 								com->match_len[pos+i]=i;
 								com->ptr_len[pos+i]=ptr;
-								ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+i)*MAX_PTR_HIST);
+								ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 							}
 						} while(i++<best_match);
 					}
@@ -400,12 +401,12 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				ptr_t ptr=pos-match_pos-1;
 				do
 				{
-					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
-						ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+i)*MAX_PTR_HIST);
+						ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
 			}
@@ -435,12 +436,12 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				ptr_t ptr=pos-match_pos-1;
 				do
 				{
-					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
-						ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+i)*MAX_PTR_HIST);
+						ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
 			}
@@ -472,12 +473,12 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 				match_t i=com->min_match32;
 				do
 				{
-					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST))<com->cost[pos+i])
+					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 					{
-						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist+pos*MAX_PTR_HIST);
+						com->cost[pos+i]=cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr);
 						com->match_len[pos+i]=i;
 						com->ptr_len[pos+i]=ptr;
-						ptr_copy(ptr, com->ptr_hist+pos*MAX_PTR_HIST, com->ptr_hist+(pos+i)*MAX_PTR_HIST);
+						ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<best_match);
 			}

@@ -134,6 +134,7 @@ void decode(int mode, unsigned long size, unsigned long compressed_size, uint32_
 		decode_n1(dst, data);
 		break;
 	case NI_MODE_2:
+	case NI_MODE_9:
 		decode_n2(dst, data);
 		break;
 	default:

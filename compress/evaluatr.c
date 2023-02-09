@@ -1376,50 +1376,72 @@ gup_result encode_big(packstruct *com)
 }
 #endif
 
-void ptr_copy2(ptr_t *src, ptr_t *dst);
+void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst);
+void ptr_insert(ptr_t ptr, index_t pos, ptr_hist_t *src);
+void literal_pointer_swap(ptr_hist_t *ptr_hist);
 
-void ptr_copy2(ptr_t *src, ptr_t *dst)
+void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst)
 {
 	int i;
 	for(i=0; i<MAX_PTR_HIST; i++)
 	{
-		dst[i]=src[i];
+		dst->ptr[i]=src->ptr[i];
+		dst->pos[i]=src->pos[i];
 	}
 }
 
-void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst)
+void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst)
 {
 	int i;
 	int j=0;
-	dst[0]=ptr;
+	dst->ptr[0]=ptr;
+	dst->pos[0]=pos;
 	for(i=1; i<MAX_PTR_HIST; i++)
 	{
-		if(src[j]==ptr)
+		if(src->ptr[j]==ptr)
 		{
 			j++;
 		}
-		dst[i]=src[j];
+		dst->ptr[i]=src->ptr[j];
+		dst->pos[i]=src->pos[j];
 		j++;
 	}
 }
 
-void ptr_insert(ptr_t ptr, ptr_t *src);
 
-void ptr_insert(ptr_t ptr, ptr_t *src)
+void ptr_insert(ptr_t ptr, index_t pos, ptr_hist_t *src)
 {
 	int i;
 	ptr_t old_ptr;
+	index_t old_pos;
 	ptr_t new_ptr=ptr;
+	index_t new_pos=pos;
 	for(i=0; i<MAX_PTR_HIST; i++)
 	{
-		old_ptr=src[i];
+		old_ptr=src->ptr[i];
+		old_pos=src->pos[i];
 		if(old_ptr==ptr)
 		{
 			break;
 		}
-		src[i]=new_ptr;
+		src->ptr[i]=new_ptr;
+		src->pos[i]=new_pos;
 		new_ptr=old_ptr;
+		new_pos=old_pos;
 	}
+}
+
+
+void literal_pointer_swap(ptr_hist_t *ptr_hist)
+{ /* swap de eerste twee pointers */
+	ptr_t ptr;
+	index_t pos;
+	ptr=ptr_hist->ptr[0];
+	pos=ptr_hist->pos[0];
+	ptr_hist->ptr[0]=ptr_hist->ptr[1];
+	ptr_hist->pos[0]=ptr_hist->pos[1];
+	ptr_hist->ptr[1]=ptr;
+	ptr_hist->pos[1]=pos;
 }
 
 gup_result encode32(packstruct *com)
@@ -1428,6 +1450,7 @@ gup_result encode32(packstruct *com)
 	unsigned long bytes_to_do;
 	unsigned long orig_size;
 	unsigned long cost;
+	int literal=0; /* we beginnen in 'pointermode' */
 	{ /*- dictionary buffer vullen */
 		long byte_count;
 		if ((byte_count = com->buf_read_crc(com->origsize, com->dictionary+DICTIONARY_START_OFFSET, com->brc_propagator)) < 0)
@@ -1438,7 +1461,8 @@ gup_result encode32(packstruct *com)
 		{
 			if (com->origsize == 0)
 			{
-				com->packed_size = com->bytes_packed = 0;
+				com->packed_size = 0;
+				com->bytes_packed = 0;
 				return GUP_OK;
 			}
 			else if (com->origsize != byte_count)
@@ -1459,9 +1483,18 @@ gup_result encode32(packstruct *com)
 		cost+=com->cost_lit(com->dictionary[current_pos]);
 		if(cost<com->cost[current_pos])
 		{ /* hier komen met een literal is het goedkoopst */
+			ptr_copy2(com->ptr_hist+(current_pos-1), com->ptr_hist+current_pos);
+			if(literal==0)
+			{ /* we zitten in pointer mode, swap de eerste twee pointers */
+				literal_pointer_swap(com->ptr_hist+current_pos);
+			}
+			literal=1;
 			com->match_len[current_pos]=0;
 			com->cost[current_pos]=cost;
-			ptr_copy2(com->ptr_hist+(current_pos-1)*MAX_PTR_HIST, com->ptr_hist+current_pos*MAX_PTR_HIST);
+		}
+		else
+		{
+			literal=0;
 		}
       find_dictionary32(current_pos, com);
 		current_pos++;
@@ -1480,7 +1513,7 @@ gup_result encode32(packstruct *com)
 		int j;
 		for(j=0; j<MAX_PTR_HIST; j++)
 		{
-			com->ptr_hist[j]=~0;
+			com->ptr_hist[0].ptr[j]=~0;
 		}
 	}
 	{	/* terug rekenen voor de goedkoopste weg */
@@ -1505,7 +1538,7 @@ gup_result encode32(packstruct *com)
 					int i;
 					for(i=0; i<com->max_hist; i++)
 					{
-						ptr_t hist_ptr=com->ptr_hist[i];
+						ptr_t hist_ptr=com->ptr_hist[0].ptr[i];
 						if(hist_ptr<(current_pos-DICTIONARY_START_OFFSET))
 						{ /* hist_ptr ligt binnen bereik */
 							match_t len=0;
@@ -1526,11 +1559,23 @@ gup_result encode32(packstruct *com)
 									j--;
 									cost+=com->cost_lit(com->dictionary[current_pos+j]);
 								} while(j>0);
-								if(cost >= com->cost_ptrlen(len, hist_ptr, current_pos, com->ptr_hist))
+								if(com->match_len[current_pos+len]==0)
+								{ /* ptr swap */
+									literal_pointer_swap(com->ptr_hist+current_pos);
+								}
+								if(cost >= com->cost_ptrlen(len, hist_ptr, current_pos, com->ptr_hist[0].ptr))
 								{ /* ja, een vervaning */
+								printf("/n1/n");
 									com->ptr_len[current_pos]=hist_ptr;
 									com->match_len[current_pos]=len;
-									ptr_insert(hist_ptr, com->ptr_hist);
+									ptr_insert(hist_ptr, current_pos, com->ptr_hist);
+								}
+								else
+								{
+									if(com->match_len[current_pos+len]==0)
+									{ /* ptr swap */
+										literal_pointer_swap(com->ptr_hist+current_pos);
+									}
 								}
 							}
 						}
@@ -1550,7 +1595,7 @@ gup_result encode32(packstruct *com)
 					int i;
 					for(i=0; i<com->max_hist; i++)
 					{
-						ptr_t hist_ptr=com->ptr_hist[i];
+						ptr_t hist_ptr=com->ptr_hist[0].ptr[i];
 						if((hist_ptr!=ptr) && (hist_ptr<(current_pos-DICTIONARY_START_OFFSET)))
 						{ /* hist_ptr ligt binnen bereik en is ongelijk aan de huidige pointer */
 							match_t match_len=match;
@@ -1565,17 +1610,32 @@ gup_result encode32(packstruct *com)
 							} while(match_len>0);
 							if(match_len==0)
 							{ /* mogelijke vervanging */
-								if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist+current_pos*MAX_PTR_HIST) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist))
-								{ /* ja, een vervaning */
-									ptr=hist_ptr;
-									com->ptr_len[current_pos]=ptr;
+								if(com->match_len[current_pos+match]==0)
+								{ /* ptr swap */
+									literal_pointer_swap(com->ptr_hist+current_pos);
+									if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist[0].ptr))
+									{ /* ja, een vervaning */
+									printf("3");
+										ptr=hist_ptr;
+										com->ptr_len[current_pos]=ptr;
+									}
+									literal_pointer_swap(com->ptr_hist+current_pos);
+								}
+								else
+								{
+									if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist[0].ptr))
+									{ /* ja, een vervaning */
+									printf("2");
+										ptr=hist_ptr;
+										com->ptr_len[current_pos]=ptr;
+									}
 								}
 							}
 						}
 					}
 				}
 				literal_count=0;
-				ptr_insert(ptr, com->ptr_hist);
+				ptr_insert(ptr, current_pos, com->ptr_hist);
 				match=new_match;
 				ptr=new_ptr;
 			}
@@ -1584,16 +1644,6 @@ gup_result encode32(packstruct *com)
 	{
 		gup_result res;
 		if((res=com->compress(com))!=GUP_OK)
-		{
-			return res;
-		}
-	}
-	/*
-	** Nu alleen compressed bitstram afsluiten
-	*/
-	{
-		gup_result res;
-		if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
 		{
 			return res;
 		}

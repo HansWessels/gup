@@ -304,7 +304,6 @@ gup_result decode(decode_struct *com)
     ret=decode_big(com);
     break;
   case NI_MODE_0:
-  case NI_MODE_9:
     ret=n0_decode(com);
     break;
   case NI_MODE_1:
@@ -312,6 +311,9 @@ gup_result decode(decode_struct *com)
     break;
   case NI_MODE_2:
     ret=n2_decode(com);
+    break;
+  case NI_MODE_9:
+    ret=n9_decode(com);
     break;
   default:
     ret=GUP_HDR_UNKNOWN_METHOD;

@@ -8,7 +8,6 @@
 #define M4_MAX_HIST 0						/* m4 does not use history pointers */
 
 static gup_result compress(packstruct *com);
-static gup_result close_stream(packstruct *com);
 static unsigned long cost_lit(match_t kar);
 static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
@@ -267,13 +266,6 @@ static gup_result compress(packstruct *com)
 	return GUP_OK;
 }
 
-static gup_result close_stream(packstruct *com)
-{
-	NEVER_USE(com);
-	return GUP_OK;
-	return GUP_OK;
-}
-
 #define TRASHBITS(x)		/* trash  bits from bitbuffer */		\
 {																				\
 	int xbits=(x);															\
@@ -484,7 +476,6 @@ gup_result m4_init(packstruct *com)
 	com->max_match32=M4_MAX_MATCH;
 	com->max_hist=M4_MAX_HIST;
 	com->compress=compress;
-	com->close_packed_stream=close_stream;
 	com->cost_ptrlen=cost_ptrlen;
 	com->cost_lit=cost_lit;
 	res=init_dictionary32(com);

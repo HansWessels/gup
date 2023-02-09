@@ -9,7 +9,6 @@
 #define MATCH_2_CUTTOFF 0x400
 
 static gup_result compress(packstruct *com);
-static gup_result close_stream(packstruct *com);
 static unsigned long cost_lit(match_t kar);
 static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
@@ -407,98 +406,6 @@ static gup_result compress(packstruct *com)
 	return GUP_OK;
 }
 
-static gup_result close_stream(packstruct *com)
-{
-	NEVER_USE(com);
-	#ifdef STATISTICS
-	{
-		int i;
-		printf("****************************************** Statistics results *****************************************\n");
-		printf("Packed size = %lu\n", total_size/8);
-		printf("   i    Lit_run log(lit_run)       ptr   log(ptr)  last_ptr   len_run log(len_run)       len   log(len)\n");
-		for(i=0; i<STAT_MAX; i++)
-		{
-			printf("%4i", i);
-			if(i<LIT_STAT_FINE)
-			{
-				printf(" %10lu", lit_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LIT_STAT_COUNT)
-			{
-				printf(" %10lu", lit_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<PTR_STAT_FINE)
-			{
-				printf(" %10lu", ptr_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<PTR_STAT_COUNT)
-			{
-				printf(" %10lu", ptr_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LAST_PTR_COUNT)
-			{
-				printf(" %10lu", ptr_copy[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_RUN_FINE)
-			{
-				printf(" %10lu", len_run_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_RUN_COUNT)
-			{
-				printf(" %10lu", len_run_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-		
-			if(i<LEN_STAT_FINE)
-			{
-				printf(" %10lu", len_stat_fine[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			if(i<LEN_STAT_COUNT)
-			{
-				printf(" %10lu", len_stat[i]);
-			}
-			else
-			{
-				printf(" %10lu", 0UL);
-			}
-			printf("\n");
-		}
-		printf("**************************************** Statistics results end ***************************************\n");
-	}
-#endif
-	return GUP_OK;
-}
 
 #define GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
@@ -685,7 +592,6 @@ gup_result n2_init(packstruct *com)
 	com->maxptr32=N2_MAX_PTR;
 	com->max_hist=N2_MAX_HIST;
 	com->compress=compress;
-	com->close_packed_stream=close_stream;
 	com->cost_ptrlen=cost_ptrlen;
 	com->cost_lit=cost_lit;
 	res=init_dictionary32(com);
@@ -698,5 +604,92 @@ gup_result n2_init(packstruct *com)
 		free_dictionary32(com);
 	}
 	com->bw_buf->current=com->rbuf_current;
+	#ifdef STATISTICS
+	{
+		int i;
+		printf("****************************************** Statistics results *****************************************\n");
+		printf("Packed size = %lu\n", total_size/8);
+		printf("   i    Lit_run log(lit_run)       ptr   log(ptr)  last_ptr   len_run log(len_run)       len   log(len)\n");
+		for(i=0; i<STAT_MAX; i++)
+		{
+			printf("%4i", i);
+			if(i<LIT_STAT_FINE)
+			{
+				printf(" %10lu", lit_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LIT_STAT_COUNT)
+			{
+				printf(" %10lu", lit_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_FINE)
+			{
+				printf(" %10lu", ptr_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_COUNT)
+			{
+				printf(" %10lu", ptr_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LAST_PTR_COUNT)
+			{
+				printf(" %10lu", ptr_copy[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_FINE)
+			{
+				printf(" %10lu", len_run_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_COUNT)
+			{
+				printf(" %10lu", len_run_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+		
+			if(i<LEN_STAT_FINE)
+			{
+				printf(" %10lu", len_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_STAT_COUNT)
+			{
+				printf(" %10lu", len_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			printf("\n");
+		}
+		printf("**************************************** Statistics results end ***************************************\n");
+	}
+#endif
 	return res;
 }

@@ -2,7 +2,47 @@
 #include "compress.h"
 #include "decode.h"
 
+#define N2_MAX_PTR 0xFFFD00            /* maximale pointer offset + 1 */
+#define N2_MIN_MATCH 2						/* n2 maximum match */
+#define N2_MAX_MATCH 65535					/* n2 maximum match */
+#define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
+#define MATCH_2_CUTTOFF 0x400
+
+static gup_result compress(packstruct *com);
+static unsigned long cost_lit(match_t kar);
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+
+static int len_len(match_t match);
+static int ptr_len(ptr_t ptr, ptr_t *ptr_hist);
+static void store_len(match_t match, ptr_t ptr, packstruct *com);
+static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
+
+
 #if 0
+#define STATISTICS
+	#define LIT_STAT_FINE 300 /* tot LIT_RUN_FINE exact bijhouden, daarboven log */
+	#define LIT_STAT_COUNT 300
+	#define LEN_RUN_FINE 300
+	#define LEN_RUN_COUNT 300
+	#define LEN_STAT_FINE 300
+	#define LEN_STAT_COUNT 300
+	#define PTR_STAT_FINE 300
+	#define PTR_STAT_COUNT 300
+	#define STAT_MAX (300)
+	#define LAST_PTR_COUNT 16
+	static unsigned long lit_stat_fine[LIT_STAT_FINE]={0};
+	static unsigned long lit_stat[LIT_STAT_COUNT]={0};
+	static unsigned long len_run_stat_fine[LEN_RUN_FINE]={0};
+	static unsigned long len_run_stat[LEN_RUN_COUNT]={0};
+	static unsigned long len_stat_fine[LEN_STAT_FINE]={0};
+	static unsigned long len_stat[LEN_STAT_COUNT]={0};
+	static unsigned long ptr_stat_fine[PTR_STAT_FINE]={0};
+	static unsigned long ptr_stat[PTR_STAT_COUNT]={0};
+	static unsigned long ptr_copy[LAST_PTR_COUNT]={0};
+	static unsigned long total_size=0;
+#endif
+        
+#if 0   
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
@@ -21,64 +61,8 @@
 #endif
 
 
-
-int n9_len_len(match_t val);
-int n9_ptr_len(ptr_t val);
-void n9_store_val(uint32 val, packstruct *com);
-void n9_store_len_val(uint32 val, packstruct *com);
-void n9_store_literal_val(uint32 val, packstruct *com);
-void n9_store_ptr_val(int32_t val, packstruct *com);
-
-
-unsigned long n9_cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
-{
-	NEVER_USE(pos);
-	NEVER_USE(ptr_hist);
-
-	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
-	if(match<2)
-	{ /* match niet mogelijk */
-		return 256;
-	}
-	if((match==2) && (ptr>255))
-	{
-		return 256;
-	}
-	if(ptr<256)
-	{
-		match++;
-	}
-	res+=n9_len_len(match);
-	res+=n9_ptr_len(ptr);
-	return res;
-}
-
-unsigned long n9_cost_lit(match_t kar)
-{
-	NEVER_USE(kar);
-	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
-}
-
-
-int n9_len_len(match_t val)
-{ /* bereken de code lengte voor val, 2 <= val <= 2^32 */
-	return 2*(first_bit_set32(val-1)-1);
-}
-
-int n9_ptr_len(ptr_t val)
-{ /* bereken de code lengte voor val, 0 <= val <= 65536 */
-	if(val<256)
-	{
-		return 9;
-	}
-	else if(val<65536)
-	{
-		return 18;
-	}
-	return 25;
-}
-
-#define N9_ST_BIT(bit)												\
+/* unsigned long val, int bit_count */
+#define ST_BIT(bit)												\
 { /* store a 1 or a 0 */											\
 	int val=bit;			                                 \
 	LOG_BIT(val);														\
@@ -96,90 +80,247 @@ int n9_ptr_len(ptr_t val)
 	}																		\
 }
 
-void n9_store_val(uint32 val, packstruct *com)
-{ /* waarde val >=2 */
-	int bits_to_do=first_bit_set32(val)-1;
-	uint32 mask=1<<bits_to_do;
-	mask>>=1;
-	do
-	{
-		if((val&mask)==0)
-		{
-			N9_ST_BIT(0);
-		}
-		else
-		{
-			N9_ST_BIT(1);
-		}
-		mask>>=1;
-		if(mask==0)
-		{
-			N9_ST_BIT(1);
-		}
-		else
-		{
-			N9_ST_BIT(0);
-		}
-	}while(mask!=0);
-}
 
-void n9_store_len_val(uint32 val, packstruct *com)
-{ /* waarde val >=3 */
-	n9_store_val(val-1, com);
-}
-
-void n9_store_ptr_val(int32_t val, packstruct *com)
-{ /* waarde val >=0 <=65535 */
-	val++;
-	if(val<=256)
+static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+{
+	NEVER_USE(pos);
+	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
+	if(match==2)
 	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) (val&0xff);
-		N9_ST_BIT(0);
-	}
-	else if(val<=65536)
-	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) ~((val>>8)&0xff);
-		N9_ST_BIT(1);
-		*com->rbuf_current++ = (uint8) (val&0xff);
-		N9_ST_BIT(0);
+		if(ptr>=MATCH_2_CUTTOFF)
+		{
+			res+=256;
+		}
 	}
 	else
 	{
-		val=-val;
-		*com->rbuf_current++ = (uint8) ~((val>>16)&0xff);
-		N9_ST_BIT(1);
-		*com->rbuf_current++ = (uint8) ((val>>8)&0xff);
-		N9_ST_BIT(1);
-		*com->rbuf_current++ = (uint8) (val&0xff);
+		if(ptr>=MATCH_2_CUTTOFF)
+		{
+			match--;
+		}
+	}
+	res+=len_len(match);
+	res+=ptr_len(ptr, ptr_hist);
+	return res;
+}
+
+static unsigned long cost_lit(match_t kar)
+{
+	NEVER_USE(kar);
+	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
+}
+
+static int len_len(match_t match)
+{
+	if((match<N2_MIN_MATCH) || (match>N2_MAX_MATCH))
+	{
+		return 256; /* error */
+	}
+	if(match<5)
+	{
+		return 2;
+	}
+	match-=3;
+	return 2+2*(first_bit_set32(match)-1);
+}
+
+static int ptr_len(ptr_t ptr, ptr_t *ptr_hist)
+{
+	if(ptr==ptr_hist[1])
+	{
+		return 2;
+	}
+	return 8+2*(first_bit_set32((ptr>>8)+3)-1);
+}
+
+static void store_len(match_t match, ptr_t ptr, packstruct *com)
+{
+	if(ptr>=MATCH_2_CUTTOFF)
+	{
+		match--;
+	}
+	if(match==2)
+	{
+		ST_BIT(0);
+		ST_BIT(0);
+		return;
+	}
+	if(match==3)
+	{
+		ST_BIT(0);
+		ST_BIT(1);
+		return;
+	}
+	if(match==4)
+	{
+		ST_BIT(1);
+		ST_BIT(0);
+		return;
+	}
+	ST_BIT(1);
+	ST_BIT(1);
+	match-=3;
+	{
+		int len;
+		match_t mask;
+		len=first_bit_set32(match);
+		mask=1<<(len-2);
+		do
+		{ /* stuur bits */
+			if(match&mask)
+			{
+				ST_BIT(1);
+			}
+			else
+			{
+				ST_BIT(0);
+			}
+			mask>>=1;
+			if(mask==0)
+			{
+				ST_BIT(1);
+			}
+			else
+			{
+				ST_BIT(0);
+			}
+		}
+		while(mask!=0);
 	}
 }
 
-gup_result n9_compress(packstruct *com)
+static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com)
 {
-	/*
-	** pointer lengte codering:
-	** 8 xxxxxxxx0              0 -   255   9 bits
-	** 16 xxxxxxxx1xxxxxxxx   256 - 65536  17 bits
-	**
-	** len codering:
-	** 1 x0              :  2 -   3   2 bits
-	** 2 x1x0            :  4 -   7   4 bits
-	** 3 x1x1x0          :  8 -  15   6 bits
-	** 4 x1x1x1x0        : 16 -  31   8 bits
-	** 5 x1x1x1x1x0      : 32 -  63  10 bits
-	** 6 x1x1x1x1x1x0    : 64 - 127  12 bits
-	** 7 x1x1x1x1x1x1x0  :128 - 255  14 bits
-	** enz...
-	**   
-	*/
+	if(ptr==last_ptr)
+	{ /* pointer reuse, send 1 */
+		ST_BIT(1);
+		ST_BIT(1);
+	}
+	else
+	{
+		int len;
+		ptr_t mask;
+		uint8 ptr_lsb=(uint8)((~ptr)&0xff);
+		ptr>>=8;
+		ptr+=3;
+		len=first_bit_set32(ptr);
+		mask=1<<(len-2);
+		do
+		{ /* stuur geinverteerde bits */
+			if(ptr&mask)
+			{
+				ST_BIT(0);
+			}
+			else
+			{
+				ST_BIT(1);
+			}
+			mask>>=1;
+			if(mask==0)
+			{
+				ST_BIT(1);
+			}
+			else
+			{
+				ST_BIT(0);
+			}
+		}
+		while(mask!=0);
+		*com->rbuf_current++=ptr_lsb;
+	}
+}
+
+static gup_result compress(packstruct *com)
+{
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do=com->origsize;
 	void* rbuf_current_store=com->rbuf_current;
 	com->rbuf_current=com->compressed_data;
 	com->bits_in_bitbuf=0;
+
+#ifdef STATISTICS
 	{
+		unsigned long i=bytes_to_do;
+		unsigned int lit_run=0;
+		unsigned int len_run=0;
+		ptr_t last_ptr[LAST_PTR_COUNT]={0};
+		index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
+		while(i>0)
+		{
+			match_t match;
+			match=com->match_len[current_pos];
+			if (match == 0)
+			{ /* literal */
+				lit_run++;
+				/* if(len_run!=0) */
+				{
+					if(len_run<LEN_RUN_FINE)
+					{
+						len_run_stat_fine[len_run]++;
+					}
+					len_run_stat[first_bit_set32(len_run)]++;
+					len_run=0;
+				}
+				total_size+=cost_lit(match);
+				i--;
+				current_pos++;
+			}
+			else
+			{
+				ptr_t ptr;
+				int j;
+				ptr=com->ptr_len[current_pos];
+				len_run++;
+				/* if(lit_run!=0) */
+				{
+					if(lit_run<LIT_STAT_FINE)
+					{
+						lit_stat_fine[lit_run]++;
+					}
+					lit_stat[first_bit_set32(lit_run)]++;
+					lit_run=0;
+				}
+				if(match<LEN_STAT_FINE)
+				{
+					len_stat_fine[match]++;
+				}
+				len_stat[first_bit_set32(match)]++;
+				if(ptr<PTR_STAT_FINE)
+				{
+					ptr_stat_fine[ptr]++;
+				}
+				ptr_stat[first_bit_set32(ptr)]++;
+				{
+					total_size+=cost_ptrlen(match, ptr, i, last_ptr);
+				}
+	         i-=match;
+   	      current_pos+=match;
+				{
+					ptr_t copy_ptr;
+					copy_ptr=ptr;
+					for(j=0; j<LAST_PTR_COUNT; j++)
+					{
+						ptr_t tmp;
+						tmp=last_ptr[j];
+						if(ptr==last_ptr[j])
+						{
+							ptr_copy[j]++;
+							last_ptr[j]=copy_ptr;
+							break;
+						}
+						last_ptr[j]=copy_ptr;
+						copy_ptr=tmp;
+					}
+				}
+			}
+		}
+		total_size+=30; /* eof token - gratis 1e byte bit */
+		total_size+=7;
+		total_size&=~7; /* rond af op hele bytes */
+	}
+#endif
+
+	{ /* send free literal */
 		match_t kar;
 		kar=com->dictionary[current_pos];
 		LOG_LITERAL(kar);
@@ -187,44 +328,59 @@ gup_result n9_compress(packstruct *com)
 		bytes_to_do--;
 		current_pos++;
 	}
-	while(bytes_to_do>0)
-	{
-		match_t match;
-		match=com->match_len[current_pos];
-		if(match==0)
-		{ /* store literal */
-			match_t kar;
-			N9_ST_BIT(0);
-			kar=com->dictionary[current_pos];
-			LOG_LITERAL(kar);
-			*com->rbuf_current++=(uint8)kar;
-			bytes_to_do--;
-			current_pos++;
-		}
-		else
-      {
-      	ptr_t ptr;
-			N9_ST_BIT(1);
-			ptr=com->ptr_len[current_pos];
-         LOG_PTR_LEN(match, ptr+1);
-         bytes_to_do-=match;
-         current_pos+=match;
-         n9_store_ptr_val(ptr, com);
-         if(ptr<256)
-         {
-         	match++;
-         }
-         if(ptr>65535)
-         {
-         	match--;
-         }
-         n9_store_len_val(match, com);
+	{ /* send main message */
+		ptr_t last_ptr0=1;
+		ptr_t last_ptr1=0;
+		{
+			while(bytes_to_do>0)
+			{
+				match_t match;
+				match=com->match_len[current_pos];
+				if(match==0)
+				{ /* store literal */
+					match_t kar;
+					ST_BIT(0);
+					kar=com->dictionary[current_pos];
+					LOG_LITERAL(kar);
+					*com->rbuf_current++=(uint8)kar;
+					bytes_to_do--;
+					current_pos++;
+				}
+				else
+      		{
+		      	ptr_t ptr;
+					ST_BIT(1);
+					ptr=com->ptr_len[current_pos];
+      		   store_ptr(ptr, last_ptr1, com);
+		         store_len(match, ptr, com);
+      		   LOG_PTR_LEN(match, ptr);
+      		   last_ptr1=last_ptr0;
+      		   last_ptr0=ptr;
+		         bytes_to_do-=match;
+      		   current_pos+=match;
+      		   match=com->match_len[current_pos];
+      		   if(match==0)
+      		   {
+      		   	ptr_t ptr;
+      		   	ptr=last_ptr1;
+	      		   last_ptr1=last_ptr0;
+   	   		   last_ptr0=ptr;
+   	   		}
+      		}
+      	}
 		}
 	}
-	{ /* schrijf n9 end of file marker */
-		N9_ST_BIT(1); /* pointer comming */
-		*com->rbuf_current++ = 0; 
-		N9_ST_BIT(1); /* deze combi kan niet voorkomen */
+	{ /* send end of stream token, 16 one's makes the 16 bit value -1 */
+		int i;
+		ST_BIT(1); /* pointer is comming */
+		for(i=0; i<15; i++)
+		{
+			ST_BIT(1);
+			ST_BIT(0);
+		}
+		ST_BIT(1);
+		ST_BIT(1);
+		LOG_TEXT("EOF token\n");			\
 	}
 	if (com->bits_in_bitbuf>0)
 	{
@@ -232,7 +388,6 @@ gup_result n9_compress(packstruct *com)
 		*com->command_byte_ptr=(uint8)com->bitbuf;
 		com->bits_in_bitbuf=0;
 	}
-	com->command_byte_ptr=NULL;
 	com->packed_size=com->rbuf_current-com->compressed_data;
 	com->bytes_packed=com->origsize;
 	com->rbuf_current=rbuf_current_store;
@@ -261,18 +416,12 @@ gup_result n9_compress(packstruct *com)
 	return GUP_OK;
 }
 
-gup_result n9_close_stream(packstruct *com)
-{
-	NEVER_USE(com);
-	return GUP_OK;
-}
 
-
-#define N9_GET_BIT(bit)								\
+#define GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
  	{ /* fill bitbuf */								\
-  		if(com->rbuf_current>com->rbuf_tail)	\
+  		if(com->rbuf_current>=com->rbuf_tail)	\
 		{													\
 			gup_result res;							\
 			if((res=read_data(com))!=GUP_OK)		\
@@ -288,62 +437,103 @@ gup_result n9_close_stream(packstruct *com)
 	bits_in_bitbuf--;									\
 }
 
-#define N9_DECODE_LEN(val)							\
-{ /* get value 2 - 2^32-1 */						\
+#define GET_LEN(len)								\
+{ /* get length from data stream */				\
 	int bit;												\
-	val=1;												\
+	GET_BIT(bit);									\
+	len=bit;												\
+	GET_BIT(bit);									\
+	len+=len+bit;										\
+	if(len<3)											\
+	{ /* short len */									\
+		len+=2;											\
+	}														\
+	else													\
+	{ /* long len */									\
+		len=1;											\
+		do													\
+		{													\
+			GET_BIT(bit);							\
+			len+=len+bit;								\
+			GET_BIT(bit);							\
+		} while(bit==0);								\
+		len+=3;											\
+	}														\
+	if(ptr>=MATCH_2_CUTTOFF)						\
+	{														\
+		len++;											\
+	}														\
+}
+			
+
+
+#define GET_PTR(ptr)								\
+{ /* get pointer from data stream */			\
+	int tmp=-2;											\
+	int bit;												\
 	do														\
 	{														\
-		N9_GET_BIT(bit);								\
-		val+=val+bit;									\
-		N9_GET_BIT(bit);								\
+		GET_BIT(bit);								\
+		tmp+=tmp+bit;									\
+		GET_BIT(bit);								\
 	} while(bit==0);									\
+	if(tmp<=-65537)									\
+	{ /* eof token */									\
+		LOG_TEXT("EOF token\n");					\
+		done=1;											\
+		break;											\
+	}														\
+	tmp+=3;												\
+	if(tmp==0)											\
+	{														\
+		ptr=last_ptr1;									\
+	}														\
+	else													\
+	{														\
+  		if(com->rbuf_current>=com->rbuf_tail)	\
+		{													\
+			gup_result res;							\
+			if((res=read_data(com))!=GUP_OK)		\
+			{												\
+				return res;								\
+			}												\
+		}													\
+		tmp<<=8;											\
+		tmp|=*com->rbuf_current++;					\
+		ptr=~tmp;										\
+	}														\
 }
-
 
 gup_result n9_decode(decode_struct *com)
 {
-	uint8* dst=com->buffstart;
-	uint8* dstend;
+   uint8* buffer;
+   uint8* buff;
 	uint8 bitbuf=0;
+	ptr_t last_ptr0=1;
+	ptr_t last_ptr1=0;
+	unsigned long origsize;
 	int bits_in_bitbuf=0;
-	dstend=com->buffstart+65536L;
 	if(com->origsize==0)
 	{
 		return GUP_OK; /* exit succes? */
 	}
-	{ /* start met een literal */
-		com->origsize--;
-  		if(com->rbuf_current > com->rbuf_tail)
-		{
-			gup_result res;
-			if((res=read_data(com))!=GUP_OK)
-			{
-				return res;
-			}
-		}
-		LOG_LITERAL(*com->rbuf_current);
-		*dst++=*com->rbuf_current++;
-		if(dst>=dstend)
-		{
-			gup_result err;
-			long bytes=dst-com->buffstart;
-			com->print_progres(bytes, com->pp_propagator);
-			if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
-			{
-				return err;
-			}
-			dst-=bytes;
-			memmove(com->buffstart-bytes, com->buffstart, bytes);
-		}
+	origsize=com->origsize;
+	buffer=com->gmalloc(origsize, com->gm_propagator);
+  	if(buffer == NULL)
+	{
+		return GUP_NOMEM;
 	}
-	for(;;)
+	buff=buffer;
+	com->origsize=0;
+	int done=0;
+	do
 	{
 		int bit;
-		N9_GET_BIT(bit);
-		if(bit==0)
+		do
 		{ /* literal */
-	  		if(com->rbuf_current > com->rbuf_tail)
+			origsize--;
+			match_t kar;
+	  		if(com->rbuf_current >= com->rbuf_tail)
 			{
 				gup_result res;
 				if((res=read_data(com))!=GUP_OK)
@@ -351,95 +541,159 @@ gup_result n9_decode(decode_struct *com)
 					return res;
 				}
 			}
-			LOG_LITERAL(*com->rbuf_current);
-			*dst++=*com->rbuf_current++;
-			if(dst>=dstend)
-			{
-				gup_result err;
-				long bytes=dst-com->buffstart;
-				com->print_progres(bytes, com->pp_propagator);
-				if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
-				{
-					return err;
-				}
-				dst-=bytes;
-				memmove(com->buffstart-bytes, com->buffstart, bytes);
-			}
-		}
-		else
+			kar=*com->rbuf_current++;
+			*buff++=kar;
+			LOG_LITERAL(kar);
+			GET_BIT(bit);
+		} while(bit==0);
+		do
 		{ /* ptr len */
-			int32 ptr;
-			uint8* src;
-			uint8 data;
-			int len;
-			ptr=-1;
-			ptr<<=8;
-	  		if(com->rbuf_current > com->rbuf_tail)
-			{
-				gup_result res;
-				if((res=read_data(com))!=GUP_OK)
+			match_t len;
+			ptr_t ptr;
+			GET_PTR(ptr);
+			GET_LEN(len);
+			{ /* copy */
+				uint8* q=buff-ptr-1;
+				LOG_PTR_LEN(len, ptr);
+				do
 				{
-					return res;
-				}
+					*buff++=*q++;
+				} 
+				while(--len>0);
 			}
-			data=*com->rbuf_current++;
-			N9_GET_BIT(bit);
-			if(bit==0)
-			{
-				ptr|=data;
-			}
-			else
-			{ /* 16 bit pointer */
-				if(data==0)
-				{
-					break; /* end of stream */
-				}
-				ptr|=~data;
-				ptr<<=8;
-		  		if(com->rbuf_current > com->rbuf_tail)
-				{
-					gup_result res;
-					if((res=read_data(com))!=GUP_OK)
-					{
-						return res;
-					}
-				}
-				ptr|=*com->rbuf_current++;
-			}
-			N9_DECODE_LEN(len);
-			len++;
-			LOG_PTR_LEN(len, -ptr)
-			src=dst+ptr;
-			do
-			{
-  				*dst++=*src++;
-  				if(dst>=dstend)
-  				{
-					gup_result err;
-					long bytes=dst-com->buffstart;
-					com->print_progres(bytes, com->pp_propagator);
-  					if ((err = com->write_crc(bytes, com->buffstart, com->wc_propagator))!=GUP_OK)
-  					{
-  						return err;
-  					}
-					dst-=bytes;
-					src-=bytes;
-					memmove(com->buffstart-bytes, com->buffstart, bytes);
-				}
-			} while(--len!=0);
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
+			GET_BIT(bit);
+		} while(bit==1);
+		{
+			ptr_t ptr=last_ptr1;
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
 		}
-	}
+	} while(done==0);
 	{
 		unsigned long len;
-		if((len=(dst-com->buffstart))!=0)
+		if((len=(buff-buffer))!=0)
 		{
 			gup_result err;
 			com->print_progres(len, com->pp_propagator);
-			if ((err = com->write_crc(len, com->buffstart, com->wc_propagator))!=GUP_OK)
+			if ((err = com->write_crc(len, buffer, com->wc_propagator))!=GUP_OK)
 			{
+				com->gfree(buffer, com->gf_propagator);
 				return err;
 			}
 		}
+		com->gfree(buffer, com->gf_propagator);
 	}
 	return GUP_OK; /* exit succes */
+}
+
+gup_result n9_init(packstruct *com)
+{
+	gup_result res=GUP_OK;
+	com->min_match32=N2_MIN_MATCH;
+	com->max_match32=N2_MAX_MATCH;
+	com->maxptr32=N2_MAX_PTR;
+	com->max_hist=N2_MAX_HIST;
+	com->compress=compress;
+	com->cost_ptrlen=cost_ptrlen;
+	com->cost_lit=cost_lit;
+	res=init_dictionary32(com);
+	com->rbuf_current=com->bw_buf->current;
+	com->rbuf_tail=com->bw_buf->end;
+	com->mv_bits_left=0;
+	if(res==GUP_OK)
+	{
+		res=encode32(com);
+		free_dictionary32(com);
+	}
+	com->bw_buf->current=com->rbuf_current;
+	#ifdef STATISTICS
+	{
+		int i;
+		printf("****************************************** Statistics results *****************************************\n");
+		printf("Packed size = %lu\n", total_size/8);
+		printf("   i    Lit_run log(lit_run)       ptr   log(ptr)  last_ptr   len_run log(len_run)       len   log(len)\n");
+		for(i=0; i<STAT_MAX; i++)
+		{
+			printf("%4i", i);
+			if(i<LIT_STAT_FINE)
+			{
+				printf(" %10lu", lit_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LIT_STAT_COUNT)
+			{
+				printf(" %10lu", lit_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_FINE)
+			{
+				printf(" %10lu", ptr_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<PTR_STAT_COUNT)
+			{
+				printf(" %10lu", ptr_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LAST_PTR_COUNT)
+			{
+				printf(" %10lu", ptr_copy[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_FINE)
+			{
+				printf(" %10lu", len_run_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_RUN_COUNT)
+			{
+				printf(" %10lu", len_run_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+		
+			if(i<LEN_STAT_FINE)
+			{
+				printf(" %10lu", len_stat_fine[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			if(i<LEN_STAT_COUNT)
+			{
+				printf(" %10lu", len_stat[i]);
+			}
+			else
+			{
+				printf(" %10lu", 0UL);
+			}
+			printf("\n");
+		}
+		printf("**************************************** Statistics results end ***************************************\n");
+	}
+#endif
+	return res;
 }

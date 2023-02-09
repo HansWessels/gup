@@ -26,7 +26,6 @@
 #endif
 
 static gup_result compress(packstruct *com);
-static gup_result close_stream(packstruct *com);
 static unsigned long cost_lit(match_t kar);
 static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
@@ -241,13 +240,6 @@ static gup_result compress(packstruct *com)
 	return GUP_OK;
 }
 
-static gup_result close_stream(packstruct *com)
-{
-	NEVER_USE(com);
-	return GUP_OK;
-}
-
-
 #define GET_BIT(bit)								\
 { /* get a bit from the data stream */			\
  	if(bits_in_bitbuf==0)							\
@@ -432,7 +424,6 @@ gup_result n0_init(packstruct *com)
 	com->maxptr32=N0_MAX_PTR;
 	com->max_hist=N0_MAX_HIST;
 	com->compress=compress;
-	com->close_packed_stream=close_stream;
 	com->command_byte_ptr=NULL;
 	com->cost_ptrlen=cost_ptrlen;
 	com->cost_lit=cost_lit;

@@ -507,7 +507,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	index_t *hash_table_rle; /* hash of rle match string */
 	node_t *tree32; /* dictionary tree */
 	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
-	index_t *ptr_hist; /* pointer history */
+	ptr_hist_t *ptr_hist; /* pointer history */
 	ptr_t maxptr32; /* maximum size of a pointer */
 	match_t min_match32; /* minimum match */
 	match_t max_match32; /* maximum match */
@@ -519,7 +519,7 @@ gup_result encode32(packstruct *com);
 gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
 void find_dictionary32(index_t pos, packstruct* com);
-void ptr_copy(ptr_t ptr, ptr_t *src, ptr_t *dst);
+void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
 
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
