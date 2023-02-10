@@ -186,6 +186,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 			*parent=NO_NODE;
 		}
 	}
+	if(com->max_hist!=0)
 	{ /* check for matches at pointer history positions */
 		int i;
 		uint8 orig=com->dictionary[pos+max_match];
@@ -372,17 +373,22 @@ void find_dictionary32(index_t pos, packstruct* com)
 void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com)
 { /* find rle matches, special case: rle_depth==(RLE32_DEPTH+2) in that case don't build tree but tread as an max_match */
 	match_t best_match=0;
+	match_t max_rle_depth=RLE32_DEPTH;
 	index_t match_pos; /* working node */
 	index_t* c_leftp;
 	index_t* c_rightp;
 	index_t* parent;
 	uint32_t h;
+	if((com->max_match32-2)<RLE32_DEPTH)
+	{
+		max_rle_depth=com->max_match32-2;
+	}
 	if(com->rle_size>0)
 	{ /* already running an RLE */
-		if(com->rle_size==(RLE32_DEPTH-1))
+		if(com->rle_size==(max_rle_depth-1))
 		{ /* continue on max depth? */
 			com->dictionary[pos+max_match]=~com->dictionary[pos]; /* sentinel, orig wordt door aanroeper terug gezet */
-			if(com->dictionary[pos+RLE32_DEPTH+1]!=com->dictionary[pos])
+			if(com->dictionary[pos+max_rle_depth+1]!=com->dictionary[pos])
 			{ /* rle is getting smaller */
 				com->rle_size--;
 			}
@@ -391,7 +397,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 		{
 			com->rle_size--;
 		}
-		if(com->rle_size<(RLE32_DEPTH-1))
+		if(com->rle_size<(max_rle_depth-1))
 		{ /* hebben we een match op rle_size+1? */
 			match_t rle=com->rle_size;
 			match_pos=com->hash_table_rle[com->dictionary[pos]*RLE32_DEPTH+rle+1];
@@ -419,7 +425,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 		while(com->dictionary[pos+rle]==com->dictionary[pos])
 		{
 			rle++;
-			if(rle==(RLE32_DEPTH+2))
+			if(rle==(max_rle_depth+2))
 			{
 				break;
 			}
