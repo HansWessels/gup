@@ -42,7 +42,7 @@ static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	static unsigned long total_size=0;
 #endif
         
-#if 0   
+#if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}

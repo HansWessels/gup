@@ -1378,7 +1378,6 @@ gup_result encode_big(packstruct *com)
 
 void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst);
 void ptr_insert(ptr_t ptr, index_t pos, ptr_hist_t *src);
-void literal_pointer_swap(ptr_hist_t *ptr_hist);
 
 void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst)
 {
@@ -1509,21 +1508,12 @@ gup_result encode32(packstruct *com)
 			com->cost[current_pos]=cost;
 		}
 	}
-	{	/* De pointer geschiedenis omdraaien zodat we een laatste ronde kunnen doen op zoek naar matches met toekomstige pointers */
-		int j;
-		for(j=0; j<MAX_PTR_HIST; j++)
-		{
-			com->ptr_hist[0].ptr[j]=~0;
-		}
-	}
 	{	/* terug rekenen voor de goedkoopste weg */
 		match_t match;
 		ptr_t ptr;
-		index_t literal_count;
 		match=com->match_len[current_pos];
 		ptr=com->ptr_len[current_pos];
 		com->match_len[current_pos]=0;
-		literal_count=0;
 		while(current_pos>DICTIONARY_START_OFFSET)
 		{
 			if(match==0)
@@ -1532,55 +1522,6 @@ gup_result encode32(packstruct *com)
 				match=com->match_len[current_pos];
 				ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=0;
-				literal_count++;
-				if(literal_count>=com->min_match32)
-				{ /* op zoek naar mogelijke matches met de pointer history */
-					int i;
-					for(i=0; i<com->max_hist; i++)
-					{
-						ptr_t hist_ptr=com->ptr_hist[0].ptr[i];
-						if(hist_ptr<(current_pos-DICTIONARY_START_OFFSET))
-						{ /* hist_ptr ligt binnen bereik */
-							match_t len=0;
-							do
-							{
-								if(com->dictionary[current_pos+len]!=com->dictionary[current_pos-hist_ptr-1+len])
-								{
-									break;
-								}
-								len++;
-							} while(len<literal_count);
-							if(len>=com->min_match32)
-							{ /* mogelijke vervanging */
-								match_t j=len;
-								unsigned long cost=0;
-								do
-								{
-									j--;
-									cost+=com->cost_lit(com->dictionary[current_pos+j]);
-								} while(j>0);
-								if(com->match_len[current_pos+len]==0)
-								{ /* ptr swap */
-									literal_pointer_swap(com->ptr_hist+current_pos);
-								}
-								if(cost >= com->cost_ptrlen(len, hist_ptr, current_pos, com->ptr_hist[0].ptr))
-								{ /* ja, een vervaning */
-								printf("/n1/n");
-									com->ptr_len[current_pos]=hist_ptr;
-									com->match_len[current_pos]=len;
-									ptr_insert(hist_ptr, current_pos, com->ptr_hist);
-								}
-								else
-								{
-									if(com->match_len[current_pos+len]==0)
-									{ /* ptr swap */
-										literal_pointer_swap(com->ptr_hist+current_pos);
-									}
-								}
-							}
-						}
-					}
-				}
 			}
 			else
 			{
@@ -1592,50 +1533,36 @@ gup_result encode32(packstruct *com)
 				com->match_len[current_pos]=match;
 				com->ptr_len[current_pos]=ptr;
 				{ /* probeer ptr te vervangen door een pointer hystory match */
-					int i;
-					for(i=0; i<com->max_hist; i++)
-					{
-						ptr_t hist_ptr=com->ptr_hist[0].ptr[i];
-						if((hist_ptr!=ptr) && (hist_ptr<(current_pos-DICTIONARY_START_OFFSET)))
-						{ /* hist_ptr ligt binnen bereik en is ongelijk aan de huidige pointer */
-							match_t match_len=match;
+					unsigned long cost;
+					cost=com->cost[current_pos];
+					if((cost+com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr))!=com->cost[current_pos+match])
+					{ /* ptr reuse, detect because ptr_hist is wrong here */
+						index_t hist_pos;
+						ptr_t hist_ptr;
+						match_t hist_len;
+						hist_pos=com->ptr_hist[current_pos].pos[1];
+						if(hist_pos>DICTIONARY_START_OFFSET)
+						{
+							int old_cost;
+							int new_cost;
+							int delta;
+							hist_ptr=com->ptr_len[hist_pos];
+							hist_len=com->match_len[hist_pos];
+							printf("%X: old_cost=%lu, new_cost=%lu, old_ptr=%u, new_ptr=%u len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr), com->cost[current_pos+match]-cost, hist_ptr, ptr, hist_len, match);
+							old_cost=(int)com->cost_ptrlen(hist_len, hist_ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
+							new_cost=(int)com->cost_ptrlen(hist_len, ptr     , hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
+							delta=new_cost-old_cost;
+							printf("delta=%i old: cost(%u, %u)=%i new: cost(%u, %u)=%i\n", delta, hist_ptr, hist_len, old_cost, ptr, hist_len, new_cost);
+							com->ptr_len[hist_pos]=ptr;
+							/* fix nu alles tot current_pos */
 							do
 							{
-								match_len--;
-								if(com->dictionary[current_pos+match_len]!=com->dictionary[current_pos-hist_ptr-1+match_len])
-								{
-									match_len++;
-									break;
-								}
-							} while(match_len>0);
-							if(match_len==0)
-							{ /* mogelijke vervanging */
-								if(com->match_len[current_pos+match]==0)
-								{ /* ptr swap */
-									literal_pointer_swap(com->ptr_hist+current_pos);
-									if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist[0].ptr))
-									{ /* ja, een vervaning */
-									printf("3");
-										ptr=hist_ptr;
-										com->ptr_len[current_pos]=ptr;
-									}
-									literal_pointer_swap(com->ptr_hist+current_pos);
-								}
-								else
-								{
-									if(com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr) >= com->cost_ptrlen(match, hist_ptr, current_pos, com->ptr_hist[0].ptr))
-									{ /* ja, een vervaning */
-									printf("2");
-										ptr=hist_ptr;
-										com->ptr_len[current_pos]=ptr;
-									}
-								}
-							}
+								com->cost[hist_pos]+=delta;
+								hist_pos++;
+							} while(hist_pos<=current_pos);
 						}
 					}
 				}
-				literal_count=0;
-				ptr_insert(ptr, current_pos, com->ptr_hist);
 				match=new_match;
 				ptr=new_ptr;
 			}

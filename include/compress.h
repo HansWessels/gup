@@ -520,6 +520,7 @@ gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
 void find_dictionary32(index_t pos, packstruct* com);
 void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
+void literal_pointer_swap(ptr_hist_t *ptr_hist);
 
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
