@@ -1548,11 +1548,11 @@ gup_result encode32(packstruct *com)
 							int delta;
 							hist_ptr=com->ptr_len[hist_pos];
 							hist_len=com->match_len[hist_pos];
-							printf("%X: old_cost=%lu, new_cost=%lu, old_ptr=%u, new_ptr=%u len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr), com->cost[current_pos+match]-cost, hist_ptr, ptr, hist_len, match);
+//							printf("%X: old_cost=%lu, new_cost=%lu, old_ptr=%u, new_ptr=%u len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(match, ptr, current_pos, com->ptr_hist[current_pos].ptr), com->cost[current_pos+match]-cost, hist_ptr, ptr, hist_len, match);
 							old_cost=(int)com->cost_ptrlen(hist_len, hist_ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
 							new_cost=(int)com->cost_ptrlen(hist_len, ptr     , hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
 							delta=new_cost-old_cost;
-							printf("delta=%i old: cost(%u, %u)=%i new: cost(%u, %u)=%i\n", delta, hist_ptr, hist_len, old_cost, ptr, hist_len, new_cost);
+//							printf("delta=%i old: cost(%u, %u)=%i new: cost(%u, %u)=%i\n", delta, hist_ptr, hist_len, old_cost, ptr, hist_len, new_cost);
 							com->ptr_len[hist_pos]=ptr;
 							/* fix nu alles tot current_pos */
 							do

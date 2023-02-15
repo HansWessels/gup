@@ -42,7 +42,7 @@ static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	static unsigned long total_size=0;
 #endif
         
-#if 0   
+#if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
 	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
@@ -126,7 +126,7 @@ static int len_len(match_t match)
 
 static int ptr_len(ptr_t ptr, ptr_t *ptr_hist)
 {
-	if(ptr==ptr_hist[0])
+	if(ptr==ptr_hist[1])
 	{
 		return 2;
 	}
@@ -329,7 +329,8 @@ static gup_result compress(packstruct *com)
 		current_pos++;
 	}
 	{ /* send main message */
-		ptr_t last_ptr=0;
+		ptr_t last_ptr0=1;
+		ptr_t last_ptr1=0;
 		{
 			while(bytes_to_do>0)
 			{
@@ -350,12 +351,21 @@ static gup_result compress(packstruct *com)
 		      	ptr_t ptr;
 					ST_BIT(1);
 					ptr=com->ptr_len[current_pos];
-      		   store_ptr(ptr, last_ptr, com);
+      		   store_ptr(ptr, last_ptr1, com);
 		         store_len(match, ptr, com);
       		   LOG_PTR_LEN(match, ptr);
-      		   last_ptr=ptr;
+      		   last_ptr1=last_ptr0;
+      		   last_ptr0=ptr;
 		         bytes_to_do-=match;
       		   current_pos+=match;
+      		   match=com->match_len[current_pos];
+      		   if(match==0)
+      		   {
+      		   	ptr_t ptr;
+      		   	ptr=last_ptr1;
+	      		   last_ptr1=last_ptr0;
+   	   		   last_ptr0=ptr;
+   	   		}
       		}
       	}
 		}
@@ -470,12 +480,13 @@ static gup_result compress(packstruct *com)
 	if(tmp<=-65537)									\
 	{ /* eof token */									\
 		LOG_TEXT("EOF token\n");					\
+		done=1;											\
 		break;											\
 	}														\
 	tmp+=3;												\
 	if(tmp==0)											\
 	{														\
-		ptr=last_ptr;									\
+		ptr=last_ptr1;									\
 	}														\
 	else													\
 	{														\
@@ -498,7 +509,8 @@ gup_result n2_decode(decode_struct *com)
    uint8* buffer;
    uint8* buff;
 	uint8 bitbuf=0;
-	ptr_t last_ptr=0;
+	ptr_t last_ptr0=1;
+	ptr_t last_ptr1=0;
 	unsigned long origsize;
 	int bits_in_bitbuf=0;
 	if(com->origsize==0)
@@ -513,27 +525,11 @@ gup_result n2_decode(decode_struct *com)
 	}
 	buff=buffer;
 	com->origsize=0;
-	
-	{ /* start met een literal */
-		origsize--;
-		match_t kar;
-  		if(com->rbuf_current >= com->rbuf_tail)
-		{
-			gup_result res;
-			if((res=read_data(com))!=GUP_OK)
-			{
-				return res;
-			}
-		}
-		kar=*com->rbuf_current++;
-		*buff++=kar;
-		LOG_LITERAL(kar);
-	}
-	for(;;)
+	int done=0;
+	do
 	{
 		int bit;
-		GET_BIT(bit);
-		if(bit==0)
+		do
 		{ /* literal */
 			origsize--;
 			match_t kar;
@@ -548,8 +544,9 @@ gup_result n2_decode(decode_struct *com)
 			kar=*com->rbuf_current++;
 			*buff++=kar;
 			LOG_LITERAL(kar);
-		}
-		else
+			GET_BIT(bit);
+		} while(bit==0);
+		do
 		{ /* ptr len */
 			match_t len;
 			ptr_t ptr;
@@ -564,9 +561,16 @@ gup_result n2_decode(decode_struct *com)
 				} 
 				while(--len>0);
 			}
-			last_ptr=ptr;
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
+			GET_BIT(bit);
+		} while(bit==1);
+		{
+			ptr_t ptr=last_ptr1;
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
 		}
-	}
+	} while(done==0);
 	{
 		unsigned long len;
 		if((len=(buff-buffer))!=0)
