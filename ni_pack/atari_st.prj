@@ -15,8 +15,8 @@ atari_st\ni_n0.s
 ;atari_st\ni_n0_f.s
 atari_st\ni_n1.s
 ;atari_st\ni_n1_f.s
-atari_st\ni_n2.s
-;atari_st\ni_n2_f.s
+;atari_st\ni_n2.s
+atari_st\ni_n2_f.s
 atari_st\unstore.s
 
 ;PCBGILIB.LIB       ; BGI library

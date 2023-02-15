@@ -70,7 +70,7 @@ typedef int32_t int32;
 	tmp+=3;												\
 	if(tmp==0)											\
 	{														\
-		ptr=last_ptr;									\
+		ptr=last_ptr1;									\
 	}														\
 	else													\
 	{														\
@@ -83,20 +83,18 @@ typedef int32_t int32;
 void decode_n2(uint8_t *dst, uint8_t *data)
 {
 	uint8 bitbuf=0;
-	uint32 last_ptr=0;
+	uint32 last_ptr0=1;
+	uint32 last_ptr1=0;
 	int bits_in_bitbuf=0;
-	{ /* start met een literal */
-		*dst++=*data++;
-	}
 	for(;;)
 	{
 		int bit;
-		N2_GET_BIT(bit);
-		if(bit==0)
+		do
 		{ /* literal */
 			*dst++=*data++;
-		}
-		else
+			N2_GET_BIT(bit);
+		} while(bit==0);
+		do
 		{ /* ptr len */
 			uint32 len;
 			uint32 ptr;
@@ -110,7 +108,15 @@ void decode_n2(uint8_t *dst, uint8_t *data)
 				} 
 				while(--len>0);
 			}
-			last_ptr=ptr;
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
+			N2_GET_BIT(bit);
+		} while(bit==1);
+		{
+			uint32 ptr=last_ptr1;
+			last_ptr1=last_ptr0;
+			last_ptr0=ptr;
 		}
+
 	}
 }
