@@ -52,6 +52,7 @@
 
 gup_result init_dictionary32(packstruct *com);
 void free_dictionary32(packstruct *com);
+ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match);
 uint32_t hash(index_t pos, packstruct* com);
 void find_dictionary32(index_t pos, packstruct* com);
 void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com);
@@ -164,6 +165,90 @@ uint32_t hash(index_t pos, packstruct* com)
 	val|=(com->dictionary[pos+1]^com->dictionary[pos+2]);
 	return val;
 }
+ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match)
+{ /* kijken of we de pointer kunnen hergebruiken */
+	ptr_t hist_ptr;
+	index_t hist_pos;
+	match_t hist_len;
+	index_t p;
+	index_t q;
+	
+	hist_pos=com->ptr_hist[pos].pos[1];
+	if(hist_pos<DICTIONARY_START_OFFSET)
+	{
+		return 0;
+	}
+	hist_ptr=com->ptr_hist[pos].ptr[1];
+	hist_len=com->match_len[hist_pos];
+	if(hist_len>0)
+	{
+		p=hist_pos-hist_len;
+		if(ptr<(p-DICTIONARY_START_OFFSET))
+		{
+			q=p-ptr-1;
+			do
+			{
+				if(com->dictionary[p++]!=com->dictionary[q++])
+				{ /* neen, pointers zijn niet gelijk */
+					return 0;
+				}
+			} while(--hist_len>0);
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+	{ /* we kunnen de huidige pointer ook voor de vorige match gebruiken, willen we dat ook? Let op of er al een swap gaande is... */
+		unsigned long old_cost;
+		unsigned long new_cost;
+		hist_len=com->match_len[hist_pos];
+		old_cost=com->cost_ptrlen(hist_len, hist_ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
+		if(com->cost[hist_pos]==(com->cost[hist_pos-hist_len]+old_cost))
+		{ /* hier is nog geen pointer swap */
+			old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
+			com->ptr_hist[pos].ptr[1]=ptr;
+			new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
+			new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
+			if(new_cost<old_cost)
+			{ /* ja, swap, fix kosten */
+//				printf("%X: old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
+				*cost+=com->cost_ptrlen(hist_len, ptr     , hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
+				*cost-=com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
+				return hist_ptr+1;
+			}
+			else
+			{ /* nee, toch niet */
+				com->ptr_hist[pos].ptr[1]=hist_ptr;
+				return 0;
+			}
+		}
+		else
+		{ /* we hadden al een pointer swap */
+//			old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
+//			com->ptr_hist[pos].ptr[1]=ptr;
+//			new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
+//			new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
+//			printf("%X: ! old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
+//			com->ptr_hist[pos].ptr[1]=hist_ptr;
+			return 0;
+		}
+	}
+	return 0;
+}
+
+#define UNSWAP_PTR(swap)													\
+{																					\
+	if(swap!=0)																	\
+	{ /* zet oude pointer en originele kosten weer terug */		\
+		com->ptr_hist[pos].ptr[1]=swap-1;								\
+		cost=com->cost[pos];													\
+	}																				\
+}
 
 
 void find_dictionary32(index_t pos, packstruct* com)
@@ -241,8 +326,10 @@ void find_dictionary32(index_t pos, packstruct* com)
 			if(com->dictionary[match_pos]==com->dictionary[pos])
 			{
 				ptr_t ptr;
+				ptr_t swap;
 				best_match=1;
 				ptr=pos-match_pos-1;
+				swap=check_ptr_reuse(com, pos, &cost, ptr, best_match);
 				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
 				{
 					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
@@ -250,6 +337,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 					com->ptr_len[pos+best_match]=ptr;
 					ptr_copy(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
+				UNSWAP_PTR(swap);
 			}
 		}
 		com->match_1[key]=pos;
@@ -264,8 +352,10 @@ void find_dictionary32(index_t pos, packstruct* com)
 			if((com->dictionary[match_pos]==com->dictionary[pos]) && (com->dictionary[match_pos+1]==com->dictionary[pos+1]))
 			{
 				ptr_t ptr;
+				ptr_t swap;
 				best_match=2;
 				ptr=pos-match_pos-1;
+				swap=check_ptr_reuse(com, pos, &cost, ptr, best_match);
 				if((cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
 				{
 					com->cost[pos+best_match]=cost+com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
@@ -273,6 +363,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 					com->ptr_len[pos+best_match]=ptr;
 					ptr_copy(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
+				UNSWAP_PTR(swap);
 			}
 		}
 		com->match_2[key]=pos;
@@ -310,76 +401,11 @@ void find_dictionary32(index_t pos, packstruct* com)
 				if((p-pos)>2) //best_match)
 				{ /* found new best_match */
 					ptr_t ptr;
-					ptr_t hist_ptr;
-					int swap=0;
+					ptr_t swap;
 
 					best_match=p-pos;
 					ptr=pos-match_pos-1;
-					{ /* kijken of we de pointer kunnen hergebruiken */
-						index_t hist_pos;
-						match_t hist_len;
-						index_t p;
-						index_t q;
-						
-						hist_pos=com->ptr_hist[pos].pos[1];
-						if(hist_pos>DICTIONARY_START_OFFSET)
-						{
-							hist_ptr=com->ptr_hist[pos].ptr[1];
-							hist_len=com->match_len[hist_pos];
-							if(hist_len>0)
-							{
-								p=hist_pos-hist_len;
-								if(ptr<(p-DICTIONARY_START_OFFSET))
-								{
-									q=p-ptr-1;
-									swap=1;
-									do
-									{
-										if(com->dictionary[p++]!=com->dictionary[q++])
-										{
-											swap=0;
-											break;
-										}
-									}while(--hist_len>0);
-								}
-							}
-						}
-						if(swap==1)
-						{ /* we kunnen de huidige pointer ook voor de vorige match gebruiken, willen we dat ook? Let op of er al een swap gaande is... */
-							unsigned long old_cost;
-							unsigned long new_cost;
-							hist_len=com->match_len[hist_pos];
-							old_cost=com->cost_ptrlen(hist_len, hist_ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-							if(com->cost[hist_pos]==(com->cost[hist_pos-hist_len]+old_cost))
-							{ /* hier is nog geen pointer swap */
-								old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-								com->ptr_hist[pos].ptr[1]=ptr;
-								new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-								new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-								if(new_cost<old_cost)
-								{ /* ja, swap, fix kosten */
-//									printf("%X: old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
-									cost+=com->cost_ptrlen(hist_len, ptr     , hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
-									cost-=com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
-								}
-								else
-								{ /* nee, toch niet */
-									com->ptr_hist[pos].ptr[1]=hist_ptr;
-									swap=0;
-								}
-							}
-							else
-							{ /* we hadden al een pointer swap */
-								old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-								com->ptr_hist[pos].ptr[1]=ptr;
-								new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-								new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-//								printf("%X: ! old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
-								com->ptr_hist[pos].ptr[1]=hist_ptr;
-								swap=0;
-							}
-						}
-					}
+					swap=check_ptr_reuse(com, pos, &cost, ptr, best_match);
 					{
 						match_t i=com->min_match32;
 						do
@@ -393,11 +419,7 @@ void find_dictionary32(index_t pos, packstruct* com)
 							}
 						} while(i++<best_match);
 					}
-					if(swap==1)
-					{ /* zet oude pointer en originele kosten weer terug */
-						com->ptr_hist[pos].ptr[1]=hist_ptr;
-						cost=com->cost[pos];
-					}
+					UNSWAP_PTR(swap);
 					if(best_match==max_match)
 					{ /* found max_match, we are done inserting */
 						break;
@@ -478,6 +500,8 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 			{
 				match_t i=com->min_match32;
 				ptr_t ptr=pos-match_pos-1;
+				ptr_t swap;
+				swap=check_ptr_reuse(com, pos, &cost, ptr, rle+3);
 				do
 				{
 					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
@@ -488,6 +512,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 						ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
+				UNSWAP_PTR(swap);
 			}
 		}
 	}
@@ -513,6 +538,8 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 			{
 				match_t i=com->min_match32;
 				ptr_t ptr=pos-match_pos-1;
+				ptr_t swap;
+				swap=check_ptr_reuse(com, pos, &cost, ptr, rle+3);
 				do
 				{
 					if((cost+com->cost_ptrlen(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
@@ -523,6 +550,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 						ptr_copy(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
+				UNSWAP_PTR(swap);
 			}
 		}
 	}
@@ -546,77 +574,11 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 		if((p-pos)>2) //best_match)
 		{ /* found new best_match */
 			ptr_t ptr;
-			ptr_t hist_ptr;
-			int swap=0;
+			ptr_t swap;
 
 			best_match=p-pos;
 			ptr=pos-match_pos-1;
-			{ /* kijken of we de pointer kunnen hergebruiken */
-				index_t hist_pos;
-				match_t hist_len;
-				index_t p;
-				index_t q;
-				
-				hist_pos=com->ptr_hist[pos].pos[1];
-				if(hist_pos>DICTIONARY_START_OFFSET)
-				{
-					hist_ptr=com->ptr_hist[pos].ptr[1];
-					hist_len=com->match_len[hist_pos];
-					if(hist_len>0)
-					{
-						p=hist_pos-hist_len;
-						if(ptr<(p-DICTIONARY_START_OFFSET))
-						{
-							q=p-ptr-1;
-							swap=1;
-							do
-							{
-								if(com->dictionary[p++]!=com->dictionary[q++])
-								{
-									swap=0;
-									break;
-								}
-							}while(--hist_len>0);
-						}
-					}
-				}
-				if(swap==1)
-				{ /* we kunnen de huidige pointer ook voor de vorige match gebruiken, willen we dat ook? Let op of er al een swap gaande is... */
-					unsigned long old_cost;
-					unsigned long new_cost;
-					hist_len=com->match_len[hist_pos];
-					old_cost=com->cost_ptrlen(hist_len, hist_ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-					if(com->cost[hist_pos]==(com->cost[hist_pos-hist_len]+old_cost))
-					{ /* hier is nog geen pointer swap */
-						old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-						com->ptr_hist[pos].ptr[1]=ptr;
-						new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-						new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-						if(new_cost<old_cost)
-						{ /* ja, swap, fix kosten */
-//							printf("%X: old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
-							cost+=com->cost_ptrlen(hist_len, ptr     , hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
-							cost-=com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr);
-						}
-						else
-						{ /* nee, toch niet */
-							com->ptr_hist[pos].ptr[1]=hist_ptr;
-							swap=0;
-						}
-					}
-					else
-					{ /* we hadden al een pointer swap */
-						old_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-						com->ptr_hist[pos].ptr[1]=ptr;
-						new_cost=com->cost_ptrlen(hist_len, ptr, hist_pos-hist_len, com->ptr_hist[hist_pos-hist_len].ptr);
-						new_cost+=com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr);
-//						printf("%X: ! old_cost=%lu+%lu, new_cost=%lu+%lu, old_ptr=%u new_ptr=%u, len=%u+%u\n", hist_pos-hist_len-DICTIONARY_START_OFFSET, com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), old_cost-com->cost_ptrlen(hist_len, hist_ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(hist_len, ptr, hist_pos, com->ptr_hist[hist_pos-hist_len].ptr), com->cost_ptrlen(best_match, ptr, pos, com->ptr_hist[pos].ptr), hist_ptr, ptr, hist_len, best_match);
-						com->ptr_hist[pos].ptr[1]=hist_ptr;
-						swap=0;
-					}
-				}
-			}
-
+			swap=check_ptr_reuse(com, pos, &cost, ptr, best_match);
 			{
 				match_t i=com->min_match32;
 				do
@@ -630,12 +592,7 @@ void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* 
 					}
 				} while(i++<best_match);
 			}
-			if(swap==1)
-			{ /* zet oude pointer en originele kosten weer terug */
-				com->ptr_hist[pos].ptr[1]=hist_ptr;
-				cost=com->cost[pos];
-			}
-
+			UNSWAP_PTR(swap);
 			if((best_match==max_match) || (com->rle_size==(RLE32_DEPTH-1)))
 			{ /* found max_match, we are done inserting */
 				break;

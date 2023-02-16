@@ -6,10 +6,11 @@
 #define N1_MIN_MATCH 2						/* n1 maximum match */
 #define N1_MAX_MATCH 65535					/* n1 maximum match */
 #define N1_MAX_HIST 0						/* n1 does not use history pointers */
+#define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
 static gup_result compress(packstruct *com);
-static unsigned long cost_lit(match_t kar);
-static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static int cost_lit(match_t kar);
+static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 static int len_len(match_t match);
 static int ptr_len(ptr_t ptr);
@@ -69,18 +70,18 @@ static void store_ptr(ptr_t ptr, packstruct *com);
 }
 
 
-static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
 	NEVER_USE(pos);
 	NEVER_USE(ptr_hist);
 
-	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
+	int res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	res+=len_len(match);
 	res+=ptr_len(ptr);
 	return res;
 }
 
-static unsigned long cost_lit(match_t kar)
+static int cost_lit(match_t kar)
 {
 	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
@@ -90,7 +91,7 @@ static int len_len(match_t match)
 {
 	if((match<N1_MIN_MATCH) || (match>N1_MAX_MATCH))
 	{
-		return 256; /* error */
+		return ERROR_COST; /* error */
 	}
 	if(match>32767)
 	{
@@ -113,7 +114,7 @@ static int ptr_len(ptr_t ptr)
 		}
 		else
 		{ /* can happen with length 2 matches */
-			return 256; /* error */
+			return ERROR_COST; /* error */
 		}
 	}
 	return 10+2*first_bit_set32(((ptr-512)>>10)+1);

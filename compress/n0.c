@@ -6,6 +6,7 @@
 #define N0_MIN_MATCH 3						/* n0 maximum match */
 #define N0_MAX_MATCH 65536					/* n0 maximum match */
 #define N0_MAX_HIST 0						/* n0 does not use history pointers */
+#define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
 #if 0
 	/* log literal en pointer len combi's */
@@ -26,8 +27,8 @@
 #endif
 
 static gup_result compress(packstruct *com);
-static unsigned long cost_lit(match_t kar);
-static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static int cost_lit(match_t kar);
+static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
 
 
 static int len_len(match_t val);
@@ -37,21 +38,21 @@ static void store_len_val(uint32 val, packstruct *com);
 static void store_ptr_val(int32_t val, packstruct *com);
 
 
-static unsigned long cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 {
 	NEVER_USE(pos);
 	NEVER_USE(ptr_hist);
-	unsigned long res=1; /* 1 bit voor aan te geven dat het een ptr len is */
+	int res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	if(match<3)
 	{ /* match < 3 niet mogelijk */
-		return -1UL;
+		return ERROR_COST;
 	}
 	res+=len_len(match);
 	res+=ptr_len(ptr);
 	return res;
 }
 
-static unsigned long cost_lit(match_t kar)
+static int cost_lit(match_t kar)
 {
 	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
@@ -69,10 +70,11 @@ static int ptr_len(ptr_t val)
 	{
 		return 9;
 	}
-	else
+	else if(val<N0_MAX_PTR)
 	{
 		return 17;
 	}
+	return ERROR_COST;
 }
 
 #define ST_BIT(bit)												\
