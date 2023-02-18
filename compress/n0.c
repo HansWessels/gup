@@ -8,6 +8,17 @@
 #define N0_MAX_HIST 0						/* n0 does not use history pointers */
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
+#define MAX_HIST N0_MAX_HIST
+#undef MIN_MATCH
+#define MIN_MATCH N0_MIN_MATCH
+#define MAX_PTR32 N0_MAX_PTR
+#define MAX_MATCH32 N0_MAX_MATCH
+
+#define COST_LIT(kar) cost_lit()
+#define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr)
+static int cost_lit(void);
+static int cost_ptrlen(match_t match, ptr_t ptr);
+
 #if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
@@ -27,8 +38,8 @@
 #endif
 
 static gup_result compress(packstruct *com);
-static int cost_lit(match_t kar);
-static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static int cost_lit(void);
+static int cost_ptrlen(match_t match, ptr_t ptr);
 
 
 static int len_len(match_t val);
@@ -37,11 +48,10 @@ static void store_val(uint32 val, packstruct *com);
 static void store_len_val(uint32 val, packstruct *com);
 static void store_ptr_val(int32_t val, packstruct *com);
 
+#include "sld32i.c" /* sliding dictionary routines */
 
-static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static int cost_ptrlen(match_t match, ptr_t ptr)
 {
-	NEVER_USE(pos);
-	NEVER_USE(ptr_hist);
 	int res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	if(match<3)
 	{ /* match < 3 niet mogelijk */
@@ -52,9 +62,8 @@ static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 	return res;
 }
 
-static int cost_lit(match_t kar)
+static int cost_lit(void)
 {
-	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
 }
 
@@ -421,22 +430,14 @@ gup_result n0_decode(decode_struct *com)
 gup_result n0_init(packstruct *com)
 {
 	gup_result res=GUP_OK;
-	com->min_match32=N0_MIN_MATCH;
-	com->max_match32=N0_MAX_MATCH;
-	com->maxptr32=N0_MAX_PTR;
-	com->max_hist=N0_MAX_HIST;
-	com->compress=compress;
-	com->command_byte_ptr=NULL;
-	com->cost_ptrlen=cost_ptrlen;
-	com->cost_lit=cost_lit;
-	res=init_dictionary32(com);
+	res=init_dictionary32_i(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
 	if(res==GUP_OK)
 	{
-		res=encode32(com);
-		free_dictionary32(com);
+		res=encode32_i(com);
+		free_dictionary32_i(com);
 	}
 	com->bw_buf->current=com->rbuf_current;
 	return res;

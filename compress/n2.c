@@ -5,13 +5,24 @@
 #define N2_MAX_PTR 0xFFFD00            /* maximale pointer offset + 1 */
 #define N2_MIN_MATCH 2						/* n2 maximum match */
 #define N2_MAX_MATCH 65535					/* n2 maximum match */
-#define N2_MAX_HIST 1						/* n2 does use 1 history pointer */
+#define N2_MAX_HIST 2						/* n2 does use 1 history pointer */
 #define MATCH_2_CUTTOFF 0x400
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
+#define MAX_HIST N2_MAX_HIST
+#undef MIN_MATCH
+#define MIN_MATCH N2_MIN_MATCH
+#define MAX_PTR32 N2_MAX_PTR
+#define MAX_MATCH32 N2_MAX_MATCH
+
+#define BEST_MATCH 2 /* we want to evaluate more then only best matches */
+
+#define COST_LIT(kar) cost_lit()
+#define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr, ptr_hist)
+
 static gup_result compress(packstruct *com);
-static int cost_lit(match_t kar);
-static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist);
+static int cost_lit(void);
+static int cost_ptrlen(match_t match, ptr_t ptr, ptr_t *ptr_hist);
 
 static int len_len(match_t match);
 static int ptr_len(ptr_t ptr, ptr_t *ptr_hist);
@@ -81,10 +92,10 @@ static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 	}																		\
 }
 
+#include "sld32i.c" /* sliding dictionary routines */
 
-static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
+static int cost_ptrlen(match_t match, ptr_t ptr, ptr_t *ptr_hist)
 {
-	NEVER_USE(pos);
 	int res=1; /* 1 bit voor aan te geven dat het een ptr len is */
 	if(match==2)
 	{
@@ -105,9 +116,8 @@ static int cost_ptrlen(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist)
 	return res;
 }
 
-static int cost_lit(match_t kar)
+static int cost_lit(void)
 {
-	NEVER_USE(kar);
 	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
 }
 
@@ -592,21 +602,14 @@ gup_result n2_decode(decode_struct *com)
 gup_result n2_init(packstruct *com)
 {
 	gup_result res=GUP_OK;
-	com->min_match32=N2_MIN_MATCH;
-	com->max_match32=N2_MAX_MATCH;
-	com->maxptr32=N2_MAX_PTR;
-	com->max_hist=N2_MAX_HIST;
-	com->compress=compress;
-	com->cost_ptrlen=cost_ptrlen;
-	com->cost_lit=cost_lit;
-	res=init_dictionary32(com);
+	res=init_dictionary32_i(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
 	if(res==GUP_OK)
 	{
-		res=encode32(com);
-		free_dictionary32(com);
+		res=encode32_i(com);
+		free_dictionary32_i(com);
 	}
 	com->bw_buf->current=com->rbuf_current;
 	#ifdef STATISTICS

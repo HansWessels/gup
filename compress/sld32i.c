@@ -69,6 +69,10 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 	#define LITERAL_POINTER_SWAP(ptr_hist) 
 #endif
 
+#ifndef BEST_MATCH
+	#define BEST_MATCH best_match
+#endif
+
 static gup_result encode32_i(packstruct *com);
 
 static gup_result init_dictionary32_i(packstruct *com)
@@ -133,7 +137,7 @@ static gup_result init_dictionary32_i(packstruct *com)
 	/* initialiseer de index_hashes en de kosten */
 	memset(com->hash_table, 0, (HASH_SIZE32)*sizeof(index_t));
 	memset(com->hash_table_rle, 0, (HASH_SIZE_RLE32)*sizeof(index_t));
-	#if(MIN_MATCH<=2)
+	#if(MIN_MATCH==1)
 	memset(com->match_1, 0, (NC)*sizeof(index_t));
 	#endif
 	#if(MIN_MATCH<=2)
@@ -440,7 +444,7 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 					PTR_COPY(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
 				#if (MAX_HIST!=0) 
-				UNSWAP_PTR(swap);
+					UNSWAP_PTR(swap);
 				#endif
 			}
 		}
@@ -477,7 +481,7 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 					p++;
 					q++;
 				}
-				if((p-pos)>best_match)
+				if((p-pos)>BEST_MATCH)
 				{ /* found new best_match */
 					ptr_t ptr;
 
@@ -654,7 +658,7 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 			p++;
 			q++;
 		}
-		if((p-pos)>best_match)
+		if((p-pos)>BEST_MATCH)
 		{ /* found new best_match */
 			ptr_t ptr;
 
