@@ -70,7 +70,7 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 #endif
 
 #ifndef BEST_MATCH
-	#define BEST_MATCH best_match
+	#define BEST_MATCH(best_match) best_match
 #endif
 
 static gup_result encode32_i(packstruct *com);
@@ -362,7 +362,7 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 					p++;
 					q++;
 				}
-				if((p-pos)>best_match)
+				if((p-pos)>BEST_MATCH(best_match))
 				{ /* found new best_match */
 					ptr_t ptr;
 					ptr=pos-match_pos-1;
@@ -481,7 +481,7 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 					p++;
 					q++;
 				}
-				if((p-pos)>BEST_MATCH)
+				if((p-pos)>BEST_MATCH(best_match))
 				{ /* found new best_match */
 					ptr_t ptr;
 
@@ -658,7 +658,7 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 			p++;
 			q++;
 		}
-		if((p-pos)>BEST_MATCH)
+		if((p-pos)>BEST_MATCH(best_match))
 		{ /* found new best_match */
 			ptr_t ptr;
 
