@@ -15,7 +15,7 @@
 #define MAX_PTR32 N2_MAX_PTR
 #define MAX_MATCH32 N2_MAX_MATCH
 
-#define BEST_MATCH(best_match) 2 /* we want to evaluate more then only best matches */
+#define BEST_MATCH(best_match) 1 /* we want to evaluate more then only best matches */
 
 #define COST_LIT(kar) cost_lit()
 #define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr, ptr_hist)
