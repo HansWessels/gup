@@ -480,21 +480,14 @@ gup_result n9_decode(decode_struct *com)
 gup_result n9_init(packstruct *com)
 {
 	gup_result res=GUP_OK;
-	com->min_match32=M4_MIN_MATCH;
-	com->maxptr32=M4_MAX_PTR;
-	com->max_match32=M4_MAX_MATCH;
-	com->max_hist=M4_MAX_HIST;
-	com->compress=NULL;
-	com->cost_ptrlen=NULL;
-	com->cost_lit=NULL;
-	res=init_dictionary32_i(com);
+	res=init_dictionary32(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
 	if(res==GUP_OK)
 	{
-		res=encode32_i(com);
-		free_dictionary32_i(com);
+		res=encode32(com);
+		free_dictionary32(com);
 	}
 	com->bw_buf->current=com->rbuf_current;
 	return res;

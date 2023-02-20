@@ -118,7 +118,6 @@ extern "C"
 
 #define FASTLOGBUF 65536UL           /* grootte fastlog buffer */
 void init_fast_log(packstruct *com); /* lookuptable for: int LOG(uint16 x){return x?LOG(x/2)+1:0;} */
-void m4_init_fast_log(packstruct *com);
 void init_lzs_fast_log(packstruct *com);
 void init_lz5_fast_log(packstruct *com);
 #define LOG(x) com->fast_log[x]

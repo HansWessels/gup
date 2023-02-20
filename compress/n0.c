@@ -430,14 +430,14 @@ gup_result n0_decode(decode_struct *com)
 gup_result n0_init(packstruct *com)
 {
 	gup_result res=GUP_OK;
-	res=init_dictionary32_i(com);
+	res=init_dictionary32(com);
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
 	if(res==GUP_OK)
 	{
-		res=encode32_i(com);
-		free_dictionary32_i(com);
+		res=encode32(com);
+		free_dictionary32(com);
 	}
 	com->bw_buf->current=com->rbuf_current;
 	return res;

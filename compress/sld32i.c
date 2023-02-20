@@ -46,22 +46,22 @@
 
 #define NO_NODE 0
 
-static gup_result init_dictionary32_i(packstruct *com);
-static void free_dictionary32_i(packstruct *com);
-static uint32_t hash_i(index_t pos, packstruct* com);
-static void find_dictionary32_i(index_t pos, packstruct* com);
-static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, packstruct* com);
+static gup_result init_dictionary32(packstruct *com);
+static void free_dictionary32(packstruct *com);
+static uint32_t hash(index_t pos, packstruct* com);
+static void find_dictionary32(index_t pos, packstruct* com);
+static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com);
 
 #if (MAX_HIST!=0) 
-	static ptr_t check_ptr_reuse_i(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match);
-	static void ptr_copy2_i(ptr_hist_t *src, ptr_hist_t *dst);
-	static void ptr_copy_i(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
-	static void literal_pointer_swap_i(ptr_hist_t *ptr_hist);
+	static ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match);
+	static void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst);
+	static void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
+	static void literal_pointer_swap(ptr_hist_t *ptr_hist);
 
-	#define CHECK_PTR_REUSE(com, pos, cost, ptr, best_match) check_ptr_reuse_i(com, pos, cost, ptr, best_match)
-	#define PTR_COPY2(src, dst) ptr_copy2_i(src, dst)
-	#define PTR_COPY(ptr, pos, src, dst) ptr_copy_i(ptr, pos, src, dst)
-	#define LITERAL_POINTER_SWAP(ptr_hist) literal_pointer_swap_i(ptr_hist)
+	#define CHECK_PTR_REUSE(com, pos, cost, ptr, best_match) check_ptr_reuse(com, pos, cost, ptr, best_match)
+	#define PTR_COPY2(src, dst) ptr_copy2(src, dst)
+	#define PTR_COPY(ptr, pos, src, dst) ptr_copy(ptr, pos, src, dst)
+	#define LITERAL_POINTER_SWAP(ptr_hist) literal_pointer_swap(ptr_hist)
 #else
 	#define CHECK_PTR_REUSE(com, pos, cost, ptr, best_match) 
 	#define PTR_COPY2(src, dst) 
@@ -73,9 +73,9 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 	#define BEST_MATCH(best_match) best_match
 #endif
 
-static gup_result encode32_i(packstruct *com);
+static gup_result encode32(packstruct *com);
 
-static gup_result init_dictionary32_i(packstruct *com)
+static gup_result init_dictionary32(packstruct *com)
 {
 	com->dictionary=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(uint8), com->gm_propagator);
 	if (com->dictionary == NULL)
@@ -167,7 +167,7 @@ static gup_result init_dictionary32_i(packstruct *com)
 	return GUP_OK;
 }
 
-static void free_dictionary32_i(packstruct *com)
+static void free_dictionary32(packstruct *com)
 {
 	com->gfree(com->dictionary, com->gf_propagator);
 	com->gfree(com->match_len, com->gf_propagator);
@@ -187,7 +187,7 @@ static void free_dictionary32_i(packstruct *com)
 	#endif
 }
 
-static uint32_t hash_i(index_t pos, packstruct* com)
+static uint32_t hash(index_t pos, packstruct* com)
 { /* bereken de positie in de hash table en geef deze positie terug */
 	uint32_t val;
 	val=(com->dictionary[pos]^com->dictionary[pos+1]);
@@ -197,7 +197,7 @@ static uint32_t hash_i(index_t pos, packstruct* com)
 }
 
 #if (MAX_HIST!=0) 
-static ptr_t check_ptr_reuse_i(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match)
+static ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match)
 { /* kijken of we de pointer kunnen hergebruiken */
 	ptr_t hist_ptr;
 	index_t hist_pos;
@@ -282,7 +282,7 @@ static ptr_t check_ptr_reuse_i(packstruct* com, index_t pos, unsigned long *cost
 	}																				\
 }
 
-static void ptr_copy2_i(ptr_hist_t *src, ptr_hist_t *dst)
+static void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst)
 {
 	int i;
 	for(i=0; i<MAX_PTR_HIST; i++)
@@ -292,7 +292,7 @@ static void ptr_copy2_i(ptr_hist_t *src, ptr_hist_t *dst)
 	}
 }
 
-static void ptr_copy_i(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst)
+static void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst)
 {
 	int i;
 	int j=0;
@@ -310,7 +310,7 @@ static void ptr_copy_i(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst)
 	}
 }
 
-static void literal_pointer_swap_i(ptr_hist_t *ptr_hist)
+static void literal_pointer_swap(ptr_hist_t *ptr_hist)
 { /* swap de eerste twee pointers */
 	ptr_t ptr;
 	index_t pos;
@@ -324,7 +324,7 @@ static void literal_pointer_swap_i(ptr_hist_t *ptr_hist)
 
 #endif	// (MAX_HIST!=0) 
 
-static void find_dictionary32_i(index_t pos, packstruct* com)
+static void find_dictionary32(index_t pos, packstruct* com)
 {
 	match_t best_match=0;
 	unsigned long cost;
@@ -455,9 +455,9 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 	{ /* insert pos into slidingdictionary tree and try to find matches */
 		uint32_t h;
 		uint8 orig=com->dictionary[pos+max_match];
-		if((com->rle_size>0) || ((h=hash_i(pos, com))==0))
+		if((com->rle_size>0) || ((h=hash(pos, com))==0))
 		{ /* RLE hash */
-			insert_rle_i(cost, max_match, pos, com);
+			insert_rle(cost, max_match, pos, com);
 		}
 		else
 		{
@@ -551,7 +551,7 @@ static void find_dictionary32_i(index_t pos, packstruct* com)
 	return;
 }
 
-static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, packstruct* com)
+static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com)
 { /* find rle matches, special case: rle_depth==(RLE32_DEPTH+2) in that case don't build tree but tread as an max_match */
 	match_t best_match=0;
 	index_t match_pos; /* working node */
@@ -725,7 +725,7 @@ static void insert_rle_i(unsigned long cost, match_t max_match, index_t pos, pac
 	return;
 }
 
-static gup_result encode32_i(packstruct *com)
+static gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do;
@@ -777,7 +777,7 @@ static gup_result encode32_i(packstruct *com)
 		{
 			literal=0;
 		}
-      find_dictionary32_i(current_pos, com);
+      find_dictionary32(current_pos, com);
 		current_pos++;
 		bytes_to_do--;
 	}

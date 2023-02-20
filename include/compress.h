@@ -489,8 +489,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   long (*buf_read_crc)(long count, void *buf, void* brc_propagator); /* read routine for reading the original file */
   void* brc_propagator;
   gup_result (*close_packed_stream)(struct packstruct_t *com); /* output the last bits in bitbuf */
-  int (*cost_ptrlen)(match_t match, ptr_t ptr, index_t pos, ptr_t *ptr_hist); /* costs of pointer len combi */
-  int (*cost_lit)(match_t kar); /* costs of a literal */
   uint8 *inmem_output; /* buffer, origsize*2+8 bytes in size, after 8 bytes it shares space with the inmem_input buffer */
   uint8 *inmem_output_cur; /* current position in inmem_ouput buffer */
   uint16 *inmem_input; /* buffer for origsize 16 bit words */
@@ -499,7 +497,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	long origsize; /* size of uncompressed file */
 	match_t *match_len; /* match lengte op iedere positie van de file */
 	ptr_t *ptr_len; /* bij behorende pointer lengte op iedere positie van de file */
-	match_t *backmatch_len; /* back match lengte op iedere positie van de file */
 	uint8 *compressed_data; /* de gecomprimeerde data */
 	index_t *match_1; /* laatst geziene locatie van een enkele byte -> matchlen=1 */
 	index_t *match_2; /* laatst geziene locatie van twee bytes -> matchlen=2 */
@@ -508,20 +505,8 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	node_t *tree32; /* dictionary tree */
 	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
 	ptr_hist_t *ptr_hist; /* pointer history */
-	ptr_t maxptr32; /* maximum size of a pointer */
-	match_t min_match32; /* minimum match */
-	match_t max_match32; /* maximum match */
-	int max_hist; /* number of history pointers */
 } packstruct;
 #endif
-
-gup_result encode32(packstruct *com);
-gup_result init_dictionary32(packstruct *com);
-void free_dictionary32(packstruct *com);
-void find_dictionary32(index_t pos, packstruct* com);
-void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
-void literal_pointer_swap(ptr_hist_t *ptr_hist);
-
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
 uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
