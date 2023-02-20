@@ -8,6 +8,7 @@
 #define N2_MAX_HIST 2						/* n2 does use 1 history pointer */
 #define MATCH_2_CUTTOFF 0x400
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
+#define LINK_HIST
 
 #define MAX_HIST N2_MAX_HIST
 #undef MIN_MATCH

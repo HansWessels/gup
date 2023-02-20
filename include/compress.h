@@ -505,6 +505,8 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	node_t *tree32; /* dictionary tree */
 	cost_t *cost; /* geschatte kosten om tot een bepaalde plek te komen */
 	ptr_hist_t *ptr_hist; /* pointer history */
+	index_t *link2_hist; /* linked list met len 2 matches */
+	index_t *link3_hist; /* linked list met len 3 of meer matches */
 } packstruct;
 #endif
 

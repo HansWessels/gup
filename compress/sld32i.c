@@ -134,6 +134,18 @@ static gup_result init_dictionary32(packstruct *com)
 		return GUP_NOMEM;
 	}
 	#endif
+	#ifdef LINK_HIST
+	com->link2_hist=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(index_t), com->gm_propagator);
+	if (com->link2_hist == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->link3_hist=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(index_t), com->gm_propagator);
+	if (com->link3_hist == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	#endif
 	/* initialiseer de index_hashes en de kosten */
 	memset(com->hash_table, 0, (HASH_SIZE32)*sizeof(index_t));
 	memset(com->hash_table_rle, 0, (HASH_SIZE_RLE32)*sizeof(index_t));
@@ -142,6 +154,10 @@ static gup_result init_dictionary32(packstruct *com)
 	#endif
 	#if(MIN_MATCH<=2)
 	memset(com->match_2, 0, (NC*NC)*sizeof(index_t));
+	#endif
+	#ifdef LINK_HIST
+	memset(com->link2_hist, 0, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(index_t));
+	memset(com->link3_hist, 0, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(index_t));
 	#endif
 	memset(com->cost, 0xFF, (com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(cost_t));
 	{ /* init special cases, tree en costs vullen tot DICTIONARY_START_OFFSET */
@@ -184,6 +200,10 @@ static void free_dictionary32(packstruct *com)
 	com->gfree(com->cost, com->gf_propagator);
 	#if (MAX_HIST!=0) 
 	com->gfree(com->ptr_hist, com->gf_propagator);
+	#endif
+	#ifdef LINK_HIST
+	com->gfree(com->link2_hist, com->gf_propagator);
+	com->gfree(com->link3_hist, com->gf_propagator);
 	#endif
 }
 
@@ -428,14 +448,12 @@ static void find_dictionary32(index_t pos, packstruct* com)
 		match_pos=com->match_2[key];
 		if(match_pos!=NO_NODE)
 		{
+			#ifndef LINK_HIST
 			if((com->dictionary[match_pos]==com->dictionary[pos]) && (com->dictionary[match_pos+1]==com->dictionary[pos+1]))
 			{
 				ptr_t ptr;
 				best_match=2;
 				ptr=pos-match_pos-1;
-				#if (MAX_HIST!=0) 
-					ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
-				#endif
 				if((cost+COST_PTRLEN(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
 				{
 					com->cost[pos+best_match]=cost+COST_PTRLEN(best_match, ptr, pos, com->ptr_hist[pos].ptr);
@@ -443,10 +461,31 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					com->ptr_len[pos+best_match]=ptr;
 					PTR_COPY(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
-				#if (MAX_HIST!=0) 
-					UNSWAP_PTR(swap);
-				#endif
 			}
+			#else
+			{ /* ga kijken of we een lengte twee pointer reuse kunnen vinden */
+				com->link2_hist[pos]=match_pos;
+				while((match_pos!=NO_NODE) && ((match_pos+MATCH_2_CUTTOFF) >= pos))
+				{
+					if((com->dictionary[match_pos]==com->dictionary[pos]) && (com->dictionary[match_pos+1]==com->dictionary[pos+1]))
+					{
+						ptr_t ptr;
+						best_match=2;
+						ptr=pos-match_pos-1;
+						ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
+						if((cost+COST_PTRLEN(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match])
+						{
+							com->cost[pos+best_match]=cost+COST_PTRLEN(best_match, ptr, pos, com->ptr_hist[pos].ptr);
+							com->match_len[pos+best_match]=best_match;
+							com->ptr_len[pos+best_match]=ptr;
+							PTR_COPY(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
+						}
+						UNSWAP_PTR(swap);
+					}
+					match_pos=com->link2_hist[match_pos];
+				}
+			}
+			#endif
 		}
 		com->match_2[key]=pos;
 	}
