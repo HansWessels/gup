@@ -618,6 +618,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 							if((repeat_match-list[i])>MATCH_2_CUTTOFF)
 							{
 								list[i]=NO_NODE;
+								break;
 							}
 							i=list[i];
 						}
@@ -932,6 +933,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 					if((repeat_match-list[i])>MATCH_2_CUTTOFF)
 					{
 						list[i]=NO_NODE;
+						break;
 					}
 					i=list[i];
 				}
