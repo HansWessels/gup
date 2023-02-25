@@ -599,21 +599,35 @@ static void find_dictionary32(index_t pos, packstruct* com)
 				index_t match_pos;
 				index_t repeat_match;
 				index_t repeat_pos;
+				index_t* list;
 				match_t repeat_len;
 
 				match_pos=com->link3_hist[pos];
 				repeat_match=com->ptr_hist[pos].pos[1];
 				repeat_len=com->match_len[repeat_match];
 				repeat_match-=repeat_len;
-				best_match=0;
 				if(repeat_len==2)
 				{
-					repeat_pos=com->link2_hist[repeat_match];
+					list=com->link2_hist;
+					if((repeat_match-DICTIONARY_START_OFFSET)>MATCH_2_CUTTOFF)
+					{ /* beperk de lengte van de list tot MATCH_2_CUTTOFF */
+						index_t i;
+						i=list[repeat_match];
+						while(i!=NO_NODE)
+						{
+							if((repeat_match-list[i])>MATCH_2_CUTTOFF)
+							{
+								list[i]=NO_NODE;
+							}
+							i=list[i];
+						}
+					}
 				}
 				else
 				{
-					repeat_pos=com->link3_hist[repeat_match];
+					list=com->link3_hist;
 				}
+				repeat_pos=list[repeat_match];
 				while((match_pos!=NO_NODE) && (repeat_pos!=NO_NODE))
 				{
 					if((pos-match_pos)==(repeat_match-repeat_pos))
@@ -656,14 +670,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 						}
 						else
 						{
-							if(repeat_len==2)
-							{
-								repeat_pos=com->link2_hist[repeat_pos];
-							}
-							else
-							{
-								repeat_pos=com->link3_hist[repeat_pos];
-							}
+							repeat_pos=list[repeat_pos];
 						}
 					}
 				}
@@ -905,6 +912,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 		index_t match_pos;
 		index_t repeat_match;
 		index_t repeat_pos;
+		index_t* list;
 		match_t repeat_len;
 
 		match_pos=com->link3_hist[pos];
@@ -914,12 +922,26 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 		best_match=0;
 		if(repeat_len==2)
 		{
-			repeat_pos=com->link2_hist[repeat_match];
+			list=com->link2_hist;
+			if((repeat_match-DICTIONARY_START_OFFSET)>MATCH_2_CUTTOFF)
+			{ /* beperk de lengte van de list tot MATCH_2_CUTTOFF */
+				index_t i;
+				i=list[repeat_match];
+				while(i!=NO_NODE)
+				{
+					if((repeat_match-list[i])>MATCH_2_CUTTOFF)
+					{
+						list[i]=NO_NODE;
+					}
+					i=list[i];
+				}
+			}
 		}
 		else
 		{
-			repeat_pos=com->link3_hist[repeat_match];
+			list=com->link3_hist;
 		}
+		repeat_pos=list[repeat_match];
 		while((match_pos!=NO_NODE) && (repeat_pos!=NO_NODE))
 		{
 			if((pos-match_pos)==(repeat_match-repeat_pos))
@@ -972,14 +994,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 				}
 				else
 				{
-					if(repeat_len==2)
-					{
-						repeat_pos=com->link2_hist[repeat_pos];
-					}
-					else
-					{
-						repeat_pos=com->link3_hist[repeat_pos];
-					}
+					repeat_pos=list[repeat_pos];
 				}
 			}
 		}
