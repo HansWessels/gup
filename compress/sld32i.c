@@ -680,10 +680,13 @@ static void find_dictionary32(index_t pos, packstruct* com)
 				index_t match_pos;
 
 				match_pos=com->link3_hist[pos];
-
+				if(end_ptr>MATCH_2_CUTTOFF_DELTA)
+				{
+					end_ptr=MATCH_2_CUTTOFF_DELTA;
+				}
 				while(match_pos!=NO_NODE)
 				{
-//					if((pos-match_pos)>=MATCH_2_CUTTOFF)
+					if((pos-match_pos)>=MATCH_2_CUTTOFF)
 					{
 						index_t p=pos;
 						index_t q=match_pos;
@@ -693,13 +696,15 @@ static void find_dictionary32(index_t pos, packstruct* com)
 							p++;
 							q++;
 						}
+						match_t match=p-pos;
+						if(match>=5)
 						{
 							ptr_t ptr;
-							match_t match=p-pos;
 							ptr=pos-match_pos-1;
 							{
-								match_t i=MIN_MATCH;
-								do
+								match_t i=5;
+								match_t delta_i=2;
+								while(i<=match)
 								{
 									if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
 									{
@@ -708,7 +713,9 @@ static void find_dictionary32(index_t pos, packstruct* com)
 										com->ptr_len[pos+i]=ptr;
 										PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 									}
-								} while(i++<match);
+									i+=delta_i;
+									delta_i+=delta_i;
+								}
 							}
 							if(ptr>=end_ptr)
 							{
@@ -1005,6 +1012,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 	return;
 }
 
+
 static gup_result encode32(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
@@ -1042,6 +1050,7 @@ static gup_result encode32(packstruct *com)
 	{ /*- hoofd_lus, deze lus zorgt voor al het pack werk */
 		cost=com->cost[current_pos-1];
 		cost+=COST_LIT(com->dictionary[current_pos]);
+//		printf("pos: %u\r", current_pos-DICTIONARY_START_OFFSET);fflush(stdout);
 		if(cost<com->cost[current_pos])
 		{ /* hier komen met een literal is het goedkoopst */
 			PTR_COPY2(com->ptr_hist+(current_pos-1), com->ptr_hist+current_pos);

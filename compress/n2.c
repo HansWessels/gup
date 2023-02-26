@@ -6,7 +6,8 @@
 #define N2_MIN_MATCH 2						/* n2 maximum match */
 #define N2_MAX_MATCH 65535					/* n2 maximum match */
 #define N2_MAX_HIST 2						/* n2 does use 1 history pointer */
-#define MATCH_2_CUTTOFF 0x400
+#define MATCH_2_CUTTOFF 0x400				/* maximum pointer voor een match 2 */
+#define MATCH_2_CUTTOFF_DELTA 0x4FF		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 #define LINK_HIST
 
