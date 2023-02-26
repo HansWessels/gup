@@ -509,7 +509,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 			index_t* c_rightp;
 			index_t* parent;
 			#ifdef LINK_HIST
-			ptr_t end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
+			ptr_t end_ptr=0;
 			#endif
 			parent=&com->hash_table[h];
 			match_pos=*parent;
@@ -536,11 +536,21 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					{ /* eerste match van 3, link */
 						com->link3_hist[pos]=match_pos;
 					}
-					if(ptr>MATCH_2_CUTTOFF)
+					if(ptr<MATCH_2_CUTTOFF_MAX_PTR)
 					{
-						if(ptr<end_ptr)
+						if(ptr>=MATCH_2_CUTTOFF_MIN_PTR)
 						{
-							end_ptr=ptr;
+							if(ptr<MATCH_2_CUTTOFF)
+							{
+								end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
+							}
+							else
+							{
+								if(ptr<end_ptr)
+								{
+									end_ptr=ptr;
+								}
+							}
 						}
 					}
 					#endif
@@ -679,7 +689,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					}
 				}
 			}
-			if(best_match>=5)
+			if((end_ptr>0) && (best_match>=5))
 			{ /* jaag de link pointers na op zoek iets kortere match door MATCH_2_CUTTOFF */
 				index_t match_pos;
 				match_t min_i=5;
