@@ -509,7 +509,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 			index_t* c_rightp;
 			index_t* parent;
 			#ifdef LINK_HIST
-			ptr_t end_ptr=pos-DICTIONARY_START_OFFSET;
+			ptr_t end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
 			#endif
 			parent=&com->hash_table[h];
 			match_pos=*parent;
@@ -538,7 +538,10 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					}
 					if(ptr>MATCH_2_CUTTOFF)
 					{
-						end_ptr=ptr;
+						if(ptr<end_ptr)
+						{
+							end_ptr=ptr;
+						}
 					}
 					#endif
 					best_match=p-pos;
@@ -676,14 +679,13 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					}
 				}
 			}
+			if(best_match>=5)
 			{ /* jaag de link pointers na op zoek iets kortere match door MATCH_2_CUTTOFF */
 				index_t match_pos;
+				match_t min_i=5;
+				match_t delta_min_i=2;
 
 				match_pos=com->link3_hist[pos];
-				if(end_ptr>MATCH_2_CUTTOFF_DELTA)
-				{
-					end_ptr=MATCH_2_CUTTOFF_DELTA;
-				}
 				while(match_pos!=NO_NODE)
 				{
 					if((pos-match_pos)>=MATCH_2_CUTTOFF)
@@ -697,13 +699,13 @@ static void find_dictionary32(index_t pos, packstruct* com)
 							q++;
 						}
 						match_t match=p-pos;
-						if(match>=5)
+						if(match>=min_i)
 						{
 							ptr_t ptr;
 							ptr=pos-match_pos-1;
 							{
-								match_t i=5;
-								match_t delta_i=2;
+								match_t i=min_i;
+								match_t delta_i=delta_min_i;
 								while(i<=match)
 								{
 									if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
@@ -712,6 +714,12 @@ static void find_dictionary32(index_t pos, packstruct* com)
 										com->match_len[pos+i]=i;
 										com->ptr_len[pos+i]=ptr;
 										PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
+										if(i>best_match)
+										{
+											break;
+										}
+										min_i=i;
+										delta_min_i=delta_i;
 									}
 									i+=delta_i;
 									delta_i+=delta_i;

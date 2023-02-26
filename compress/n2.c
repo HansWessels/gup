@@ -6,8 +6,39 @@
 #define N2_MIN_MATCH 2						/* n2 maximum match */
 #define N2_MAX_MATCH 65535					/* n2 maximum match */
 #define N2_MAX_HIST 2						/* n2 does use 1 history pointer */
+/*
+** Als de ptr >= MATCH_2_CUTTOFF dan wordt len met 1 verlaagd... Lengte 5 wordt gecodeerd als lengte 4.
+** Voor de lengtes 5, 7, 11, 19, 35, 67, 131... (3+2, 3+4, 3+8, 3+16, 3+32 of 5, 5+2, 5+2+4, 5+2+4+8)
+** kunnen dan 2 bits bespaard worden.
+** Als MATCH_2_CUTTOFF niet op een pointer codeer grens valt EN
+**    Als de lengte van een ptr len combinatie een van de bovengenoemde waardes heeft EN
+**       Als de ptr van die ptr len combinatie in de codeergrens van MATCH_2_CUTTOFF ligt en de ptr < MATCH_2_CUTTOFF
+**          Dan is het de moeite waard om te kijken of er binnen de codeergrens van MATCH_2_CUTTOFF maar na MATCH_2_CUTTOFF een
+**          zelfde pointer lengt combinatie te vinden is.
+** pointer lengte codering: 	return 8+2*(first_bit_set32((ptr>>8)+3)-1);
+** 0x0000 - 0x00FF 10
+** 0x0100 - 0x04FF 12
+** 0x0500 - 0x0CFF 14
+** 0x0D00 - 0x1CFF 16
+**	0x1D00 - 0X2CFF 18
+** ...
+*/
 #define MATCH_2_CUTTOFF 0x400				/* maximum pointer voor een match 2 */
-#define MATCH_2_CUTTOFF_DELTA 0x4FF		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+
+#if (MATCH_2_CUTTOFF<0x100)
+	#define MATCH_2_CUTTOFF_MIN_PTR 0x00		/* pointer vanaf waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+	#define MATCH_2_CUTTOFF_MAX_PTR 0x100		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+#elif (MATCH_2_CUTTOFF<0x500)
+	#define MATCH_2_CUTTOFF_MIN_PTR 0x100		/* pointer vanaf waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+	#define MATCH_2_CUTTOFF_MAX_PTR 0x500		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+#elif (MATCH_2_CUTTOFF<0xD00)
+	#define MATCH_2_CUTTOFF_MIN_PTR 0x500		/* pointer vanaf waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+	#define MATCH_2_CUTTOFF_MAX_PTR 0xD00		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+#else
+	#define MATCH_2_CUTTOFF_MIN_PTR 0xD00		/* pointer vanaf waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+	#define MATCH_2_CUTTOFF_MAX_PTR 0x1D00		/* pointer tot waar goedkopere matches gevonden kunnen worden door MATCH_2_CUTTOFF */
+#endif
+
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 #define LINK_HIST
 
