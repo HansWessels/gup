@@ -510,6 +510,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 			index_t* parent;
 			#ifdef LINK_HIST
 			ptr_t end_ptr=0;
+			match_t m2_best_match=0;
 			#endif
 			parent=&com->hash_table[h];
 			match_pos=*parent;
@@ -543,6 +544,10 @@ static void find_dictionary32(index_t pos, packstruct* com)
 							if(ptr<MATCH_2_CUTTOFF)
 							{
 								end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
+								if((p-pos)>m2_best_match)
+								{
+									m2_best_match=p-pos;
+								}
 							}
 							else
 							{
@@ -704,7 +709,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					}
 				}
 			}
-			if((end_ptr>0) && (best_match>=5))
+			if((end_ptr>0) && (m2_best_match>=5))
 			{ /* jaag de link pointers na op zoek iets kortere match door MATCH_2_CUTTOFF */
 				index_t match_pos;
 				match_t min_i=5;
@@ -739,8 +744,9 @@ static void find_dictionary32(index_t pos, packstruct* com)
 										com->match_len[pos+i]=i;
 										com->ptr_len[pos+i]=ptr;
 										PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
-										if(i>best_match)
+										if(i>m2_best_match)
 										{
+											ptr=end_ptr;
 											break;
 										}
 										min_i=i;
@@ -768,6 +774,10 @@ static void find_dictionary32(index_t pos, packstruct* com)
 
 static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com)
 { /* find rle matches, special case: rle_depth==(RLE32_DEPTH+2) in that case don't build tree but tread as an max_match */
+	#ifdef LINK_HIST
+		ptr_t end_ptr=0;
+		match_t m2_best_match=0;
+	#endif
 	match_t best_match=0;
 	index_t match_pos; /* working node */
 	index_t* c_leftp;
@@ -892,6 +902,27 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			ptr=pos-match_pos-1;
 			#if (MAX_HIST!=0) 
 				ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
+				if(ptr<MATCH_2_CUTTOFF_MAX_PTR)
+				{
+					if(ptr>=MATCH_2_CUTTOFF_MIN_PTR)
+					{
+						if(ptr<MATCH_2_CUTTOFF)
+						{
+							end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
+							if((p-pos)>m2_best_match)
+							{
+								m2_best_match=best_match;
+							}
+						}
+						else
+						{
+							if(ptr<end_ptr)
+							{
+								end_ptr=ptr;
+							}
+						}
+					}
+				}
 			#endif
 			{
 				match_t i=MIN_MATCH;
@@ -1055,11 +1086,11 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			}
 		}
 	}
+	if((end_ptr>0) && (m2_best_match>=5))
 	{ /* jaag de link pointers na op zoek iets kortere match door MATCH_2_CUTTOFF */
 		index_t match_pos;
 		match_t min_i=5;
 		match_t delta_min_i=2;
-		ptr_t end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
 		match_pos=com->link3_hist[pos];
 		while(match_pos!=NO_NODE)
 		{
@@ -1089,8 +1120,9 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 								com->match_len[pos+i]=i;
 								com->ptr_len[pos+i]=ptr;
 								PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
-								if(i>best_match)
+								if(i>m2_best_match)
 								{
+									ptr=end_ptr;
 									break;
 								}
 								min_i=i;
