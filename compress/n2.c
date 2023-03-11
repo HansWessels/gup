@@ -90,15 +90,15 @@ static void store_ptr(ptr_t ptr, ptr_t last_ptr, packstruct *com);
 #if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
-	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
-	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
+	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X, %i\n", log_pos_counter, lit, cost_lit()); log_pos_counter++;}
+	#define LOG_PTR_LEN(len, ptr, last_ptr1) {printf("%lX Len: %u, ptr: %u, %i\n", log_pos_counter ,len, ptr, cost_ptrlen(len, ptr, (&last_ptr1)-1)); log_pos_counter+=len;}
 	#define LOG_BIT(bit) // printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
 	#define LOG_COUNTER_RESET log_pos_counter=0;
 	#define LOG_TEXT(string) printf(string);
 #else
 	#define LOG_LITERAL(lit) /* */
-	#define LOG_PTR_LEN(len, ptr) /* */
+	#define LOG_PTR_LEN(len, ptr, last_ptr1) /* */
 	#define LOG_BIT(bit) /* */
 	#define LOG_RUN(run) /* */
  	#define LOG_COUNTER_RESET
@@ -397,7 +397,7 @@ static gup_result compress(packstruct *com)
 					ptr=com->ptr_len[current_pos];
       		   store_ptr(ptr, last_ptr1, com);
 		         store_len(match, ptr, com);
-      		   LOG_PTR_LEN(match, ptr);
+      		   LOG_PTR_LEN(match, ptr, last_ptr1);
       		   last_ptr1=last_ptr0;
       		   last_ptr0=ptr;
 		         bytes_to_do-=match;
@@ -598,7 +598,7 @@ gup_result n2_decode(decode_struct *com)
 			GET_LEN(len);
 			{ /* copy */
 				uint8* q=buff-ptr-1;
-				LOG_PTR_LEN(len, ptr);
+				LOG_PTR_LEN(len, ptr, last_ptr1);
 				do
 				{
 					*buff++=*q++;

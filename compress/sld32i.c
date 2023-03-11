@@ -376,17 +376,17 @@ static void find_dictionary32(index_t pos, packstruct* com)
 			{
 				index_t p=pos;
 				index_t q=match_pos;
+				match_t match=0;
 				com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
-				while(com->dictionary[p]==com->dictionary[q])
+				while(com->dictionary[p+match]==com->dictionary[q+match])
 				{
-					p++;
-					q++;
+					match++;
 				}
-				if((p-pos)>BEST_MATCH(best_match))
+				if(match>BEST_MATCH(best_match))
 				{ /* found new best_match */
 					ptr_t ptr;
 					ptr=pos-match_pos-1;
-					best_match=(p-pos);
+					best_match=match;
 					{
 						match_t i=MIN_MATCH;
 						do
@@ -646,35 +646,50 @@ static void find_dictionary32(index_t pos, packstruct* com)
 				{
 					if((pos-match_pos)==(repeat_match-repeat_pos))
 					{
-						index_t p=pos;
-						index_t q=match_pos;
-						com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
-						while(com->dictionary[p]==com->dictionary[q])
+						index_t p=repeat_match;
+						index_t q=repeat_pos;
+						match_t i=repeat_len;
+						do
 						{
-							p++;
-							q++;
-						}
-						{
-							ptr_t ptr;
-							match_t match=p-pos;
-							ptr=pos-match_pos-1;
-							ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, match);
+							i--;
+							if(com->dictionary[p+i]!=com->dictionary[q+i])
 							{
-								match_t i=MIN_MATCH;
-								do
-								{
-									if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
-									{
-										com->cost[pos+i]=cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr);
-										com->match_len[pos+i]=i;
-										com->ptr_len[pos+i]=ptr;
-										PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
-									}
-								} while(i++<match);
+								break;
 							}
-							UNSWAP_PTR(swap);
+						} while(i>0);
+						if(i==0)
+						{
+							index_t p=pos;
+							index_t q=match_pos;
+							com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
+							while(com->dictionary[p]==com->dictionary[q])
+							{
+								p++;
+								q++;
+							}
+							{
+								ptr_t ptr;
+								match_t match=p-pos;
+								ptr=pos-match_pos-1;
+								ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, match);
+								{
+									match_t i=MIN_MATCH;
+									do
+									{
+										if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
+										{
+											com->cost[pos+i]=cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr);
+											com->match_len[pos+i]=i;
+											com->ptr_len[pos+i]=ptr;
+											PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
+										}
+									} while(i++<match);
+								}
+								UNSWAP_PTR(swap);
+							}
 						}
 						match_pos=com->link3_hist[match_pos];
+						repeat_pos=list[repeat_pos];
 					}
 					else
 					{
@@ -973,34 +988,48 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 		{
 			if((pos-match_pos)==(repeat_match-repeat_pos))
 			{
-				index_t p=pos;
-				index_t q=match_pos;
-				com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
-				while(com->dictionary[p]==com->dictionary[q])
+				index_t p=repeat_match;
+				index_t q=repeat_pos;
+				match_t i=repeat_len;
+				do
 				{
-					p++;
-					q++;
-				}
-				if((p-pos)>best_match)
-				{
-					ptr_t ptr;
-					best_match=p-pos;
-					ptr=pos-match_pos-1;
-					ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
+					i--;
+					if(com->dictionary[p+i]!=com->dictionary[q+i])
 					{
-						match_t i=MIN_MATCH;
-						do
-						{
-							if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
-							{
-								com->cost[pos+i]=cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr);
-								com->match_len[pos+i]=i;
-								com->ptr_len[pos+i]=ptr;
-								PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
-							}
-						} while(i++<best_match);
+						break;
 					}
-					UNSWAP_PTR(swap);
+				} while(i>0);
+				if(i==0)
+				{
+					index_t p=pos;
+					index_t q=match_pos;
+					com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
+					while(com->dictionary[p]==com->dictionary[q])
+					{
+						p++;
+						q++;
+					}
+					if((p-pos)>best_match)
+					{
+						ptr_t ptr;
+						best_match=p-pos;
+						ptr=pos-match_pos-1;
+						ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
+						{
+							match_t i=MIN_MATCH;
+							do
+							{
+								if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
+								{
+									com->cost[pos+i]=cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr);
+									com->match_len[pos+i]=i;
+									com->ptr_len[pos+i]=ptr;
+									PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
+								}
+							} while(i++<best_match);
+						}
+						UNSWAP_PTR(swap);
+					}
 				}
 				if(repeat_len!=2)
 				{
@@ -1026,7 +1055,61 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			}
 		}
 	}
-	#endif
+	{ /* jaag de link pointers na op zoek iets kortere match door MATCH_2_CUTTOFF */
+		index_t match_pos;
+		match_t min_i=5;
+		match_t delta_min_i=2;
+		ptr_t end_ptr=MATCH_2_CUTTOFF_MAX_PTR;
+		match_pos=com->link3_hist[pos];
+		while(match_pos!=NO_NODE)
+		{
+			if((pos-match_pos)>=MATCH_2_CUTTOFF)
+			{
+				index_t p=pos;
+				index_t q=match_pos;
+				com->dictionary[pos+max_match]=~com->dictionary[match_pos+max_match]; /* sentinel */
+				while(com->dictionary[p]==com->dictionary[q])
+				{
+					p++;
+					q++;
+				}
+				match_t match=p-pos;
+				if(match>=min_i)
+				{
+					ptr_t ptr;
+					ptr=pos-match_pos-1;
+					{
+						match_t i=min_i;
+						match_t delta_i=delta_min_i;
+						while(i<=match)
+						{
+							if((cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+i])
+							{
+								com->cost[pos+i]=cost+COST_PTRLEN(i, ptr, pos, com->ptr_hist[pos].ptr);
+								com->match_len[pos+i]=i;
+								com->ptr_len[pos+i]=ptr;
+								PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
+								if(i>best_match)
+								{
+									break;
+								}
+								min_i=i;
+								delta_min_i=delta_i;
+							}
+							i+=delta_i;
+							delta_i+=delta_i;
+						}
+					}
+					if(ptr>=end_ptr)
+					{
+						break;
+					}
+				}
+			}
+			match_pos=com->link3_hist[match_pos];
+		}
+	}
+#endif
 	return;
 }
 
