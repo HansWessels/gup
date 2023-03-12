@@ -19,8 +19,8 @@
 	#define RLE32_DEPTH (MAX_MATCH32-2)
 #endif
 
-#define COST_LIT(kar) cost_lit()
-#define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr)
+#define COST_LIT(kar, com) cost_lit()
+#define COST_PTRLEN(match, ptr, pos, ptr_hist, com) cost_ptrlen(match, ptr)
 static int cost_lit(void);
 static int cost_ptrlen(match_t match, ptr_t ptr);
 

@@ -50,8 +50,8 @@
 
 #define BEST_MATCH(best_match) 1 /* we want to evaluate more then only best matches */
 
-#define COST_LIT(kar) cost_lit()
-#define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr, ptr_hist)
+#define COST_LIT(kar, com) cost_lit()
+#define COST_PTRLEN(match, ptr, pos, ptr_hist, com) cost_ptrlen(match, ptr, ptr_hist)
 
 static gup_result compress(packstruct *com);
 static int cost_lit(void);

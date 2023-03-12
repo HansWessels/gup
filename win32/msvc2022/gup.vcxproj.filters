@@ -626,12 +626,6 @@
     <ClCompile Include="../../compress/sld_indx.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
-    <ClCompile Include="../../compress/sld_med.c">
-      <Filter>Source Files\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="../../compress/sld_smll.c">
-      <Filter>Source Files\compress</Filter>
-    </ClCompile>
     <ClCompile Include="../../compress/st_opti/st_opti.c">
       <Filter>Source Files\compress\st_opti</Filter>
     </ClCompile>
@@ -1458,9 +1452,6 @@
       <Filter>Source Files\compress</Filter>
     </ClCompile>
     <ClCompile Include="..\..\compress\n9.c">
-      <Filter>Source Files\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\compress\sld32.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
     <ClCompile Include="..\..\compress\n1.c">

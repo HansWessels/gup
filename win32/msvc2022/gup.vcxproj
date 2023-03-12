@@ -240,7 +240,6 @@
     <ClCompile Include="..\..\compress\n1.c" />
     <ClCompile Include="..\..\compress\n2.c" />
     <ClCompile Include="..\..\compress\n9.c" />
-    <ClCompile Include="..\..\compress\sld32.c" />
     <ClInclude Include="../../arjbeta/arj_hdr.c" />
     <ClInclude Include="../../arjbeta/arj_outp.c" />
     <ClInclude Include="../../arjbeta/arjbeta.c" />
@@ -279,8 +278,6 @@
     <ClCompile Include="../../compress/m68000/opti.c" />
     <ClCompile Include="../../compress/sld.c" />
     <ClCompile Include="../../compress/sld_indx.c" />
-    <ClCompile Include="../../compress/sld_med.c" />
-    <ClCompile Include="../../compress/sld_smll.c" />
     <ClCompile Include="../../compress/st_opti/st_opti.c" />
     <ClInclude Include="../../guplib/arc_util.cpp" />
     <ClInclude Include="../../guplib/archive.cpp" />

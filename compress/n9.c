@@ -2,20 +2,25 @@
 #include "compress.h"
 #include "decode.h"
 
-#define M4_MAX_PTR  15872              /* maximale pointer offset + 1 */
-#define M4_MIN_MATCH 3						/* m4 maximum match */
-#define M4_MAX_MATCH 256					/* m4 maximum match */
-#define M4_MAX_HIST 0						/* m4 does not use history pointers */
+#define M7_MAX_PTR  0x10000              /* maximale pointer offset + 1 */
+#define M7_MIN_MATCH 3						/* m4 maximum match */
+#define M7_MAX_MATCH 257					/* m4 maximum match */
+#define M7_MAX_HIST 0						/* m4 does not use history pointers */
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
-#define MAX_HIST M4_MAX_HIST
+#define MAX_HIST M7_MAX_HIST
 #undef MIN_MATCH
-#define MIN_MATCH M4_MIN_MATCH
-#define MAX_PTR32 M4_MAX_PTR
-#define MAX_MATCH32 M4_MAX_MATCH
+#define MIN_MATCH M7_MIN_MATCH
+#define MAX_PTR32 M7_MAX_PTR
+#define MAX_MATCH32 M7_MAX_MATCH
 
-#define COST_LIT(kar) cost_lit()
-#define COST_PTRLEN(match, ptr, pos, ptr_hist) cost_ptrlen(match, ptr)
+#if(RLE32_DEPTH>(MAX_MATCH32-2))
+	#undef RLE32_DEPTH
+	#define RLE32_DEPTH (MAX_MATCH32-2)
+#endif
+
+#define COST_LIT(kar, com) cost_lit()
+#define COST_PTRLEN(match, ptr, pos, ptr_hist, com) cost_ptrlen(match, ptr)
 static int cost_lit(void);
 static int cost_ptrlen(match_t match, ptr_t ptr);
 
@@ -102,7 +107,7 @@ static int len_len(match_t match)
 	}
 	if(match>128)
 	{
-		if(match>M4_MAX_MATCH)
+		if(match>M7_MAX_MATCH)
 		{
 			return ERROR_COST;
 		}
@@ -120,15 +125,15 @@ static int ptr_len(ptr_t ptr)
 	{
 		return 10;
 	}
-	if(ptr>7679)
+	if(ptr>65023)
 	{
-		if(ptr<M4_MAX_PTR)
+		if(ptr<M7_MAX_PTR)
 		{
-			return 17;
+			return 23;
 		}
 		else
-		{
-			return ERROR_COST; /*error */
+		{ /* can happen with length 2 matches */
+			return ERROR_COST; /* error */
 		}
 	}
 	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
@@ -166,7 +171,7 @@ static void store_ptr(ptr_t ptr, packstruct *com)
 		mask--;
 		ST_BITS(mask, len);
 	}
-	if(len!=4)
+	if(len!=7)
 	{
 		ST_BITS(0, 1);
 	}
@@ -311,36 +316,6 @@ static gup_result compress(packstruct *com)
 	bitbuf <<= xbits;														\
 }
 
-/*-
-** ARJ mode 4 packing
-**
-** (c) 1993 Mr Ni! (the Great) of the TOS-crew
-**
-** codeer schema: [len (literal 8 bits | ptr_code)]
-**
-** len codering: w bits:
-** 0 0               :  literal
-** 1 10x             :  2 -   3
-** 2 110xx           :  4 -   7
-** 3 1110xxx         :  8 -  15
-** 4 11110xxxx       : 16 -  31
-** 5 111110xxxxx     : 32 -  63
-** 6 1111110xxxxxx   : 64 - 127
-** 7 1111111xxxxxxx  :128 - 255
-**
-** Hierbij moet nog een worden opgeteld, dus minimale lengte 3, maximaal
-** 256!!!
-**
-** ptr codering: w bits
-** 9  0xxxxxxxxx            0 -   511
-** 10 10xxxxxxxxxx        512 -  1535
-** 11 110xxxxxxxxxxx     1536 -  3583
-** 12 1110xxxxxxxxxxxx   3584 -  7679
-** 13 1111xxxxxxxxxxxxx  7680 - 15871
-**
-** codering dus van 0 - 15871
-*/
-
 gup_result n9_decode(decode_struct *com)
 {
 	/* aanname origsize>0 */
@@ -423,7 +398,7 @@ gup_result n9_decode(decode_struct *com)
 				}
 				mask>>=1;
 				i++;
-			} while(i<4);
+			} while(i<7);
 			TRASHBITS(tb);
 			ptr=(((1<<i)-1)<<9)+(ptr_t)(bitbuf>>(BITBUFSIZE-(i+9)));
 			TRASHBITS(i+9);
