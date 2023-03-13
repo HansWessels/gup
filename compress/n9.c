@@ -4,7 +4,7 @@
 
 #define M7_MAX_PTR  0x10000              /* maximale pointer offset + 1 */
 #define M7_MIN_MATCH 3						/* m4 maximum match */
-#define M7_MAX_MATCH 257					/* m4 maximum match */
+#define M7_MAX_MATCH 256					/* m4 maximum match */
 #define M7_MAX_HIST 0						/* m4 does not use history pointers */
 #define ERROR_COST 32767               /* high cost for impossible matches or pointers */
 
@@ -180,24 +180,6 @@ static void store_ptr(ptr_t ptr, packstruct *com)
 
 static gup_result compress(packstruct *com)
 {
-	/*
-	** pointer lengte codering:
-	** 9  0xxxxxxxxx            0 -   511  10 bits
-	** 10 10xxxxxxxxxx        512 -  1535  12 bits
-	** 11 110xxxxxxxxxxx     1536 -  3583  14 bits
-	** 12 1110xxxxxxxxxxxx   3584 -  7679  16 bits
-	** 13 1111xxxxxxxxxxxxx  7680 - 15871  17 bits
-	**
-	** len codering:
-	** 0 0               : literal
-	** 1 10x             :  3 -   4   3 bits
-	** 2 110xx           :  5 -   8   5 bits
-	** 3 1110xxx         :  9 -  16   7 bits
-	** 4 11110xxxx       : 17 -  32   9 bits
-	** 5 111110xxxxx     : 33 -  64  11 bits
-	** 6 1111110xxxxxx   : 65 - 128  13 bits
-	** 7 1111111xxxxxxx  :129 - 256  14 bits
-	*/
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do=com->origsize;
 	void* rbuf_current_store=com->rbuf_current;
@@ -321,19 +303,21 @@ gup_result n9_decode(decode_struct *com)
 	/* aanname origsize>0 */
 	int bib; /* bits in bitbuf */
 	unsigned long int bitbuf; /* shift buffer, BITBUFSIZE bits groot */
-	uint8* buff=com->buffstart;
+	unsigned long origsize;
+   uint8* buffer=NULL;
 	uint8* buffend;
+   uint8* buff;
 
-	if(com->origsize>(65536L+MAXMATCH))
+	origsize=com->origsize;
+	buffer=com->gmalloc(origsize, com->gm_propagator);
+  	if(buffer == NULL)
 	{
-		buffend=com->buffstart+65536L;
-		com->origsize-=65536L;
+		return GUP_NOMEM;
 	}
-	else
-	{
-		buffend=com->buffstart+com->origsize;
-		com->origsize=0;
-	}
+	buffend=buffer+origsize;
+	buff=buffer;
+	com->origsize=0;
+
 	bitbuf=0;
 	bib=0;
 	{ /* init bitbuf */
@@ -386,7 +370,7 @@ gup_result n9_decode(decode_struct *com)
 			TRASHBITS(tb);
 			kar=(1<<i)+(bitbuf>>(BITBUFSIZE-i))+1;
 			TRASHBITS(i);
-			tb=4;
+			tb=7;
 			i=0;
 			mask=1UL<<(BITBUFSIZE-1);
 			do
@@ -414,40 +398,19 @@ gup_result n9_decode(decode_struct *com)
 		}
 		if(buff>=buffend)
 		{
-			if(com->origsize==0)
-			{
-				unsigned long len;
-				if((len=(buff-com->buffstart))!=0)
-				{
-					gup_result err;
-					com->print_progres(len, com->pp_propagator);
-					if ((err = com->write_crc(len, com->buffstart, com->wc_propagator))!=GUP_OK)
-					{
-						return err;
-					}
-				}
-				return GUP_OK; /* exit succes */
-			}
-			else
+			unsigned long len;
+			if((len=(buff-buffer))!=0)
 			{
 				gup_result err;
-				com->print_progres(65536UL, com->pp_propagator);
-				if ((err = com->write_crc(65536UL, com->buffstart, com->wc_propagator))!=GUP_OK)
+				com->print_progres(len, com->pp_propagator);
+				if ((err = com->write_crc(len, buffer, com->wc_propagator))!=GUP_OK)
 				{
+					com->gfree(buffer, com->gf_propagator);
 					return err;
 				}
-				buff-=65536UL;
-				memmove(com->buffstart-16UL*1024UL, buffend-16UL*1024UL, 16UL*1024UL+MAXMATCH);
-				if(com->origsize>(65536L+MAXMATCH))
-				{
-					com->origsize-=65536UL;
-				}
-				else
-				{
-					buffend=com->buffstart+com->origsize;
-					com->origsize=0;
-				}
 			}
+			com->gfree(buffer, com->gf_propagator);
+			return GUP_OK; /* exit succes */
 		}
 	}
 }
