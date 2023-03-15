@@ -562,9 +562,9 @@ int main(int argc, char *argv[])
 		printf(
 "gupdump <archive>.arj dumps all the files in the arj archive into separate\n"
 "files. The extension of those files depends on the packing mode:\n"
-"m1, m2, m3 and m7 files get the extension m7, the all can be depacked with\n"
+"m1, m2, m3 and m7 files get the extension m7, they can all be depacked with\n"
 "    the arj_m7 depack routines.\n"
-"m4 files get the extension m4 they can be depacked with\n"
+"m4 files get the extension m4, they can be depacked with\n"
 "    the arj_m4 depack routines.\n"
 "n0 files get the extension n0\n"
 "n1 files get the extension n1\n"
