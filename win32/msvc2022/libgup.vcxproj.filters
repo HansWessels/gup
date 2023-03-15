@@ -1479,9 +1479,6 @@
     <ClCompile Include="..\..\compress\n9.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compress\sld32.c">
-      <Filter>Source Files\compress</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\compress\n1.c">
       <Filter>Source Files\compress</Filter>
     </ClCompile>
