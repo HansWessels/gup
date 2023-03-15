@@ -114,8 +114,8 @@ libcompress_a_AR = $(AR) $(ARFLAGS)
 am_libcompress_a_OBJECTS = crc.$(OBJEXT) decode.$(OBJEXT) \
 	encode.$(OBJEXT) evaluatr.$(OBJEXT) sld.$(OBJEXT) \
 	sld_indx.$(OBJEXT) sld_med.$(OBJEXT) sld_smll.$(OBJEXT) \
-	sld32.$(OBJEXT) n0.$(OBJEXT) n1.$(OBJEXT) n2.$(OBJEXT) \
-	n9.$(OBJEXT) arj_m4.$(OBJEXT)
+	n0.$(OBJEXT) n1.$(OBJEXT) n2.$(OBJEXT) n9.$(OBJEXT) \
+	arj_m4.$(OBJEXT)
 libcompress_a_OBJECTS = $(am_libcompress_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -136,8 +136,8 @@ am__depfiles_remade = ./$(DEPDIR)/arj_m4.Po ./$(DEPDIR)/crc.Po \
 	./$(DEPDIR)/decode.Po ./$(DEPDIR)/encode.Po \
 	./$(DEPDIR)/evaluatr.Po ./$(DEPDIR)/n0.Po ./$(DEPDIR)/n1.Po \
 	./$(DEPDIR)/n2.Po ./$(DEPDIR)/n9.Po ./$(DEPDIR)/sld.Po \
-	./$(DEPDIR)/sld32.Po ./$(DEPDIR)/sld_indx.Po \
-	./$(DEPDIR)/sld_med.Po ./$(DEPDIR)/sld_smll.Po
+	./$(DEPDIR)/sld_indx.Po ./$(DEPDIR)/sld_med.Po \
+	./$(DEPDIR)/sld_smll.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -324,7 +324,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libcompress.a
-libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c sld_med.c sld_smll.c sld32.c n0.c n1.c n2.c n9.c arj_m4.c
+libcompress_a_SOURCES = crc.c decode.c encode.c evaluatr.c sld.c sld_indx.c sld_med.c sld_smll.c n0.c n1.c n2.c n9.c arj_m4.c
 libcompress_a_LIBADD = @OPTMOBJS@
 libcompress_a_DEPENDENCIES = $(libcompress_a_LIBADD)
 noinst_HEADERS = decode.h encode.h evaluatr.h
@@ -389,7 +389,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/n2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/n9.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sld.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sld32.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sld_indx.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sld_med.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sld_smll.Po@am__quote@ # am--include-marker
@@ -565,7 +564,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/n2.Po
 	-rm -f ./$(DEPDIR)/n9.Po
 	-rm -f ./$(DEPDIR)/sld.Po
-	-rm -f ./$(DEPDIR)/sld32.Po
 	-rm -f ./$(DEPDIR)/sld_indx.Po
 	-rm -f ./$(DEPDIR)/sld_med.Po
 	-rm -f ./$(DEPDIR)/sld_smll.Po
@@ -624,7 +622,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/n2.Po
 	-rm -f ./$(DEPDIR)/n9.Po
 	-rm -f ./$(DEPDIR)/sld.Po
-	-rm -f ./$(DEPDIR)/sld32.Po
 	-rm -f ./$(DEPDIR)/sld_indx.Po
 	-rm -f ./$(DEPDIR)/sld_med.Po
 	-rm -f ./$(DEPDIR)/sld_smll.Po

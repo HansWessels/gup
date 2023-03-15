@@ -93,7 +93,7 @@ FGREP="/usr/bin/grep -F"
 NM="nm"
 
 # Whether we need soft or hard links.
-LN_S="ln -s"
+LN_S="ln"
 
 # What is the maximum length of a command?
 max_cmd_len=1572864
@@ -281,7 +281,7 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/opt/AMD/aocc-compiler-2.3.0/lib /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/11 /lib/x86_64-linux-gnu /lib /opt/AMD/aocc-compiler-2.3.0/lib32 /usr/lib64 /usr/lib32 "
+sys_lib_search_path_spec="/opt/AMD/aocc-compiler-2.3.0/lib /usr/lib /usr/lib/x86_64-linux-gnu /lib /usr/lib/gcc/x86_64-linux-gnu/11 /lib/x86_64-linux-gnu /opt/AMD/aocc-compiler-2.3.0/lib32 /usr/lib64 /usr/lib32 "
 
 # Detected run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/local/lib /usr/local/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 "
