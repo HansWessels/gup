@@ -178,14 +178,40 @@ static void store_ptr(ptr_t ptr, packstruct *com)
 	ST_BITS(ptr-(mask<<9), len+9);
 }
 
+#define BLOCK_SIZE 4096 /* size of huffman block */
+
 static gup_result compress(packstruct *com)
 {
 	index_t current_pos = DICTIONARY_START_OFFSET; /* wijst de te packen byte aan */
 	unsigned long bytes_to_do=com->origsize;
 	void* rbuf_current_store=com->rbuf_current;
+	index_t token_aantal=0;
+	index_t block_size;
 	com->rbuf_current=com->compressed_data;
 	com->bits_in_bitbuf=0;
 	com->bitbuf=0;
+	{
+		/* eerst het totaal aantal huffman tokens tellen */
+		while(bytes_to_do>0)
+		{
+			match_t match;
+			match=com->match_len[current_pos];
+			if(match==0)
+			{ /* store literal */
+				bytes_to_do--;
+				current_pos++;
+				token_aantal++;
+			}
+			else
+			{
+   	      bytes_to_do-=match;
+      	   current_pos+=match;
+				token_aantal+=match;
+			}
+		}
+		block_size=token_aantal/((token_aantal/BLOCK_SIZE)+1);
+		printf("\nToken count=%u, block size=%u, blocks=%u\n", token_aantal, block_size, token_aantal/block_size);
+	}
 	while(bytes_to_do>0)
 	{
 		match_t match;

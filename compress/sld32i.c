@@ -363,6 +363,9 @@ static void find_dictionary32(index_t pos, packstruct* com)
 		{
 			*parent=NO_NODE;
 		}
+		#ifdef LINK_HIST
+		com->link3_hist[pos-MAX_PTR32]=NO_NODE;
+		#endif
 	}
 	#if (MAX_HIST!=0) 
 	{ /* check for matches at pointer history positions */
