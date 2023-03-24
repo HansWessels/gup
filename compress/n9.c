@@ -22,15 +22,15 @@
 	#define RLE32_DEPTH (MAX_MATCH32-2)
 #endif
 
-#define COST_LIT(kar, com) cost_lit()
-#define COST_PTRLEN(match, ptr, pos, ptr_hist, com) cost_ptrlen(match, ptr)
-static int cost_lit(void);
-static int cost_ptrlen(match_t match, ptr_t ptr);
+#define COST_LIT(kar, com) cost_lit(kar, com)
+#define COST_PTRLEN(match, ptr, pos, ptr_hist, com) cost_ptrlen(match, ptr, com)
+static int cost_lit(match_t kar, packstruct *com);
+static int cost_ptrlen(match_t match, ptr_t ptr, packstruct *com);
 
 static gup_result compress(packstruct *com);
 
-static int len_len(match_t match);
-static int ptr_len(ptr_t ptr);
+static int len_len(match_t match, packstruct *com);
+static int ptr_len(ptr_t ptr, packstruct *com);
 
 #if 0
 	/* log literal en pointer len combi's */
@@ -88,60 +88,72 @@ static int ptr_len(ptr_t ptr);
 
 #include "compress_charsi.c"
 
-static int cost_ptrlen(match_t match, ptr_t ptr)
+static void init_charlen(uint8 *charlen)
+{
+	int i;
+	for(i=0; i<NLIT; i++)
+	{ /* init literals */
+		charlen[i]=4;
+	}
+	for(i=0; i<(NC-NLIT); i++)
+	{ /* init len */
+		charlen[i+NLIT]=1+first_bit_set32(i);
+	}
+}
+
+static void init_ptrlen(uint8 *ptrlen)
+{
+	int i;
+	for(i=0; i<MAX_NPT; i++)
+	{
+		ptrlen[i]=4;
+	}
+}	
+
+static int cost_ptrlen(match_t match, ptr_t ptr, packstruct *com)
 {
 	int res=1; /* 1 bit voor aan te geven dat het een ptr len is */
-	res+=len_len(match);
-	res+=ptr_len(ptr);
+	res+=len_len(match, com);
+	res+=ptr_len(ptr, com);
 	return res;
 }
 
-static int cost_lit(void)
+static int cost_lit(match_t kar, packstruct *com)
 {
-	return 9; /* 1 bit om aan te geven dat het een literal is en 8 bits voor de literal */
+	return com->charlen[kar];
 }
 
-static int len_len(match_t match)
+static int len_len(match_t match, packstruct *com)
 {
-	if(match<3)
+	if(match<M7_MIN_MATCH)
 	{
 		return ERROR_COST;
 	}
-	if(match>128)
+	if(match>M7_MAX_MATCH)
 	{
-		if(match>M7_MAX_MATCH)
-		{
-			return ERROR_COST;
-		}
-		else
-		{
-			return 13;
-		}
+		return ERROR_COST;
 	}
-	return 2*(first_bit_set32(match-1)-1);
+	return com->charlen[match+NLIT-MIN_MATCH];
 }
 
-static int ptr_len(ptr_t ptr)
+static int ptr_len(ptr_t ptr, packstruct *com)
 {
-	if(ptr<512)
+	if(ptr<M7_MAX_PTR)
 	{
-		return 10;
-	}
-	if(ptr>65023)
-	{
-		if(ptr<M7_MAX_PTR)
+		int res;
+		int j = first_bit_set32(com->ptr_len[ptr]);
+		res=com->ptrlen[j];
+		j--;
+		if(j > 0)
 		{
-			return 23;
+			res+=j;
 		}
-		else
-		{ /* can happen with length 2 matches */
-			return ERROR_COST; /* error */
-		}
+		return res;
 	}
-	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
+	return ERROR_COST; /* error */
 }
 
-#define BLOCK_SIZE 4096 /* size of huffman block */
+#define BLOCK_SIZE (4*1024) /* size of huffman block */
 
 static gup_result compress(packstruct *com)
 {
@@ -173,7 +185,6 @@ static gup_result compress(packstruct *com)
 			}
 		}
 		block_size=token_aantal/((token_aantal/BLOCK_SIZE)+1);
-//		printf("\nToken count=%u, block size=%u, blocks=%u\n", token_aantal, block_size, token_aantal/block_size);
 	}
 	current_pos = DICTIONARY_START_OFFSET;
 	while(token_aantal>0)
@@ -182,7 +193,6 @@ static gup_result compress(packstruct *com)
 		{
 			block_size=token_aantal;
 		}
-		printf("pos=%u: Token count=%u, block size=%u\n", current_pos-DICTIONARY_START_OFFSET, token_aantal, block_size);
 		compress_chars32(&current_pos, block_size, com);
 		token_aantal-=block_size;
 	}
@@ -410,6 +420,8 @@ gup_result n9_init(packstruct *com)
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
+	init_charlen(com->charlen);
+	init_ptrlen(com->ptrlen);
 	if(res==GUP_OK)
 	{
 		res=encode32(com);
