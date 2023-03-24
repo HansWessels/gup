@@ -113,6 +113,7 @@ void decode(int mode, unsigned long size, unsigned long compressed_size, uint32_
 	case ARJ_MODE_2:
 	case ARJ_MODE_3:
 	case GNU_ARJ_MODE_7:
+	case NI_MODE_9:
 		{ /* zero last two bytes */
 			uint8_t temp_bytes[2];
 			temp_bytes[0]=data[compressed_size];
@@ -134,7 +135,6 @@ void decode(int mode, unsigned long size, unsigned long compressed_size, uint32_
 		decode_n1(dst, data);
 		break;
 	case NI_MODE_2:
-	case NI_MODE_9:
 		decode_n2(dst, data);
 		break;
 	default:

@@ -13,6 +13,9 @@
 #define MIN_MATCH M7_MIN_MATCH
 #define MAX_PTR32 M7_MAX_PTR
 #define MAX_MATCH32 M7_MAX_MATCH
+#define N_PTR ARJ_NPT
+#define M_PTR_BIT ARJ_PBIT;
+
 
 #if(RLE32_DEPTH>(MAX_MATCH32-2))
 	#undef RLE32_DEPTH
@@ -166,7 +169,7 @@ static gup_result compress(packstruct *com)
 			{
    	      bytes_to_do-=match;
       	   current_pos+=match;
-				token_aantal+=match;
+				token_aantal++;
 			}
 		}
 		block_size=token_aantal/((token_aantal/BLOCK_SIZE)+1);
@@ -179,8 +182,8 @@ static gup_result compress(packstruct *com)
 		{
 			block_size=token_aantal;
 		}
+		printf("pos=%u: Token count=%u, block size=%u\n", current_pos-DICTIONARY_START_OFFSET, token_aantal, block_size);
 		compress_chars32(&current_pos, block_size, com);
-//		printf("Token count=%u, block size=%u\n", token_aantal, block_size);
 		token_aantal-=block_size;
 	}
 	if(com->bits_in_bitbuf>0)
