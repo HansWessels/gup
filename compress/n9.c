@@ -28,8 +28,6 @@ static gup_result compress(packstruct *com);
 
 static int len_len(match_t match);
 static int ptr_len(ptr_t ptr);
-static void store_len(match_t match, packstruct *com);
-static void store_ptr(ptr_t ptr, packstruct *com);
 
 #if 0
 	/* log literal en pointer len combi's */
@@ -85,6 +83,7 @@ static void store_ptr(ptr_t ptr, packstruct *com);
   }                                                        \
 }
 
+#include "compress_charsi.c"
 
 static int cost_ptrlen(match_t match, ptr_t ptr)
 {
@@ -139,45 +138,6 @@ static int ptr_len(ptr_t ptr)
 	return 10+2*first_bit_set32(((ptr-512)>>10)+1);
 }
 
-static void store_len(match_t match, packstruct *com)
-{
-	int len;
-	match_t mask;
-	match-=1;
-	len=first_bit_set32(match)-1;
-	mask=1<<len;
-	mask--;
-	ST_BITS(mask, len);
-	if(len!=7)
-	{
-		ST_BITS(0, 1);
-	}
-	ST_BITS(match&mask, len);
-}
-
-static void store_ptr(ptr_t ptr, packstruct *com)
-{
-	int len;
-	ptr_t mask;
-	if(ptr<512)
-	{
-		len=0;
-		mask=0;
-	}
-	else
-	{
-		len=first_bit_set32(((ptr-512)>>10)+1);
-		mask=1<<len;
-		mask--;
-		ST_BITS(mask, len);
-	}
-	if(len!=7)
-	{
-		ST_BITS(0, 1);
-	}
-	ST_BITS(ptr-(mask<<9), len+9);
-}
-
 #define BLOCK_SIZE 4096 /* size of huffman block */
 
 static gup_result compress(packstruct *com)
@@ -210,31 +170,18 @@ static gup_result compress(packstruct *com)
 			}
 		}
 		block_size=token_aantal/((token_aantal/BLOCK_SIZE)+1);
-		printf("\nToken count=%u, block size=%u, blocks=%u\n", token_aantal, block_size, token_aantal/block_size);
+//		printf("\nToken count=%u, block size=%u, blocks=%u\n", token_aantal, block_size, token_aantal/block_size);
 	}
-	while(bytes_to_do>0)
+	current_pos = DICTIONARY_START_OFFSET;
+	while(token_aantal>0)
 	{
-		match_t match;
-		match=com->match_len[current_pos];
-		if(match==0)
-		{ /* store literal */
-			match=com->dictionary[current_pos];
-			ST_BITS(match, 9);
-			LOG_LITERAL(match);
-			bytes_to_do--;
-			current_pos++;
-		}
-		else
+		if(token_aantal<(2*block_size))
 		{
-			ptr_t ptr;
-			ptr=com->ptr_len[current_pos];
-         bytes_to_do-=match;
-         current_pos+=match;
-	      LOG_PTR_LEN(match, ptr);
-			store_len(match, com);
-			store_ptr(ptr, com);
-
+			block_size=token_aantal;
 		}
+		compress_chars32(&current_pos, block_size, com);
+//		printf("Token count=%u, block size=%u\n", token_aantal, block_size);
+		token_aantal-=block_size;
 	}
 	if(com->bits_in_bitbuf>0)
 	{ /* flush bitbuf */
@@ -445,6 +392,18 @@ gup_result n9_init(packstruct *com)
 {
 	gup_result res=GUP_OK;
 	res=init_dictionary32(com);
+	uint8 charlen[NC+NC];  /* karakter lengte */
+	uint16 char2huffman[NC];  /* huffman codes van de karakters */
+	uint8 ptrlen[MAX_NPT+MAX_NPT];  /* pointer lengte */
+	uint16 ptr2huffman[MAX_NPT]; /* huffman codes van de pointers */
+	uint8 ptrlen1[NCPT+NCPT];  /* pointer lengte */
+	uint16 ptr2huffman1[NCPT];/* huffman codes van de pointers */
+	com->charlen=charlen;  /* karakter lengte */
+	com->char2huffman=char2huffman;
+	com->ptrlen=ptrlen;
+	com->ptr2huffman=ptr2huffman;
+	com->ptrlen1=ptrlen1;
+	com->ptr2huffman1=ptr2huffman1;
 	com->rbuf_current=com->bw_buf->current;
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
