@@ -1,7 +1,7 @@
 
 #include "gup.h"
 
-#include <malloc.h>
+//#include <malloc.h> //niet meer nodig onder linux en MAC OS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
