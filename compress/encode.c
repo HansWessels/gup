@@ -286,6 +286,11 @@
 
 /* eerst ff wat definities */
 
+typedef uint16 huffman_t;
+typedef uint32_t freq_t;
+typedef uint16 symbol_t;
+typedef int symbol_count_t;
+
 void init_bitbuffer(packstruct *com);
 gup_result close_m1_m7_stream(packstruct *com);
 gup_result store(packstruct *com);
@@ -295,18 +300,29 @@ gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
                          unsigned long* packed_bytes, int charct, uint16 entries,
                          uint8* charlen, uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
+#define NEW_HUFFMAN
 
-void make_hufftable(uint8* len, uint16* tabel, uint16* freq, uint16 totaalfreq, int nchar, int max_hufflen, packstruct *com); /* maakt huffman tabel */
-void make_huffmancodes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
+#ifdef NEW_HUFFMAN
+void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], uint16 total_freq, const symbol_count_t symbol_size, int max_huff_len, packstruct * com);
+#else
+void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      */
+                    uint16 * table,      /* O: Huffman codes                     */
+                    uint16 * freq,       /* I: occurrence frequencies            */
+                    uint16 totalfreq,    /* I: sum of all occurrence frequencies */
+                    int nchar,         /* I: number of characters in <freq>    */
+                    int max_hufflen,   /* I: maximum huffman code length */
+                    packstruct * com);
+#endif
+void make_huffman_codes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
 gup_result init_encode_r(packstruct *com);
 void free_encode_r(packstruct *com);
 
 /*
  * ALIGN is a macro to align elements of a certain size in a malloced
- * array. The start of the array is guaranteed aligned with every possible 
+ * array. The start of the array is guaranteed aligned with every possible
  * object. So an object is aligned when it's position relative to the start
- * of the array is a multiple of it's size. Instead of the modulo operator 
- * the & operator is used. This assumes that the alignment of an object 
+ * of the array is a multiple of it's size. Instead of the modulo operator
+ * the & operator is used. This assumes that the alignment of an object
  * is the smalest power of two of its size; ie: sizeof(object)==3 -> alignment
  * is 1. sizeof(object)==6 ->alignment is 2.
  */
@@ -316,7 +332,7 @@ void free_encode_r(packstruct *com);
   /*
    * x=packstruct pointer.
    * Function to allign buffer_pointer pointers, needed in some optimisations of
-   * storebits, only align when in the packstruct use_align!=0 
+   * storebits, only align when in the packstruct use_align!=0
    */
   #define ALIGN_BUFP(x) /* */
 #endif
@@ -357,8 +373,8 @@ int32 first_bit_set32(uint32 u)
 /*
   Alignement problemen bij de Alpha...
   Deze functie malloct een memory blok en zet daar pointers in naar diverse
-  typen. Probleem is dat hier een hard coded alignment werd gebruikt op 
-  word en longword boundaries. De macro ALIGN zorgt ervoor dat de alignment 
+  typen. Probleem is dat hier een hard coded alignment werd gebruikt op
+  word en longword boundaries. De macro ALIGN zorgt ervoor dat de alignment
   machine onafhankelijk gefixed wordt. (Hopelijk.)
 */
 
@@ -402,8 +418,8 @@ gup_result init_encode_r(packstruct *com)
       i_fastlog=init_fast_log;
       com->maxptr= 65534UL;
       /*
-      // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de 
-      // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen 
+      // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de
+      // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen
       // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
       // positie ook gebruiken...
       */
@@ -676,7 +692,7 @@ gup_result store(packstruct *com)
         }
         bytes_left=com->bw_buf->end - com->bw_buf->current;
       }
-      if((bytes_read=com->buf_read_crc(bytes_left, com->bw_buf->current, 
+      if((bytes_read=com->buf_read_crc(bytes_left, com->bw_buf->current,
                                        com->brc_propagator))<0)
       {
         return GUP_READ_ERROR; /* ("read error"); */
@@ -1113,13 +1129,13 @@ gup_result compress_chars(packstruct *com)
     uint16 old_entries;
     ARJ_Assert(com->backmatch!=NULL);
     com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
-    
+
     do
     {
       /*
       //  Nu filteren van matches van lengte 3 en 4
       //  Probeer zo veel mogelijk characters bij de volgende match aan te
-      //  hangen (backmatch lengte) en converteer de overgebleven characters 
+      //  hangen (backmatch lengte) en converteer de overgebleven characters
       //  naar literals. Dit werkt ook voor matches langer dan 4, zolang de
       //  overgebleven backmatchlengte maar kleiner of gelijk aan 4 is.
       //  Als dit allemaal niet lukt wordt er gekeken of het zinnig is om
@@ -1155,19 +1171,19 @@ gup_result compress_chars(packstruct *com)
         c_codetype *p = com->chars;
         {
           /* char-length for element 'MIN_MATCH': */
-          int8 len3 = com->charlen[MIN_MATCH + (NLIT - MIN_MATCH)]; 
+          int8 len3 = com->charlen[MIN_MATCH + (NLIT - MIN_MATCH)];
           /* char-length for element 'MIN_MATCH+1': */
           int8 len4 = com->charlen[(MIN_MATCH + 1) + (NLIT - MIN_MATCH)];
           uint16 i = entries-entriesextra;
-          
+
           do
           {
             c_codetype kar = *p++;
-            
+
             if (kar > (NLIT-1))
             {
               int bml;
-              
+
               if((bml=*bp++)>0)
               {
                 /*
@@ -1175,11 +1191,11 @@ gup_result compress_chars(packstruct *com)
                 //  1 tot 4 literals en een grotere match kunnen maken
                 */
                 int ckar = kar-bml-NLIT+MIN_MATCH; /* aantal mogelijke literals */
-                
+
                 ARJ_Assert(*p>(NLIT-1));
                 ARJ_Assert((bml+*p-NLIT+MIN_MATCH)<=com->max_match);
                 ARJ_Assert(ckar>0);
-                
+
                 if((ckar < 5) && (entries < (MAX_ENTRIES-ckar))) /* entries moet kleiner MAX_ENTRIES blijven */
                 { /* conversie mogelijk */
                   int8 lengte1;
@@ -1193,7 +1209,7 @@ gup_result compress_chars(packstruct *com)
                   lengte1 += com->charlen[kar];
                   lengte1 -= com->charlen[(*p)+bml];
                   lengte1 -= com->charlen[*mstp];
-                  
+
                   if(ckar == 1)
                   {
                     if(lengte1>=0)
@@ -1358,10 +1374,10 @@ gup_result compress_chars(packstruct *com)
               { /* check for (MIN_MATCH) or (MIN_MATCH+1) matches only! */
                 int8 lengte1;
                 int8 lenq;
-                
+
                 lenq = LOG(*q);
                 lengte1 = com->ptrlen[lenq];
-                
+
                 if (lenq > 0)
                 {
                   lengte1 += lenq - 1;
@@ -1453,11 +1469,11 @@ gup_result compress_chars(packstruct *com)
     }
     while (com->jm && (entries != old_entries));
     {
-      /* 
+      /*
       //  Code die backmatch stringlengtes optimaliseert.
-      //  Bij een backmatch zijn er twee opeenvolgende matches, waarbij 
+      //  Bij een backmatch zijn er twee opeenvolgende matches, waarbij
       //  de laatste match een backmatch waarde groter dan nul heeft.
-      //  Deze laatste match kunnen we groter laten worden ten koste van de 
+      //  Deze laatste match kunnen we groter laten worden ten koste van de
       //  grootte van de match die ervoor ligt...
       */
       int redo; /* geeft aan dat er een conversie heeft plaatsgevonden -> nog een iteratie */
@@ -1599,7 +1615,7 @@ gup_result compress_chars(packstruct *com)
      * Nu hebben we de data geoptimaliseerd en kan het de file in, maar past
      * het wel in de file? dat beslist de multiple volume code!
     */
-    if(com->mv_mode) 
+    if(com->mv_mode)
     {
       unsigned long bits=bits_comming+com->mv_bits_left+7;
       bits >>= 3;                      /* bytes=bits/8 */
@@ -1607,7 +1623,7 @@ gup_result compress_chars(packstruct *com)
       { /*- gedonder!, MV break! */
         uint16 delta_size;
         uint16 the_size = 1;
-        
+
         com->mv_next = 1;
         delta_size=0x8000;
         entries -= entriesextra;
@@ -1680,9 +1696,9 @@ gup_result compress_chars(packstruct *com)
           {
             unsigned long h_bits, m_bits;
 
-            make_hufftable(com->ptrlen, com->ptr2huffman, freq, 
+            make_hufftable(com->ptrlen, com->ptr2huffman, freq,
                            pointer_count, com->n_ptr, MAX_HUFFLEN, com);
-            make_hufftable(com->charlen, com->char2huffman, charfreq, 
+            make_hufftable(com->charlen, com->char2huffman, charfreq,
                            (uint16)(entries + entriesextra), NC, MAX_HUFFLEN, com);
             bits = count_bits(&h_bits, &m_bits, &m_size, charct, (uint16)(entries + entriesextra),
                               com->charlen, com->ptrlen, charfreq, freq, com) + com->mv_bits_left+7;
@@ -1814,16 +1830,16 @@ gup_result compress_chars(packstruct *com)
   /*-
    * we hebben nu de huffman codes van de karakterset berekend, nu moeten
    * we de lengtes gaan coderen. deze staan in charlen c_len coderings
-   * blok: 
+   * blok:
    * lengte van de pointers die c_len coderen, er zijn 19 pointers:
-   * 0          = c_len = 0 
+   * 0          = c_len = 0
    * 1 + 4 bits = de volgende 3-18 karakters hebben lengte 0
    * 2 + 9 bits = de volgende 20-531 karakters hebben lengte 0
-   * Waar de hell is 19 gebleven? Foutje????? 
-   * 3          = c_len = 1 
+   * Waar de hell is 19 gebleven? Foutje?????
+   * 3          = c_len = 1
    * :
-   * n          = c_len = n-2 
-   * : 
+   * n          = c_len = n-2
+   * :
    * 18         = c_len = 16
   */
   if(com->special_header!=NORMAL_HEADER)
@@ -2228,7 +2244,7 @@ gup_result compress_chars(packstruct *com)
         if (kar > (NLIT - 1))
         {
           int j = LOG(*s);
-  
+
           ST_BITS(com->ptr2huffman[j], com->ptrlen[j]);
           if (--j > 0)
           {
@@ -2290,6 +2306,460 @@ gup_result compress_chars(packstruct *com)
               5. <nchar> is less than or equal to <NC>.
               6. Elements N..2*N-1 of <len> exist and may be modified.
 ******************************************************************************/
+
+#define MAX_HUFFMAN_LEN MAX_HUFFLEN
+#define MAX_SYMBOL_SIZE NC
+
+#ifdef NEW_HUFFMAN
+
+#define INSERTION_GRENS 16
+
+void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count)
+{
+    symbol_count_t i;
+    for(i=1; i<symbol_count; i++)
+    {
+        freq_t cur_freq=freq[i];
+        symbol_t cur_symbol=symbols[i];
+        symbol_count_t pos=i-1;
+        while(pos>=0 && (freq[pos]>cur_freq))
+        {
+            freq[pos+1]=freq[pos];
+            symbols[pos+1]=symbols[pos];
+            pos--;
+        }
+        freq[pos+1]=cur_freq;
+        symbols[pos+1]=cur_symbol;
+    }
+}
+
+void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count)
+{
+    symbol_t tmp_symbols[MAX_SYMBOL_SIZE];
+    freq_t tmp_freq[MAX_SYMBOL_SIZE];
+
+    #define BUCKET_BITS 8
+    #define BUCKET_SIZE (1<<BUCKET_BITS)
+    #define BUCKET_MASK (BUCKET_SIZE-1)
+
+    symbol_count_t bucket[BUCKET_SIZE];
+    freq_t max=0;
+    int shift=0;
+    if(symbol_count<INSERTION_GRENS)
+    {
+        insertion_sort_symbols(symbols, freq, symbol_count);
+        return;
+    }
+    symbol_count_t i=symbol_count;
+    do
+    {
+        i--;
+        if(max<freq[i])
+        {
+            max=freq[i];
+        }
+    } while(i>0);
+
+    for(;;)
+    {
+        symbol_count_t i;
+        i=symbol_count;
+        memset(bucket, 0, sizeof(bucket));
+        do
+        {
+            i--;
+            bucket[((freq[i]>>shift) & BUCKET_MASK)]++;
+        } while(i>0);
+
+        symbol_count_t start;
+        start=0;
+        for(i=0; i<BUCKET_SIZE; i++)
+        {
+            symbol_count_t tmp=bucket[i];
+            bucket[i]=start;
+            start+=tmp;
+        }
+        for(i=0; i<symbol_count; i++)
+        {
+            int tmp=(freq[i]>>shift)&BUCKET_MASK;
+            tmp_freq[bucket[tmp]]=freq[i];
+            tmp_symbols[bucket[tmp]]=symbols[i];
+            bucket[tmp]++;
+        }
+        max>>=BUCKET_BITS;
+        if(max==0)
+        {
+            memcpy(freq, tmp_freq, symbol_count*sizeof(freq[0]));
+            memcpy(symbols, tmp_symbols, symbol_count*sizeof(symbols[0]));
+            return;
+        }
+        shift+=BUCKET_BITS;
+        i=symbol_count;
+        memset(bucket, 0, sizeof(bucket));
+        do
+        {
+            i--;
+            bucket[((tmp_freq[i]>>shift) & BUCKET_MASK)]++;
+        } while(i>0);
+        start=0;
+        for(i=0; i<BUCKET_SIZE; i++)
+        {
+            symbol_count_t tmp=bucket[i];
+            bucket[i]=start;
+            start+=tmp;
+        }
+        for(i=0; i<symbol_count; i++)
+        {
+            int tmp=(tmp_freq[i]>>shift)&BUCKET_MASK;
+            freq[bucket[tmp]]=tmp_freq[i];
+            symbols[bucket[tmp]]=tmp_symbols[i];
+            bucket[tmp]++;
+        }
+//        max>>=BUCKET_BITS;
+//        if(max==0)
+        {
+            return;
+        }
+//        shift+=BUCKET_BITS;
+    }
+}
+
+int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t symbol_size, int max_huff_len)
+{
+    symbol_count_t len_count[MAX_HUFFMAN_LEN+1]={0};
+    int max_len=0;
+    symbol_count_t max_len_symbol;
+    symbol_count_t symbol_count=0;
+    symbol_count_t i;
+    i=symbol_size;
+    max_len_symbol=0;
+
+    if(max_huff_len>MAX_HUFFMAN_LEN)
+    {
+        fprintf(stderr, "Given max_huffman len is bigger as the fixed length limit: max_huffman_len=%i > %i (MAX_HUFFMAN_LEN).\n", max_huff_len, MAX_HUFFMAN_LEN);
+        return -1;
+    }
+    do
+    {
+        i--;
+        if(s_len[i]==0)
+        {
+            if(huff_codes[i]!=0)
+            {
+                fprintf(stderr, "Zero length huffman code has a non zero code: s_len[%i]=%i, huffcode=%X\n", i, s_len[i], huff_codes[i]);
+                exit(-1);
+            }
+        }
+        else
+        {
+            symbol_count++;
+            if(s_len[i]>max_huff_len)
+            {
+                fprintf(stderr, "Length huffman code is larger as the limit: s_len[%i]=%i > %i (max_huffman_len)\n", i, s_len[i], max_huff_len);
+                exit(-1);
+            }
+            len_count[s_len[i]]++;
+            if(s_len[i]>=max_len)
+            {
+                max_len=s_len[i];
+                max_len_symbol=i;
+            }
+            { /* test lengte van huffman code */
+                huffman_t code=huff_codes[i];
+                int len=0;
+                while(code!=0)
+                {
+                    len++;
+                    code>>=1;
+                }
+                if(len>s_len[i])
+                {
+                    fprintf(stderr, "Length huffman code is larger as its stated length: len(%i)=%i > s_len[%i]=%i\n", huff_codes[i], len, i, s_len[i]);
+                    exit(-1);
+                }
+            }
+
+        }
+    } while(i>0);
+    if(symbol_count<2)
+    { /* aantal symbolen <2, weinig te checken */
+        if(symbol_count==1)
+        {
+            if(max_len>1)
+            {
+                fprintf(stderr, "Length of the single huffman code is larger as 1: len(%i)=%i > 1\n", max_len_symbol, s_len[i]);
+                exit(-1);
+            }
+            if(huff_codes[max_len_symbol]!=0)
+            {
+                fprintf(stderr, "Huffmancode of the single huffman code is not zero: huffman_code[%i]=%X != 0\n", huff_codes[max_len_symbol], s_len[i]);
+                exit(-1);
+            }
+        }
+        return 0;
+    }
+    /* is de tree compleet? */
+    {
+        huffman_t totaal=0;
+        huffman_t correct=1;
+        for (i=1; i<=max_len; i++)
+        {
+            totaal+=(len_count[i]<<(max_len-i));
+            correct<<=1;
+        }
+        if(totaal!=correct)
+        {
+            fprintf(stderr, "Tree is not complete, totaal: %X != correct: %X\n", totaal, correct);
+            exit(-1);
+        }
+    }
+    /* klopt de tree? */
+    {
+        huffman_t huffcode[MAX_HUFFMAN_LEN+1];
+        huffman_t start_huffcode=0;
+        huffcode[0]=0;
+        for(i=1; i<=MAX_HUFFMAN_LEN; i++)
+        {
+            start_huffcode<<=1;
+            huffcode[i]=start_huffcode;
+            start_huffcode+=len_count[i];
+        }
+        for(i=0; i<symbol_size; i++)
+        {
+            if(huff_codes[i]!=huffcode[s_len[i]])
+            {
+                fprintf(stderr, "Wrong huffman code: huff_code[%i]=%X!=%X\n", i, huff_codes[i], huffcode[s_len[i]]);
+                exit(-1);
+            }
+            if(s_len[i]!=0)
+            {
+                huffcode[s_len[i]]++;
+            }
+        }
+    }
+    return 0;
+}
+
+void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], uint16 total_freq, const symbol_count_t symbol_size, int max_huff_len, packstruct * com)
+{
+    freq_t freq_array[MAX_SYMBOL_SIZE*2];
+    symbol_count_t tree_array[MAX_HUFFMAN_LEN*MAX_SYMBOL_SIZE*2];
+    symbol_t symbols[MAX_SYMBOL_SIZE];
+    symbol_count_t* tree=tree_array;
+    freq_t* freq=freq_array;
+    symbol_count_t symbol_count;
+    symbol_count_t pairs_count;
+    symbol_count_t i;
+    i=symbol_size;
+    symbol_count=0;
+    do
+    { /* hoeveel symbols zijn er met een freq>0? */
+        i--;
+        if(in_freq[i]!=0)
+        {
+            freq[symbol_count]=in_freq[i];
+            symbols[symbol_count]=i;
+            symbol_count++;
+        }
+    } while(i>0);
+    memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
+    if(symbol_count<3)
+    { /* special cases 0, 1 en 2 symbolen */
+        memset(huff_codes, 0, (size_t)symbol_size*sizeof(huff_codes[0]));
+        if(symbol_count>1)
+        {
+            huffman_t code=0;
+            for(i=0; i<symbol_size; i++)
+            {
+                if(in_freq[i]!=0)
+                {
+                    huff_codes[i]=code;
+                    code++;
+                    s_len[i]=1;
+                }
+            }
+        }
+        return;
+    }
+    {
+        radix_sort_symbols(symbols, freq, symbol_count);
+    }
+    freq+=symbol_count; /* freq array index -1 based */
+    if(1)
+    { /* eerst een traditionele huffmanboom bouwen */
+        symbol_count_t* len=tree+3*symbol_count;
+        symbol_count_t symbol_pos=-symbol_count;
+        symbol_count_t child=0;
+        symbol_count_t pair_pos=symbol_count-1;
+        symbol_count_t node;
+        for(node=0; node<symbol_count; node++)
+        {
+            freq[node]=~((freq_t)0); /* sentries */
+        }
+        node=symbol_count-1;
+        do
+        {
+            freq_t node_freq;
+            if(freq[symbol_pos]<=freq[pair_pos])
+            {
+                tree[child++]=symbol_pos;
+                node_freq=freq[symbol_pos];
+                symbol_pos++;
+            }
+            else
+            {
+                tree[child++]=pair_pos;
+                node_freq=freq[pair_pos];
+                pair_pos--;
+            }
+            if(freq[symbol_pos]<=freq[pair_pos])
+            {
+                tree[child++]=symbol_pos;
+                node_freq+=freq[symbol_pos];
+                symbol_pos++;
+            }
+            else
+            {
+                tree[child++]=pair_pos;
+                node_freq+=freq[pair_pos];
+                pair_pos--;
+            }
+            freq[node]=node_freq;
+            node--;
+        } while(node>0);
+        node++;
+        { /* bouw s_len */
+            len[node]=0;
+            do
+            {
+                int current_len;
+                current_len=len[node]+1;
+                len[tree[--child]]=current_len;
+                len[tree[--child]]=current_len;
+                node++;
+            } while(child>0);
+            len-=symbol_count;
+            if(len[0]<=max_huff_len)
+            {
+                for(i=0; i<symbol_count; i++)
+                {
+                    s_len[symbols[i]]=(uint8)len[i];
+                }
+                make_huffman_codes(huff_codes, s_len, symbol_size);
+                huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
+
+                return;
+            }
+        }
+    }
+    freq[0]=0; /* sentry */
+    {
+        symbol_count_t symbol_pos;
+        pairs_count=symbol_count>>1;
+        symbol_pos=-1-(symbol_count&1);
+        i=pairs_count;
+        do
+        { /* eerste ronde, gewoon de gegeven character bij elkaar voegen */
+            i--;
+            freq_t node_freq;
+            node_freq=freq[symbol_pos];
+            tree[i*2+1]=symbol_pos;
+            symbol_pos--;
+            node_freq+=freq[symbol_pos];
+            tree[i*2]=symbol_pos;
+            symbol_pos--;
+            freq[i+1]=node_freq;
+        } while(i>0);
+        max_huff_len--;
+    }
+    do
+    { /* merge symbols, max_huff_len-1 keer */
+        symbol_count_t symbol_pos=-1;
+        symbol_count_t pair_pos=pairs_count;
+        freq_t next_symbol_freq=freq[symbol_pos];
+        freq_t next_pair_freq=freq[pair_pos];
+        tree+=symbol_count*2;
+        pairs_count=symbol_count+pairs_count;
+        if((pairs_count)&1)
+        { /* oneven som, waarde met hoogste freq doet niet mee */
+            if(next_pair_freq>=next_symbol_freq)
+            {
+                pair_pos--;
+                next_pair_freq=freq[pair_pos];
+            }
+            else
+            {
+                symbol_pos--;
+                next_symbol_freq=freq[symbol_pos];
+            }
+        }
+        pairs_count>>=1;
+        i=pairs_count;
+        do
+        { /* maak de nieuwe pairs */
+            freq_t node_freq;
+            i--;
+            if(next_pair_freq>=next_symbol_freq)
+            {
+                node_freq=next_pair_freq;
+                tree[i*2+1]=0;
+                pair_pos--;
+                next_pair_freq=freq[pair_pos];
+            }
+            else
+            {
+                node_freq=next_symbol_freq;
+                tree[i*2+1]=symbol_pos;
+                symbol_pos--;
+                next_symbol_freq=freq[symbol_pos];
+            }
+            if(next_pair_freq>=next_symbol_freq)
+            {
+                node_freq+=next_pair_freq;
+                tree[i*2]=0;
+                pair_pos--;
+                next_pair_freq=freq[pair_pos];
+            }
+            else
+            {
+                node_freq+=next_symbol_freq;
+                tree[i*2]=symbol_pos;
+                symbol_pos--;
+                next_symbol_freq=freq[symbol_pos];
+            }
+            freq[i+1]=node_freq;
+        } while(i>0);
+        max_huff_len--;
+    } while(max_huff_len>0);
+    {
+        symbol_count_t i;
+        memset(freq-symbol_count, 0, (size_t)symbol_count*sizeof(freq[0]));
+        i=2*(symbol_count-1);  /* N symbolen levert altijd N-1 pairs op */
+        do
+        {
+            freq[0]=0;
+            do
+            {
+                i--;
+                freq[tree[i]]++;
+            } while(i>0);
+            i=2*freq[0];
+            tree-=symbol_count*2;
+        } while(i>0);
+        i=symbol_count;
+        freq-=symbol_count; /* undo negatieve symbol index */
+        do
+        {
+            i--;
+            s_len[symbols[i]]=(uint8)freq[i];
+        } while(i>0);
+    }
+    make_huffman_codes(huff_codes, s_len, symbol_size);
+    huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
+    return;
+}
+
+#else
 
 void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      */
                     uint16 * table,      /* O: Huffman codes                     */
@@ -2457,7 +2927,7 @@ void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      
           while(--new_char > 0);
           if(tmp <= max_hufflen)
           {
-            make_huffmancodes(table, len, nchar);
+            make_huffman_codes(table, len, nchar);
             return;
           }
           else
@@ -2484,6 +2954,7 @@ void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      
     }
   }
 }
+#endif
 
 #endif
 
@@ -2502,50 +2973,31 @@ void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      
 
 ******************************************************************************/
 
-void make_huffmancodes(uint16 * table,   /* Tabel waarin de huffman codes komen te staan */
-                       uint8 * len,     /* lengte van de karakters            */
-                       int nchar)      /* aantal karakters                   */
+
+void make_huffman_codes(huffman_t huff_codes[], uint8 s_len[], symbol_count_t symbol_count)
 {
-  uint16 count[MAX_HUFFLEN + 1];
-  uint16 huff[MAX_HUFFLEN + 1];
-
-  { /*- hoeveel van iedere lengte hebben we eigenlijk? */
-    int i = nchar;
-    uint8 *p = len;
-
-    memset(count, 0, sizeof (count));
+    int len_count[MAX_HUFFMAN_LEN+1]={0};
+    huffman_t huffcode[MAX_HUFFMAN_LEN+1];
+    symbol_count_t i;
+    i=symbol_count;
     do
     {
-      count[*p++]++;
-    }
-    while(--i!=0);
-  }
-
-  { /*- bereken eerste huffmancode van iedere lengte */
-    int i = MAX_HUFFLEN - 1;           /* de eerste huffcode is gegarandeerd 0 */
-    uint16 *p = huff + 1;                /* huff[0] doet er niet toe           */
-    uint16 *q = count + 1;               /* count[0]==0 overslaan dus          */
-    uint16 tmp = 0;
-
-    *p++ = tmp;                        /* de huffmancode van len[1] komt met nul garantie */
-    do
+        i--;
+        len_count[s_len[i]]++;
+    } while(i>0);
+    huffman_t start_huffcode=0;
+    huffcode[0]=0;
+    for(i=1; i<=MAX_HUFFMAN_LEN; i++)
     {
-      tmp += *q++;
-      tmp += tmp;
-      *p++ = tmp;
+        start_huffcode<<=1;
+        huffcode[i]=start_huffcode;
+        start_huffcode+=len_count[i];
     }
-    while(--i!=0);
-  }
-  { /*- assign huffman codes to characters */
-    uint16 *p = table;
-    uint8 *q = len;
-
-    do
+    for(i=0; i<symbol_count; i++)
     {
-      *p++ = huff[*q++]++;
+        huff_codes[i]=huffcode[s_len[i]];
+        huffcode[s_len[i]]+=(s_len[i]!=0);
     }
-    while(--nchar > 0);
-  }
 }
 
 #endif
@@ -2847,7 +3299,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
   }
   /*
    * als er alleen maar matches van 3 en 4 zijn kan alles naar karakters worden
-   * omgezet, door gebruik te maken van een minimum ASCII header 
+   * omgezet, door gebruik te maken van een minimum ASCII header
    */
   if(((message_bits+header_bits)>>3)>(*packed_bytes) && (*packed_bytes <= MAX_ENTRIES))
   { /* is een conversie mogelijk */
@@ -2949,7 +3401,7 @@ gup_result compress_lzs(packstruct *com)
   memmove(com->pointers, q, entries*sizeof(*q));
   return GUP_OK;
 }
-    
+
 #endif
 
 #ifndef NOT_USE_STD_compress_lz5
@@ -3184,7 +3636,7 @@ gup_result compress_lz5(packstruct *com)
   memmove(com->pointers, q, entries*sizeof(*q));
   return GUP_OK;
 }
-    
+
 #endif
 
 
@@ -3197,7 +3649,7 @@ gup_result re_crc(unsigned long origsize, packstruct * com)
 {
   unsigned long buflen=com->buffer_size;
   uint8 *buffer=com->buffer_start;
-  
+
   if(buffer==NULL)
   {
     gup_result res;
@@ -3269,5 +3721,3 @@ void init_lz5_fast_log(packstruct *com)
 }
 
 #endif
-
- 
