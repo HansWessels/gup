@@ -2,6 +2,8 @@
 //   and
 // https://github.com/yuikns/intrin
 
+#ifdef HAVE_IMMINTRIN_H
+
 #include <immintrin.h>
 
 #if defined(_MSC_VER)
@@ -66,3 +68,6 @@ static uint32_t inline __builtin_clz(uint32_t value)
 #endif
 
 #endif // _MSC_VER
+
+#endif
+

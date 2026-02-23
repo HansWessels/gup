@@ -55,7 +55,7 @@ m4_warn([obsolete],
 AC_CHECK_INCLUDES_DEFAULT
 AC_PROG_EGREP
 
-AC_CHECK_HEADERS(unistd.h rx.h regex.h io.h dir.h dirent.h direct.h utime.h tos.h)
+AC_CHECK_HEADERS(unistd.h rx.h regex.h io.h dir.h dirent.h direct.h utime.h tos.h immintrin.h)
 GUP_INTS_H
 
 dnl Checks for typedefs, structures, and compiler characteristics.
