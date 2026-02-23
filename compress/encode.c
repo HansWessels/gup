@@ -302,7 +302,13 @@ unsigned long count_bits(unsigned long* header_size, unsigned long* message_size
                          uint8* charlen, uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
 #define NEW_HUFFMAN
 
+#define MAX_HUFFMAN_LEN MAX_HUFFLEN
+#define MAX_SYMBOL_SIZE NC
+
 #ifdef NEW_HUFFMAN
+
+void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
+void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
 void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], uint16 total_freq, const symbol_count_t symbol_size, int max_huff_len, packstruct * com);
 #else
 void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      */
@@ -2307,9 +2313,6 @@ gup_result compress_chars(packstruct *com)
               6. Elements N..2*N-1 of <len> exist and may be modified.
 ******************************************************************************/
 
-#define MAX_HUFFMAN_LEN MAX_HUFFLEN
-#define MAX_SYMBOL_SIZE NC
-
 #ifdef NEW_HUFFMAN
 
 #define INSERTION_GRENS 16
@@ -2550,18 +2553,33 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     symbol_count_t symbol_count;
     symbol_count_t pairs_count;
     symbol_count_t i;
-    i=symbol_size;
     symbol_count=0;
-    do
-    { /* hoeveel symbols zijn er met een freq>0? */
-        i--;
-        if(in_freq[i]!=0)
-        {
-            freq[symbol_count]=in_freq[i];
-            symbols[symbol_count]=i;
-            symbol_count++;
+    if(0)
+    {
+        for(i=0; i<symbol_size; i++)
+        { /* hoeveel symbols zijn er met een freq>0? */
+            if(in_freq[i]!=0)
+            {
+                freq[symbol_count]=in_freq[i];
+                symbols[symbol_count]=i;
+                symbol_count++;
+            }
         }
-    } while(i>0);
+    }
+    else
+    {
+        i=symbol_size;
+        do
+        { /* hoeveel symbols zijn er met een freq>0? */
+            i--;
+            if(in_freq[i]!=0)
+            {
+                freq[symbol_count]=in_freq[i];
+                symbols[symbol_count]=i;
+                symbol_count++;
+            }
+        } while(i>0);
+    }
     memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
     if(symbol_count<3)
     { /* special cases 0, 1 en 2 symbolen */
