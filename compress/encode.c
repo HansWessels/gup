@@ -301,25 +301,13 @@ gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
                          unsigned long* packed_bytes, int charct, uint16 entries,
                          uint8* charlen, uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
-#define NEW_HUFFMAN
 
 #define MAX_HUFFMAN_LEN MAX_HUFFLEN
 #define MAX_SYMBOL_SIZE NC
 
-#ifdef NEW_HUFFMAN
-
 void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
 void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
 void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], uint16 total_freq, const symbol_count_t symbol_size, int max_huff_len, packstruct * com);
-#else
-void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      */
-                    uint16 * table,      /* O: Huffman codes                     */
-                    uint16 * freq,       /* I: occurrence frequencies            */
-                    uint16 totalfreq,    /* I: sum of all occurrence frequencies */
-                    int nchar,         /* I: number of characters in <freq>    */
-                    int max_hufflen,   /* I: maximum huffman code length */
-                    packstruct * com);
-#endif
 void make_huffman_codes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
 gup_result init_encode_r(packstruct *com);
 void free_encode_r(packstruct *com);
@@ -2314,8 +2302,6 @@ gup_result compress_chars(packstruct *com)
               6. Elements N..2*N-1 of <len> exist and may be modified.
 ******************************************************************************/
 
-#ifdef NEW_HUFFMAN
-
 #define INSERTION_GRENS 16
 
 void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count)
@@ -2785,203 +2771,6 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
     return;
 }
-
-#else
-
-void make_hufftable(uint8 * len,        /* O: lengths of the Huffman codes      */
-                    uint16 * table,      /* O: Huffman codes                     */
-                    uint16 * freq,       /* I: occurrence frequencies            */
-                    uint16 totalfreq,    /* I: sum of all occurrence frequencies */
-                    int nchar,         /* I: number of characters in <freq>    */
-                    int max_hufflen,   /* I: maximum huffman code length */
-                    packstruct * com)
-{
-  memset(len, 0, nchar);
-  if(totalfreq != 0)
-  {
-    for(;;)
-    {
-      int up1[X_CHARS + NC + NC + 1];  /* linked list of characters          */
-      uint16 xfreq[X_CHARS + NC + NC];   /* modified character frequencies     */
-      int *up = (up1 + X_CHARS);
-
-      { /*- link de X_CHARS met elkaar */
-        int *p = up1;
-        int i = -X_CHARS + 2;
-
-        *p++ = 2 * nchar - 1;          /* terminate up array */
-        do
-        {
-          *p++ = i;
-        }
-        while(++i < 0);
-        *p = -X_CHARS;
-      }
-      { /*- zet X_CHARS freq op 0xffff */
-        int i = HUFF_HIGH_FREQS;
-        uint16 tmp = 0xffff;
-        uint16 *p = freq;
-
-        do
-        {
-          *--p = tmp;
-        }
-        while(--i!=0);
-        freq[-X_CHARS] = tmp;
-        /* zet freq[] boven nchar op 0xffff */
-        i = nchar;
-        p = freq + nchar;
-        do
-        {
-          *p++ = tmp;
-        }
-        while(--i!=0);
-      }
-      { /*- zet karakters in linked list */
-        uint16 *p = freq;                /* current character frequency        */
-        int c = 0;                     /* current character                  */
-
-        do
-        {
-          uint16 currfreq;               /* frequency of the current character <c> */
-
-          if((currfreq = *p++) != 0)
-          {
-            if(currfreq <= HUFF_MAX_SINGLE_FREQ)
-            {
-              up[c] = up1[currfreq];
-              up1[currfreq] = c;
-            }
-            else
-            {
-              int c1 = LOG(currfreq) - 17;  /* 17=maximale LOG waarde +1     */
-              int c2;
-
-              for(;;)
-              {
-                c2 = up[c1];
-                if(freq[c2] >= currfreq)
-                {
-                  up[c1] = c;
-                  up[c] = c2;
-                  break;
-                }
-                c1 = up[c2];
-                if(freq[c1] >= currfreq)
-                {
-                  up[c2] = c;
-                  up[c] = c1;
-                  break;
-                }
-              }
-            }
-          }
-        }
-        while(++c < nchar);
-      }
-      {
-        int mem[NC + NC];
-        int *child = mem;              /* left and right child of the pseudo-characters */
-        int new_char = nchar;          /* pseudo-character                   */
-
-        {
-          int low_p = -X_CHARS + 1;    /* source index for low half          */
-          int high_p = nchar;          /* source index for high half         */
-          uint16 new_freq;               /* frequency of new character         */
-
-          while((low_p = up[low_p]) < 0)
-          {
-            ;
-          }
-          if((new_freq = freq[low_p]) == totalfreq)
-          { /*- there is only one character in the array, we're done */
-            return;
-          }
-          *child++ = low_p;            /* define first child of pseudo-char */
-          while((low_p = up[low_p]) < 0) /* find next char of low half */
-          {
-            ;
-          }
-          for(;;)
-          {
-            if (freq[low_p] <= freq[high_p])
-            {
-              *child++ = low_p;        /* 2nd child of pseudo-char */
-              freq[new_char++] = new_freq + freq[low_p];  /* frequency of pseudo-char */
-              while((low_p = up[low_p]) < 0) /* find next char */
-              {
-                ;
-              }
-            }
-            else
-            {
-              *child++ = high_p;       /* 2nd child of pseudo-char */
-              freq[new_char++] = new_freq + freq[high_p++]; /* frequency of pseudo-char */
-            }
-            if((new_freq = freq[low_p]) <= freq[high_p])
-            {
-              *child++ = low_p;        /* define first child of pseudo-char */
-              while((low_p = up[low_p]) < 0) /* find next char */
-              {
-                ;
-              }
-            }
-            else
-            {
-              if((new_freq = freq[high_p]) >= totalfreq)
-              {
-                break;
-              }
-              else
-              {
-                *child++ = high_p++;   /* define first child of pseudo-char */
-              }
-            }
-          }
-        }
-        {
-          uint8 *p = len + new_char;
-          uint8 tmp;
-
-          p[-1] = 0;                   /* len[new_char]=0 */
-          new_char -= nchar;
-          do
-          {
-            tmp = *--p + 1;
-            len[*--child] = tmp;
-            len[*--child] = tmp;
-          }
-          while(--new_char > 0);
-          if(tmp <= max_hufflen)
-          {
-            make_huffman_codes(table, len, nchar);
-            return;
-          }
-          else
-          {
-            if((xfreq + X_CHARS) != freq)
-            {
-              memcpy(xfreq + X_CHARS, freq, nchar * sizeof (*freq));
-              freq = xfreq + X_CHARS;
-            }
-            freq[*child]++;            /* fix lowest freq */
-            do
-            {
-              child += 2;
-            }
-            while(*p++ != 0);
-            while(*--child >= nchar)
-            {
-              ;
-            }
-            freq[*child]--;            /* fix highest freq */
-          }
-        }
-      }
-    }
-  }
-}
-#endif
 
 #endif
 
