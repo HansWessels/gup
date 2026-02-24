@@ -35,3 +35,4 @@ stamp-h1
 *.zip
 /ni_pack/windows/msvc2022/bin/
 /ni_pack/windows/msvc2022/obj/
+test_resultaten.txt

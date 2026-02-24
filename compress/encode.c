@@ -287,7 +287,8 @@
 /* eerst ff wat definities */
 
 typedef uint16 huffman_t;
-typedef uint32_t freq_t;
+typedef uint16_t freq_t;
+#define MAX_FREQ_VALUE UINT16_MAX
 typedef uint16 symbol_t;
 typedef int symbol_count_t;
 
@@ -2427,6 +2428,8 @@ void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBO
     }
 }
 
+int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t symbol_size, int max_huff_len);
+
 int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t symbol_size, int max_huff_len)
 {
     symbol_count_t len_count[MAX_HUFFMAN_LEN+1]={0};
@@ -2612,7 +2615,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
         symbol_count_t node;
         for(node=0; node<symbol_count; node++)
         {
-            freq[node]=~((freq_t)0); /* sentries */
+            freq[node]=MAX_FREQ_VALUE; /* sentries */
         }
         node=symbol_count-1;
         do
@@ -2665,7 +2668,6 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
                 }
                 make_huffman_codes(huff_codes, s_len, symbol_size);
                 huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
-
                 return;
             }
         }
@@ -2715,7 +2717,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
         i=pairs_count;
         do
         { /* maak de nieuwe pairs */
-            freq_t node_freq;
+            uint64_t node_freq;
             i--;
             if(next_pair_freq>=next_symbol_freq)
             {
@@ -2745,7 +2747,14 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
                 symbol_pos--;
                 next_symbol_freq=freq[symbol_pos];
             }
-            freq[i+1]=node_freq;
+            if(node_freq<MAX_FREQ_VALUE)
+            {
+                freq[i+1]=(freq_t)node_freq;
+            }
+            else
+            {
+                freq[i+1]=(freq_t)MAX_FREQ_VALUE;
+            }
         } while(i>0);
         max_huff_len--;
     } while(max_huff_len>0);
