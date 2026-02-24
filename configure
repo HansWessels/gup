@@ -810,6 +810,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 with_dmalloc
+with_sanitizers
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1482,6 +1483,8 @@ Optional Packages:
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
   --with-dmalloc          use dmalloc, as in http://www.dmalloc.com
+  --with-sanitizers=...,...
+                          Enable sanitizers.
 
 Some influential environment variables:
   CC          C compiler command
@@ -19147,6 +19150,40 @@ printf "%s\n" "#define SYSTEM \"$target_alias\"" >>confdefs.h
     fi
 
 
+
+
+# Check whether --with-sanitizers was given.
+if test ${with_sanitizers+y}
+then :
+  withval=$with_sanitizers;  SANITIZERS="$withval"
+else case e in #(
+  e)  SANITIZERS=""  ;;
+esac
+fi
+
+
+if test -n "${SANITIZERS}"; then
+  SANITIZERS=$(echo $SANITIZERS | sed -e 's/,/ /g')
+  for SANITIZER in $SANITIZERS; do
+    case $SANITIZER in
+      asan|ASAN)
+        CFLAGS="$CFLAGS -fsanitize=address"
+        CXXFLAGS="$CXXFLAGS -fsanitize=address"
+        LDFLAGS="$LDFLAGS -fsanitize=address"
+        ;;
+      ubsan|UBSAN)
+        CFLAGS="$CFLAGS -fsanitize=undefined"
+        CXXFLAGS="$CXXFLAGS -fsanitize=undefined"
+        LDFLAGS="$LDFLAGS -fsanitize=undefined"
+        ;;
+      tsan|TSAN)
+        CFLAGS="$CFLAGS -fsanitize=thread"
+        CXXFLAGS="$CXXFLAGS -fsanitize=thread"
+        LDFLAGS="$LDFLAGS -fsanitize=thread"
+	    ;;
+    esac
+  done
+fi
 
 LTLIBOBJS="`echo ${LIBOBJS} | sed 's/\.o/.lo/g'`"
 
