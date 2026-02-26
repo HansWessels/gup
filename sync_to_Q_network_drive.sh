@@ -1,7 +1,7 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 rm -rf .git
-# cp -r ./* ~/q/nyh/gup/ 
+# cp -r ./* ~/q/nyh/gup/
 #
 # cat config.guess > ~/q/nyh/gup/config.guess
 # cat config.sub   > ~/q/nyh/gup/config.sub
