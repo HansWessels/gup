@@ -91,6 +91,35 @@ GUP_OS_ID
 GUP_ASSEMBLY
 GUP_USE_INDEX
 
+AC_ARG_WITH([sanitizers],
+  [AS_HELP_STRING([--with-sanitizers=...,...],
+    [Enable sanitizers.])],
+  [ SANITIZERS="$withval" ],
+  [ SANITIZERS="" ])
+
+if test -n "${SANITIZERS}"; then
+  SANITIZERS=$(echo $SANITIZERS | sed -e 's/,/ /g')
+  for SANITIZER in $SANITIZERS; do
+    case $SANITIZER in
+      asan|ASAN)
+        CFLAGS="$CFLAGS -fsanitize=address"
+        CXXFLAGS="$CXXFLAGS -fsanitize=address"
+        LDFLAGS="$LDFLAGS -fsanitize=address"
+        ;;
+      ubsan|UBSAN)
+        CFLAGS="$CFLAGS -fsanitize=undefined"
+        CXXFLAGS="$CXXFLAGS -fsanitize=undefined"
+        LDFLAGS="$LDFLAGS -fsanitize=undefined"
+        ;;
+      tsan|TSAN)
+        CFLAGS="$CFLAGS -fsanitize=thread"
+        CXXFLAGS="$CXXFLAGS -fsanitize=thread"
+        LDFLAGS="$LDFLAGS -fsanitize=thread"
+	    ;;
+    esac
+  done
+fi
+
 dnl The following two lines are needed for autoconf 2.12 and earlier.
 LTLIBOBJS="`echo ${LIBOBJS} | sed 's/\.o/.lo/g'`"
 AC_SUBST(LTLIBOBJS)
