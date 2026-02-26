@@ -2532,15 +2532,20 @@ int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t s
 
 void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len)
 {
-    freq_t freq_array[MAX_SYMBOL_SIZE*2];
+    freq_t freq_array[MAX_SYMBOL_SIZE*2+1]; /* we willen een voor het array ook kunnen lezen */
     symbol_count_t tree_array[MAX_HUFFMAN_LEN*MAX_SYMBOL_SIZE*2];
     symbol_t symbols[MAX_SYMBOL_SIZE];
     symbol_count_t* tree=tree_array;
-    freq_t* freq=freq_array;
+    freq_t* freq=freq_array+1;
     symbol_count_t symbol_count;
     symbol_count_t pairs_count;
     symbol_count_t i;
     symbol_count=0;
+    if(symbol_size>MAX_SYMBOL_SIZE)
+    {
+        fprintf(stderr, "Symbolsize error! symbolsize=%i, MAX_SYMBOL_SIZE=%i\n", symbol_size, MAX_SYMBOL_SIZE);
+        exit(-1);
+    }
     if(0)
     {
         for(i=0; i<symbol_size; i++)
@@ -2555,6 +2560,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     }
     else
     {
+        uint32_t total_freq=0;
         i=symbol_size;
         do
         { /* hoeveel symbols zijn er met een freq>0? */
@@ -2562,10 +2568,15 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
             if(in_freq[i]!=0)
             {
                 freq[symbol_count]=in_freq[i];
+                total_freq+=in_freq[i];
                 symbols[symbol_count]=i;
                 symbol_count++;
             }
         } while(i>0);
+        if(total_freq>MAX_FREQ_VALUE)
+        {
+            fprintf(stderr, "total_freq error! total_freq=%u, MAX_FREQ_VALUE=%u\n", symbol_size, MAX_FREQ_VALUE);
+        }
     }
     memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
     if(symbol_count<3)
@@ -2590,7 +2601,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
         radix_sort_symbols(symbols, freq, symbol_count);
     }
     freq+=symbol_count; /* freq array index -1 based */
-    if(1)
+    if(0)
     { /* eerst een traditionele huffmanboom bouwen */
         symbol_count_t* len=tree+3*symbol_count;
         symbol_count_t symbol_pos=-symbol_count;
