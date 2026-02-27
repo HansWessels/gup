@@ -496,7 +496,6 @@ gup_result init_encode_r(packstruct *com)
         ALIGN(0, memneed, sizeof(uint8));
         memneed += buf * 5;
         com->bufbase = com->gmalloc(memneed, com->gm_propagator);
-        memset(com->bufbase, 0, memneed);
         if (com->bufbase == NULL)
         {
             return GUP_NOMEM;
@@ -1758,11 +1757,11 @@ gup_result compress_chars(packstruct *com)
     */
     {
       gup_result res;
-      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
+      bits_comming+=com->bits_rest;
+      if((res=announce((bits_comming+com->bits_in_bitbuf)>>3, com))!=GUP_OK)
       {
         return res;
       }
-      bits_comming+=com->bits_rest;
       com->bits_rest=(int16)(bits_comming&7);
       com->packed_size += bits_comming>>3;
     }
@@ -3112,11 +3111,11 @@ gup_result compress_lzs(packstruct *com)
     }
     {
       gup_result res;
-      if((res=announce((bits_comming+7)>>3, com))!=GUP_OK)
+      bits_comming+=com->bits_rest;
+      if((res=announce((bits_comming+com->bits_in_bitbuf)>>3, com))!=GUP_OK)
       {
         return res;
       }
-      bits_comming+=com->bits_rest;
       com->bits_rest=(int16)(bits_comming&7);
       com->packed_size += bits_comming>>3;
     }
