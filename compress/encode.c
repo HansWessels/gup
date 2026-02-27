@@ -391,141 +391,119 @@ gup_result init_encode(packstruct *com)
 
 gup_result init_encode_r(packstruct *com)
 {
-  void (*i_fastlog)(packstruct *com);
-  com->compress=compress_chars;
-  com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
-  com->use_align=1;              /* use align macro */
-  com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
-  switch(com->mode)
-  {
+    void (*i_fastlog)(packstruct *com);
+    com->compress=compress_chars;
+    com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
+    com->use_align=1;              /* use align macro */
+    com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
+    switch(com->mode)
+    {
     case ARJ_MODE_1:
     case ARJ_MODE_2:
     case ARJ_MODE_3:
     default:
-      com->n_ptr=ARJ_NPT;
-      com->m_ptr_bit=ARJ_PBIT;
-      com->maxptr= MAX_PTR;
-      i_fastlog=init_fast_log;
-      break;
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        com->maxptr= MAX_PTR;
+        i_fastlog=init_fast_log;
+        break;
     case GNU_ARJ_MODE_7:
-      com->n_ptr=ARJ_NPT;
-      com->m_ptr_bit=ARJ_PBIT;
-      i_fastlog=init_fast_log;
-      com->maxptr= 65534UL;
-      /*
-      // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de
-      // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen
-      // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
-      // positie ook gebruiken...
-      */
-      break;
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        i_fastlog=init_fast_log;
+        com->maxptr= 65534UL;
+        /*
+        // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de
+        // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen
+        // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
+        // positie ook gebruiken...
+        */
+        break;
     case LHA_LZS_:
-      com->maxptr= MAX_LHA_LZS_PTR;
-      com->compress=compress_lzs;
-      com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
-      i_fastlog=init_lzs_fast_log;
-      com->use_align=0;             /* do NOT use align macro */
-      break;
+        com->maxptr= MAX_LHA_LZS_PTR;
+        com->compress=compress_lzs;
+        com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
+        i_fastlog=init_lzs_fast_log;
+        com->use_align=0;             /* do NOT use align macro */
+        break;
     case LHA_LZ5_:
     case LHA_AFX_:
-      com->maxptr= MAX_LHA_LZ5_PTR;
-      com->compress=compress_lz5;
-      com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
-      i_fastlog=init_lz5_fast_log;
-      com->use_align=0;             /* do NOT use align macro */
-      break;
+        com->maxptr= MAX_LHA_LZ5_PTR;
+        com->compress=compress_lz5;
+        com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
+        i_fastlog=init_lz5_fast_log;
+        com->use_align=0;             /* do NOT use align macro */
+        break;
     case LHA_LH4_:
-      com->n_ptr=LHA_NPT;
-      com->m_ptr_bit=LHA_PBIT;
-      com->maxptr=4095;
-      i_fastlog=init_fast_log;
-      break;
+        com->n_ptr=LHA_NPT;
+        com->m_ptr_bit=LHA_PBIT;
+        com->maxptr=4095;
+        i_fastlog=init_fast_log;
+        break;
     case 8:
     case LHA_LH5_:
-      com->n_ptr=LHA_NPT;
-      com->m_ptr_bit=LHA_PBIT;
-      com->maxptr=8191;
-      i_fastlog=init_fast_log;
-      break;
+        com->n_ptr=LHA_NPT;
+        com->m_ptr_bit=LHA_PBIT;
+        com->maxptr=8191;
+        i_fastlog=init_fast_log;
+        break;
     case LHA_LH6_:
-      com->n_ptr=ARJ_NPT;
-      com->m_ptr_bit=ARJ_PBIT;
-      i_fastlog=init_fast_log;
-      com->maxptr= 32767UL;
-      break;
-  }
-  if (com->mode > 0)
-  {
-    int jm=com->jm;
-    for (;;)
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        i_fastlog=init_fast_log;
+        com->maxptr= 32767UL;
+        break;
+    }
+    if (com->mode > 0)
     {
-      unsigned long memneed = 0;
-      long buf;
-      int zeef = 0;
-      int link = 0;
+        unsigned long memneed = 0;
+        long buf;
+        memneed += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
+        ALIGN(0, memneed, sizeof(node_struct)); /* align on node struct */
+        memneed += sizeof (node_struct) * TREE_SIZE; /* sld tree        */
+        ALIGN(0, memneed, sizeof(node_type)); /* align on node_type */
+        memneed += sizeof (node_type) * HASH_SIZE;  /* normal root */
 
-      memneed += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
-      ALIGN(0, memneed, sizeof(node_struct)); /* align on node struct */
-      memneed += sizeof (node_struct) * TREE_SIZE; /* sld tree        */
-      ALIGN(0, memneed, sizeof(node_type)); /* align on node_type */
-      memneed += sizeof (node_type) * HASH_SIZE;  /* normal root */
+        memneed += FASTLOGBUF;           /* grootte fastlog buffer */
 
-      memneed += FASTLOGBUF;           /* grootte fastlog buffer */
-
-      ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
-      memneed += 4UL*BIG_HUFFSIZE;
-      ALIGN(0, memneed, sizeof(uint8));
-      memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
-      ALIGN(0, memneed, sizeof(uint16));
-      memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
-      ALIGN(0, memneed, sizeof(uint8));
-      memneed += sizeof (uint8) * (MAX_NPT + MAX_NPT); /* pointer lengte */
-      ALIGN(0, memneed, sizeof(uint16));
-      memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
-      ALIGN(0, memneed, sizeof(uint8));
-      memneed += sizeof (uint8) * (NCPT + NCPT); /* pointer lengte */
-      ALIGN(0, memneed, sizeof(uint16));
-      memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
-      if (jm)
-      {
+        ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
+        memneed += 4UL*BIG_HUFFSIZE;
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
+        ALIGN(0, memneed, sizeof(uint16));
+        memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += sizeof (uint8) * (MAX_NPT + MAX_NPT); /* pointer lengte */
+        ALIGN(0, memneed, sizeof(uint16));
+        memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += sizeof (uint8) * (NCPT + NCPT); /* pointer lengte */
+        ALIGN(0, memneed, sizeof(uint16));
+        memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
         buf = HUFFBUFSIZE;
-      }
-      else
-      {
-        buf = HUFFSIZE;
-      }
-      ALIGN(0, memneed, sizeof(c_codetype));
-      memneed += buf * sizeof (c_codetype);
-      ALIGN(0, memneed, sizeof(pointer_type));
-      memneed += buf * sizeof (pointer_type);
-      if (com->speed<2)
-      { /* linking */
-        link = 1;
+        ALIGN(0, memneed, sizeof(c_codetype));
+        memneed += buf * sizeof (c_codetype);
+        ALIGN(0, memneed, sizeof(pointer_type));
+        memneed += buf * sizeof (pointer_type);
+        /* linking */
         ALIGN(0, memneed, sizeof(node_type));
         memneed += sizeof (node_type) * HASH2_SIZE; /* rle root */
         ALIGN(0, memneed, sizeof(hist_struct)); /* history is a array of hist_struct */
         memneed += sizeof (history) * HISTSIZE;     /* match history buffer */
         ALIGN(0, memneed, sizeof(node_type));
         memneed += TREE_SIZE * sizeof (node_type);  /* buffer voor link */
-        if (com->speed==0)
-        { /* zeef 34 */
-          zeef = 1;
-          ALIGN(0, memneed, sizeof(uint8));
-          memneed += buf * 5;
+        /* zeef 34 */
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += buf * 5;
+        com->bufbase = com->gmalloc(memneed, com->gm_propagator);
+        memset(com->bufbase, 0, memneed);
+        if (com->bufbase == NULL)
+        {
+            return GUP_NOMEM;
         }
-      }
-      com->bufbase = com->gmalloc(memneed, com->gm_propagator);
-      if (com->bufbase == NULL)
-      {
-        return GUP_NOMEM;
-      }
-      else
-      {
         uint8 *cp = com->bufbase;
         uint8 *base = cp;
-
         /* de copy buffer, die kan worden opgevraagd met de functie get_buf(); start hier met com->dictionary */
-
         com->dictionary = (void *)(cp + DICTIONARY_OFFSET);  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
         cp += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8); /* sliding dictionary + 4 voor terugkijken */
         ALIGN(base, cp, sizeof(node_type));
@@ -535,34 +513,23 @@ gup_result init_encode_r(packstruct *com)
         com->root.big = ((int32 *)cp)-((int32*)base);
 #endif
         cp += sizeof (node_type) * HASH_SIZE; /* normal root */
-        if (link)
-        {
-          ALIGN(base, cp, sizeof(node_type));
+        ALIGN(base, cp, sizeof(node_type));
 #ifndef INDEX_STRUCT
-          com->root2.big = (void *)cp;
+        com->root2.big = (void *)cp;
 #else
-          com->root2.big = ((int32 *)cp)-((int32*)base);
+        com->root2.big = ((int32 *)cp)-((int32*)base);
 #endif
-          cp += sizeof (node_type) * HASH2_SIZE;  /* rle root */
-          ALIGN(base, cp, sizeof(hist_struct)); /* history is a array of hist_structs */
-          com->hist=(void *)cp;          /* match history buffer */
-          cp += sizeof (history) * HISTSIZE;
-          ALIGN(base, cp, sizeof(node_type));
+        cp += sizeof (node_type) * HASH2_SIZE;  /* rle root */
+        ALIGN(base, cp, sizeof(hist_struct)); /* history is a array of hist_structs */
+        com->hist=(void *)cp;          /* match history buffer */
+        cp += sizeof (history) * HISTSIZE;
+        ALIGN(base, cp, sizeof(node_type));
 #ifndef INDEX_STRUCT
-          com->link.big = (void *)(cp);
+        com->link.big = (void *)(cp);
 #else
-          com->link.big = ((int32 *)cp)-((int32*)base);
+        com->link.big = ((int32 *)cp)-((int32*)base);
 #endif
-          cp += TREE_SIZE * sizeof (node_type); /* buffer voor link */
-        }
-        else
-        {
-#ifndef INDEX_STRUCT
-          com->link.big = NULL;
-#else
-          com->link.big = 0;
-#endif
-        }
+        cp += TREE_SIZE * sizeof (node_type); /* buffer voor link */
         ALIGN(base, cp, sizeof(unsigned long)); /* align on unsigned long for output buffer */
 #ifndef INDEX_STRUCT
         com->tree.big = (void *)cp;
@@ -596,19 +563,11 @@ gup_result init_encode_r(packstruct *com)
         ALIGN(base, cp, sizeof(pointer_type));
         com->pointers = (void *)(cp);
         cp += buf * sizeof (pointer_type);
-        if (zeef)
-        {
-          ALIGN(base, cp, sizeof(uint8));
-          com->matchstring = cp;
-          cp += buf * 4UL;
-          com->backmatch = cp;
-          cp += buf;
-        }
-        else
-        {
-          com->matchstring = NULL;
-        }
-
+        ALIGN(base, cp, sizeof(uint8));
+        com->matchstring = cp;
+        cp += buf * 4UL;
+        com->backmatch = cp;
+        cp += buf;
         ALIGN(base, cp, sizeof(uint8));
         com->fast_log = cp;
         cp += FASTLOGBUF;
@@ -617,11 +576,8 @@ gup_result init_encode_r(packstruct *com)
         com->small_code=0;       /* geen small code dus */
         ARJ_Assert((com->bufbase+memneed)==cp); /* al het geheugen gebruiken, nix meer en nix minder */
         NEVER_USE(cp); /* shut up some compilers */
-        return GUP_OK; /* succes */
-      }
     }
-  }
-  return GUP_OK; /* succes */
+    return GUP_OK; /* succes */
 }
 
 #endif
@@ -922,7 +878,7 @@ gup_result compress_chars(packstruct *com)
     {
       lentries = com->hufbufsize;
     }
-    if (com->jm && (lentries > HUFFSTART))
+    if (lentries > HUFFSTART)
     { /*- aantal entries dynamisch berekenen */
       int count = (int)(HUFFSTART / HUFFDELTA);
       c_codetype *cp = com->chars;
@@ -1462,7 +1418,7 @@ gup_result compress_chars(packstruct *com)
       /* recalc ptrlen */
       make_hufftable(com->ptrlen, com->ptr2huffman, freq, com->n_ptr, MAX_HUFFLEN);
     }
-    while (com->jm && (entries != old_entries));
+    while (entries != old_entries);
     {
       /*
       //  Code die backmatch stringlengtes optimaliseert.
@@ -1586,7 +1542,7 @@ gup_result compress_chars(packstruct *com)
         /* recalc charlen, ptr len hoeft niet */
         make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
       }
-      while(com->jm && (redo));
+      while(redo);
     }
   }
   /*
@@ -1905,7 +1861,6 @@ gup_result compress_chars(packstruct *com)
   }
   else
   { /* vanaf hier hebben wij charfreq niet meer nodig! */
-    uint16 ptr_count = 0;
     int i;
     /* frequentie tabel op nul zetten voor gebruik pointers */
     memset(charfreq, 0, NCPT * sizeof (*charfreq));
@@ -1914,7 +1869,6 @@ gup_result compress_chars(packstruct *com)
     {
       if (com->charlen[i])
       {
-        ptr_count++;
         charfreq[com->charlen[i] + 2]++;
       }
       else
@@ -1928,7 +1882,6 @@ gup_result compress_chars(packstruct *com)
         if (nulct < 3)
         {
           charfreq[0] += (uint16)nulct;
-          ptr_count += (uint16)nulct;
         }
         else
         {
@@ -1938,14 +1891,12 @@ gup_result compress_chars(packstruct *com)
             if (nulct == 19)
             {
               charfreq[0]++;
-              ptr_count++;
             }
           }
           else
           {
             charfreq[2]++;
           }
-          ptr_count++;
         }
         i += nulct - 1;
       }
@@ -2541,11 +2492,6 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     symbol_count_t pairs_count;
     symbol_count_t i;
     symbol_count=0;
-    if(symbol_size>MAX_SYMBOL_SIZE)
-    {
-        fprintf(stderr, "Symbolsize error! symbolsize=%i, MAX_SYMBOL_SIZE=%i\n", symbol_size, MAX_SYMBOL_SIZE);
-        exit(-1);
-    }
     if(0)
     {
         for(i=0; i<symbol_size; i++)
@@ -2560,7 +2506,6 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     }
     else
     {
-        uint32_t total_freq=0;
         i=symbol_size;
         do
         { /* hoeveel symbols zijn er met een freq>0? */
@@ -2568,15 +2513,10 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
             if(in_freq[i]!=0)
             {
                 freq[symbol_count]=in_freq[i];
-                total_freq+=in_freq[i];
                 symbols[symbol_count]=i;
                 symbol_count++;
             }
         } while(i>0);
-        if(total_freq>MAX_FREQ_VALUE)
-        {
-            fprintf(stderr, "total_freq error! total_freq=%u, MAX_FREQ_VALUE=%u\n", symbol_size, MAX_FREQ_VALUE);
-        }
     }
     memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
     if(symbol_count<3)
@@ -2601,7 +2541,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
         radix_sort_symbols(symbols, freq, symbol_count);
     }
     freq+=symbol_count; /* freq array index -1 based */
-    if(0)
+    if(1)
     { /* eerst een traditionele huffmanboom bouwen */
         symbol_count_t* len=tree+3*symbol_count;
         symbol_count_t symbol_pos=-symbol_count;
@@ -2868,8 +2808,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
    * blok: lengte van de pointers die c_len coderen, er zijn 19 pointers.
    */
   {
-    uint16 ptr_count = 0;
-
     /* frequentie tabel op nul zetten voor gebruik pointers */
     int i;
 
@@ -2879,7 +2817,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
     {
       if (charlen[i])
       {
-        ptr_count++;
         freq[charlen[i] + 2]++;
       }
       else
@@ -2893,7 +2830,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         if (nulct < 3)
         {
           freq[0] += (uint16)nulct;
-          ptr_count += (uint16)nulct;
         }
         else
         {
@@ -2903,14 +2839,12 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
             if (nulct == 19)
             {
               freq[0]++;
-              ptr_count++;
             }
           }
           else
           {
             freq[2]++;
           }
-          ptr_count++;
         }
         i += nulct - 1;
       }
