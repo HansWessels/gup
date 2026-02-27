@@ -103,8 +103,8 @@
  * Nog een manier om processortijd te doden:
  *   bij twee opeenvolgende matches: bepaal de maximale lengte waarover
  *   de twee matches overlappen. Maak die lengte zodanig dat de minimale lengte
- *   noch de maximale lengte overschreden wordt. Nu kun je de ene match langer 
- *   maken en de andere korter. Zoek hierbij de minimale som voor de lengte 
+ *   noch de maximale lengte overschreden wordt. Nu kun je de ene match langer
+ *   maken en de andere korter. Zoek hierbij de minimale som voor de lengte
  *   codes.
  *
  */
@@ -133,7 +133,7 @@
   /*
    * x=packstruct pointer.
    * Function to allign buffer_pointer pointers, needed in some optimisations of
-   * storebits, oly align when in the packstruct use_align!=0 
+   * storebits, oly align when in the packstruct use_align!=0
    */
   #define ALIGN_BUFP(x) /* */
 #endif
@@ -183,7 +183,7 @@
 // pos: positie in dictionary waar backmatch van berekend moet worden
 // ptr: pointer van de match
 // hist: index in hist array, -1 -> hist array is niet meer geldig
-// com: packstruct, functie maakt gebruik van packstruct data 
+// com: packstruct, functie maakt gebruik van packstruct data
 // en kan deze ook wijzigen
 // match is al opgeslagen -> charp[-1]=match
 //
@@ -336,7 +336,7 @@ int backmatch_big(long pos, uint16 ptr, int hist, packstruct* com)
           }
         }
         *com->bmp++=(uint8)len;
-        return 0;            
+        return 0;
       }
     }
   }
@@ -477,9 +477,9 @@ gup_result encode_big(packstruct *com)
    * Controle:
    *
    * Hoe moet current pos tov refill_pos staan?
-   * refill_pos+4*MAX_MATCH+6 geeft de positie aan waar de volgende 
-   * keer data in de dictionary wordt gezet. We moeten er dus voor 
-   * zorgen dat er nooit dictionary vergeleken wordt voorbij deze 
+   * refill_pos+4*MAX_MATCH+6 geeft de positie aan waar de volgende
+   * keer data in de dictionary wordt gezet. We moeten er dus voor
+   * zorgen dat er nooit dictionary vergeleken wordt voorbij deze
    * positie. Worst case situatie bij het zoeken van een macth 0:
    * match0 < MAX_MATCH   (current_pos)
    * match1 == MAX_MATCH  (current_pos+1)
@@ -488,23 +488,23 @@ gup_result encode_big(packstruct *com)
    * match4 == ????       (current_pos+1+MAX_MATCH)
    * match5 == MAX_MATCH  (current_pos+1+MAX_MATCH+1)
    * Maximaal wordt er dus op positie current_pos+2*MAX_MATCH+2 gekeken,
-   * althans, daar wordt de sentry neer gezet, die willen we ook mee 
-   * laten doen. Dus current_pos+2*MAX_MATCH+2 moet kleiner zijn dan 
+   * althans, daar wordt de sentry neer gezet, die willen we ook mee
+   * laten doen. Dus current_pos+2*MAX_MATCH+2 moet kleiner zijn dan
    * refill_pos+4*MAX_MATCH+6 behalve in het begin, dan staat refill_pos
    * dichter bij, maar dan moet eerst de volledige dictionary worden door gewerkt.
    * in dit geval is refill_count > (DIC_DELTA_SIZE)
-   * Als refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos betekent dit dat de 
-   * tot het einde is gevuld, current_pos+2*MAX_MATCH+2 moet altijd kleiner 
-   * zijn dan DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL, de dictionary 
-   * size minus vier, deze vier bytes staan aan het begin van de 
+   * Als refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos betekent dit dat de
+   * tot het einde is gevuld, current_pos+2*MAX_MATCH+2 moet altijd kleiner
+   * zijn dan DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL, de dictionary
+   * size minus vier, deze vier bytes staan aan het begin van de
    * dictionary.
-   * In het geval dat refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos moet er 
-   * 65536+2*MAX_MATCH bytes tussen refill_pos+4*MAX_MATCH+6 en current pos zitten, 
-   * nl de hele 64k dictionary en 2*MAX_MATCH bytes wegens back_matches zit er 
-   * tussen. Dit geldt echter niet voor de begin situatie, omdat dan de hele 
-   * dictionary in een keer gevuld wordt en er nog geen 64k aan dictionary 
-   * verwerkt is. In dit geval is de variabele refill_count groter dan 
-   * DIC_DELTA_SIZE omdat er gevuld wordt als refill_count <= 0 en er wordt dan 
+   * In het geval dat refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos moet er
+   * 65536+2*MAX_MATCH bytes tussen refill_pos+4*MAX_MATCH+6 en current pos zitten,
+   * nl de hele 64k dictionary en 2*MAX_MATCH bytes wegens back_matches zit er
+   * tussen. Dit geldt echter niet voor de begin situatie, omdat dan de hele
+   * dictionary in een keer gevuld wordt en er nog geen 64k aan dictionary
+   * verwerkt is. In dit geval is de variabele refill_count groter dan
+   * DIC_DELTA_SIZE omdat er gevuld wordt als refill_count <= 0 en er wordt dan
    * met DIC_DELTA_SIZE bytes gevuld.
    * Verder mag bij een match current_pos niet kleiner dan nul zijn.
    * Dus het is misse boel als een van de volgende uitdrukkingen waar is:
@@ -519,13 +519,13 @@ gup_result encode_big(packstruct *com)
   long current_pos = 0;                /* wijst de te packen byte aan        */
   long refill_pos =M17(DIC_START_SIZE);
   unsigned long bytes_to_do;
-  /* 
+  /*
     refill count:
     om betrouwbare backmatches te krijgen moet een volledige sessie
     unstores mogenlijk zijn. Dat is: twee maal max_match, plus twee
     maal een literal.
     dus: DIC_START_SIZE+2*MAX_MATCH+6
-    
+
     de maximale buffer vulling moet zo zijn dat er twee maal max_match
     vooruit kan worden gekeken plus nog eens twee literals
     dus: DIC_START_SIZE+4*MAX_MATCH
@@ -564,314 +564,6 @@ gup_result encode_big(packstruct *com)
   *com->charp++ = com->dictionary[current_pos++]; /* eerste karakter heeft geen match */
   bytes_to_do--;
   refill_count--;
-  if(com->speed==2)
-  { /* fastest least compression */
-    c_codetype match0;
-    pointer_type ptr0;
-    while (bytes_to_do)
-    { /*- hoofd_lus, deze lus zorgt voor al het pack werk */
-      /* Een assert voor alle find_dictionary's. Tussen door wordt current pos niet aangepast */
-      ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE)));
-      ARJ_Assert(!((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL)));
-      ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE)));
-      ARJ_Assert(!(current_pos<0));
-      match0 = find_dictionary_fast(current_pos+2, com);
-      if(match0>0)
-      {
-        if ((unsigned long)match0 >= bytes_to_do)
-        {
-          match0 = (c_codetype) bytes_to_do;
-          if (match0 < MIN_MATCH)
-          {
-            *com->charp++ = com->dictionary[current_pos++];
-            bytes_to_do--;
-            refill_count--;
-          }
-          else
-          {
-            ptr0 = com->best_match_pos;
-            *com->charp++ = match0 + NLIT - MIN_MATCH;
-            *com->ptrp++ = ptr0;
-            bytes_to_do -= match0;
-            refill_count -= match0;
-            current_pos += match0;
-          }
-        }
-        else
-        {
-          c_codetype match1;
-          ptr0 = com->best_match_pos;
-          match1 = find_dictionary_fast(current_pos + 3, com);
-          if ((unsigned long)match1 >= bytes_to_do)
-          {
-            match1 = (c_codetype)(bytes_to_do - 1);
-            if (match1 < MIN_MATCH)
-            {
-              match1 = 0;
-            }
-          }
-          if (match1 > match0)
-          { /*- eerst literal, dan match */
-            ARJ_Assert(com->ptrp>=com->pointers);
-            ARJ_Assert(com->charp>=com->chars);
-            ARJ_Assert(current_pos<(DIC_SIZE + MAX_MATCH*4 + 6UL));
-            ARJ_Assert(current_pos>=0);
-            *com->charp++=com->dictionary[current_pos++];
-            bytes_to_do--;
-            refill_count--;
-            ARJ_Assert(((int)com->dictionary[current_pos]<NLIT));
-            ARJ_Assert(((int)com->dictionary[current_pos]>=0));
-            ARJ_Assert((com->charp[-1]<NLIT));
-            ARJ_Assert((com->charp[-1]>=0));
-            ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-            ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-            match0 = match1;
-            ptr0 = com->best_match_pos;
-          }
-          ARJ_Assert((ptr0)<=com->maxptr);
-          ARJ_Assert((match0)>=MIN_MATCH);
-          ARJ_Assert((match0)<=(com->max_match+2));
-          ARJ_Assert(com->ptrp>=com->pointers);
-          ARJ_Assert(com->charp>=com->chars);
-          *com->charp++ = match0 + NLIT - MIN_MATCH;
-          *com->ptrp++ = ptr0;
-          bytes_to_do -= match0;
-          refill_count -= match0;
-          current_pos += match0;
-          ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-          ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-        }
-      }
-      else
-      {
-        ARJ_Assert(com->ptrp>=com->pointers);
-        ARJ_Assert(com->charp>=com->chars);
-        ARJ_Assert(current_pos<(DIC_SIZE + MAX_MATCH*4 + 6UL));
-        ARJ_Assert(current_pos>=0);
-        *com->charp++=com->dictionary[current_pos++];
-        bytes_to_do--;
-        refill_count--;
-        ARJ_Assert(((int)com->dictionary[current_pos]<NLIT));
-        ARJ_Assert(((int)com->dictionary[current_pos]>=0));
-        ARJ_Assert((com->charp[-1]<NLIT));
-        ARJ_Assert((com->charp[-1]>=0));
-        ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-        ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-      }
-      if (com->charp > com->chars + huffbuf)
-      { /*- 64k blok vol gepropt, ga de rotzooi opslaan */
-        com->max_match+=2; /* herstel max_match */
-        ARJ_Assert(com->max_match<=MAX_MATCH);
-        {
-          gup_result res;
-          if((res=com->compress(com))!=GUP_OK)
-          {
-            return res;
-          }
-        }
-        if (com->mv_mode)
-        {
-          if (com->mv_next)
-          {
-            {
-              gup_result res;
-              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
-              {
-                return res;
-              }
-            }
-            return GUP_OK;
-          }
-        }
-        com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
-        ARJ_Assert(com->max_match>=MIN_MATCH);
-      }
-      if (refill_count <= 0)
-      {
-        long byte_count = 0;
-        refill_count += DIC_DELTA_SIZE;
-        ARJ_Assert(refill_pos>=-4);
-        ARJ_Assert((refill_pos+DIC_DELTA_SIZE+4*MAX_MATCH+6)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
-        if ((byte_count =
-             com->buf_read_crc(DIC_DELTA_SIZE, com->dictionary + refill_pos+4*MAX_MATCH+6, com->brc_propagator)) < 0)
-        {
-          com->max_match+=2; /* herstel max_match */
-          ARJ_Assert(com->max_match<=MAX_MATCH);
-          return GUP_READ_ERROR; /* ("Read error"); */
-        }
-        else
-        {
-          if (byte_count!=0)            /* byte count kan ook nul zijn */
-          {
-            ARJ_Assert((refill_pos+4*MAX_MATCH+6+byte_count)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
-            #ifndef PP_AFTER
-            com->print_progres(byte_count, com->pp_propagator);
-            #endif
-            bytes_to_do+=byte_count;
-          }
-        }
-        if (refill_pos == 0)
-        {
-          memcpy(com->dictionary-4,com->dictionary + DIC_SIZE-4, MAX_MATCH*4+4+6);
-          current_pos = M17(current_pos);
-        }
-        refill_pos = M17(refill_pos + DIC_DELTA_SIZE);
-      }
-    }
-  }
-  else if(com->speed==1)
-  { /* medium speed, medium compression */
-    c_codetype match0;
-    pointer_type ptr0;
-    while (bytes_to_do)
-    { /*- hoofd_lus, deze lus zorgt voor al het pack werk */
-      /* Een assert voor alle find_dictionary's. Tussen door wordt current pos niet aangepast */
-      ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE)));
-      ARJ_Assert(!((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL)));
-      ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE)));
-      ARJ_Assert(!(current_pos<0));
-      match0 = find_dictionary(current_pos+2, com);
-      if(match0>0)
-      {
-        if ((unsigned long)match0 >= bytes_to_do)
-        {
-          match0 = (c_codetype) bytes_to_do;
-          if (match0 < MIN_MATCH)
-          {
-            *com->charp++ = com->dictionary[current_pos++];
-            bytes_to_do--;
-            refill_count--;
-          }
-          else
-          {
-            ptr0 = com->best_match_pos;
-            *com->charp++ = match0 + NLIT - MIN_MATCH;
-            *com->ptrp++ = ptr0;
-            bytes_to_do -= match0;
-            refill_count -= match0;
-            current_pos += match0;
-          }
-        }
-        else
-        {
-          c_codetype match1;
-          ptr0 = com->best_match_pos;
-          match1 = find_dictionary(current_pos + 3, com);
-          if ((unsigned long)match1 >= bytes_to_do)
-          {
-            match1 = (c_codetype)(bytes_to_do - 1);
-            if (match1 < MIN_MATCH)
-            {
-              match1 = 0;
-            }
-          }
-          if (match1 > match0)
-          { /*- eerst literal, dan match */
-            ARJ_Assert(com->ptrp>=com->pointers);
-            ARJ_Assert(com->charp>=com->chars);
-            ARJ_Assert(current_pos<(DIC_SIZE + MAX_MATCH*4 + 6UL));
-            ARJ_Assert(current_pos>=0);
-            *com->charp++=com->dictionary[current_pos++];
-            bytes_to_do--;
-            refill_count--;
-            ARJ_Assert(((int)com->dictionary[current_pos]<NLIT));
-            ARJ_Assert(((int)com->dictionary[current_pos]>=0));
-            ARJ_Assert((com->charp[-1]<NLIT));
-            ARJ_Assert((com->charp[-1]>=0));
-            ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-            ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-            match0 = match1;
-            ptr0 = com->best_match_pos;
-          }
-          ARJ_Assert((ptr0)<=com->maxptr);
-          ARJ_Assert((match0)>=MIN_MATCH);
-          ARJ_Assert((match0)<=(com->max_match+2));
-          ARJ_Assert(com->ptrp>=com->pointers);
-          ARJ_Assert(com->charp>=com->chars);
-          *com->charp++ = match0 + NLIT - MIN_MATCH;
-          *com->ptrp++ = ptr0;
-          bytes_to_do -= match0;
-          refill_count -= match0;
-          current_pos += match0;
-          ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-          ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-        }
-      }
-      else
-      {
-        ARJ_Assert(com->ptrp>=com->pointers);
-        ARJ_Assert(com->charp>=com->chars);
-        ARJ_Assert(current_pos<(DIC_SIZE + MAX_MATCH*4 + 6UL));
-        ARJ_Assert(current_pos>=0);
-        *com->charp++=com->dictionary[current_pos++];
-        bytes_to_do--;
-        refill_count--;
-        ARJ_Assert(((int)com->dictionary[current_pos]<NLIT));
-        ARJ_Assert(((int)com->dictionary[current_pos]>=0));
-        ARJ_Assert((com->charp[-1]<NLIT));
-        ARJ_Assert((com->charp[-1]>=0));
-        ARJ_Assert((com->charp<=(com->chars+com->hufbufsize+4)));
-        ARJ_Assert((com->ptrp<=(com->pointers+com->hufbufsize+4)));
-      }
-      if (com->charp > com->chars + huffbuf)
-      { /*- 64k blok vol gepropt, ga de rotzooi opslaan */
-        com->max_match+=2; /* herstel max_match */
-        {
-          gup_result res;
-          if((res=com->compress(com))!=GUP_OK)
-          {
-            return res;
-          }
-        }
-        if (com->mv_mode)
-        {
-          if (com->mv_next)
-          {
-            {
-              gup_result res;
-              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
-              {
-                return res;
-              }
-            }
-            return GUP_OK;
-          }
-        }
-        com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
-      }
-      if (refill_count <= 0)
-      {
-        long byte_count = 0;
-        refill_count += DIC_DELTA_SIZE;
-        ARJ_Assert(refill_pos>=-4);
-        ARJ_Assert((refill_pos+DIC_DELTA_SIZE+4*MAX_MATCH+6)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
-        if ((byte_count =
-             com->buf_read_crc(DIC_DELTA_SIZE, com->dictionary + refill_pos+4*MAX_MATCH+6, com->brc_propagator)) < 0)
-        {
-          com->max_match+=2; /* herstel max_match */
-          return GUP_READ_ERROR; /* ("Read error"); */
-        }
-        else
-        {
-          if (byte_count!=0)            /* byte count kan ook nul zijn */
-          {
-            ARJ_Assert((refill_pos+4*MAX_MATCH+6+byte_count)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
-            #ifndef PP_AFTER
-            com->print_progres(byte_count, com->pp_propagator);
-            #endif
-            bytes_to_do+=byte_count;
-          }
-        }
-        if (refill_pos == 0)
-        {
-          memcpy(com->dictionary-4,com->dictionary + DIC_SIZE-4, MAX_MATCH*4+4+6);
-          current_pos = M17(current_pos);
-        }
-        refill_pos = M17(refill_pos + DIC_DELTA_SIZE);
-      }
-    }
-  }
-  else
   { /* slow speed, best compression */
     c_codetype match0 = -1;
     c_codetype match1 = -1;
@@ -933,7 +625,7 @@ gup_result encode_big(packstruct *com)
         if ((unsigned long)match0 >= bytes_to_do)
         {
           int16 diff = (int16)(match0 - bytes_to_do);
-  
+
           match0 = (c_codetype) bytes_to_do;
           match1 = 0;
           if (match0 < MIN_MATCH)
@@ -1110,8 +802,8 @@ gup_result encode_big(packstruct *com)
           { /*- er wordt een literal, pointer length opgeslagen */
             if (ptrswap > 0)
             {
-              if ((match0 == match1) 
-                  && (swapmatch0 == com->charp[-1] - (NLIT - MIN_MATCH)) 
+              if ((match0 == match1)
+                  && (swapmatch0 == com->charp[-1] - (NLIT - MIN_MATCH))
                   && ((LOG(com->ptrp[-1]) + LOG(ptr0)) < (LOG(swapptr0) + LOG(ptr1))))
               {
                 STORE_MATCH(ptr0, match0, hist0);
@@ -1217,7 +909,7 @@ gup_result encode_big(packstruct *com)
             }
             else
             {
-              if (((match0 + match3) == (match1 + match4)) && (match3 > 0) 
+              if (((match0 + match3) == (match1 + match4)) && (match3 > 0)
                   && (match4 > 0))
               {
                 if ((LOG(ptr0) + LOG(ptr3)) > (LOG(ptr1) + LOG(ptr4)))
@@ -1375,4 +1067,3 @@ gup_result encode_big(packstruct *com)
   return GUP_OK;
 }
 #endif
-
