@@ -554,7 +554,6 @@ gup_result encode_big(packstruct *com)
         }
         bytes_to_do = byte_count;
     }
-    uint16 max_match=com->max_match;
     com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
     init_dictionary(com);
     com->packed_size = 0;
