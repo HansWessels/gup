@@ -468,602 +468,598 @@ int backmatch_big(long pos, uint16 ptr, int hist, packstruct* com)
 
 gup_result encode_big(packstruct *com)
 {
-  /*-
-   * Waarschuwing: !!! rbuf_current kan 4 bytes te ver staan na compressie
-   *               !!! als dit net over een grens heen is
-   *               !!! kan rbuf_current dus in een geheel nieuw blok wijzen
-   */
-  /*
-   * Controle:
-   *
-   * Hoe moet current pos tov refill_pos staan?
-   * refill_pos+4*MAX_MATCH+6 geeft de positie aan waar de volgende
-   * keer data in de dictionary wordt gezet. We moeten er dus voor
-   * zorgen dat er nooit dictionary vergeleken wordt voorbij deze
-   * positie. Worst case situatie bij het zoeken van een macth 0:
-   * match0 < MAX_MATCH   (current_pos)
-   * match1 == MAX_MATCH  (current_pos+1)
-   * match2 == ????       (current_pos+match0)
-   * match3 == ????       (current_pos+match0+1)
-   * match4 == ????       (current_pos+1+MAX_MATCH)
-   * match5 == MAX_MATCH  (current_pos+1+MAX_MATCH+1)
-   * Maximaal wordt er dus op positie current_pos+2*MAX_MATCH+2 gekeken,
-   * althans, daar wordt de sentry neer gezet, die willen we ook mee
-   * laten doen. Dus current_pos+2*MAX_MATCH+2 moet kleiner zijn dan
-   * refill_pos+4*MAX_MATCH+6 behalve in het begin, dan staat refill_pos
-   * dichter bij, maar dan moet eerst de volledige dictionary worden door gewerkt.
-   * in dit geval is refill_count > (DIC_DELTA_SIZE)
-   * Als refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos betekent dit dat de
-   * tot het einde is gevuld, current_pos+2*MAX_MATCH+2 moet altijd kleiner
-   * zijn dan DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL, de dictionary
-   * size minus vier, deze vier bytes staan aan het begin van de
-   * dictionary.
-   * In het geval dat refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos moet er
-   * 65536+2*MAX_MATCH bytes tussen refill_pos+4*MAX_MATCH+6 en current pos zitten,
-   * nl de hele 64k dictionary en 2*MAX_MATCH bytes wegens back_matches zit er
-   * tussen. Dit geldt echter niet voor de begin situatie, omdat dan de hele
-   * dictionary in een keer gevuld wordt en er nog geen 64k aan dictionary
-   * verwerkt is. In dit geval is de variabele refill_count groter dan
-   * DIC_DELTA_SIZE omdat er gevuld wordt als refill_count <= 0 en er wordt dan
-   * met DIC_DELTA_SIZE bytes gevuld.
-   * Verder mag bij een match current_pos niet kleiner dan nul zijn.
-   * Dus het is misse boel als een van de volgende uitdrukkingen waar is:
-   * (((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE))
-   * ((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL))
-   * (((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE))
-   * (current_pos<0)
-   * voor de asserts moeten we dus bovenstaande uitdrukkingen ontkennen.
-   */
+    /*-
+    ** Waarschuwing: !!! rbuf_current kan 4 bytes te ver staan na compressie
+    **               !!! als dit net over een grens heen is
+    **               !!! kan rbuf_current dus in een geheel nieuw blok wijzen
+    */
+    /*-
+    ** Controle:
+    **
+    ** Hoe moet current pos tov refill_pos staan?
+    ** refill_pos+4*MAX_MATCH+6 geeft de positie aan waar de volgende
+    ** keer data in de dictionary wordt gezet. We moeten er dus voor
+    ** zorgen dat er nooit dictionary vergeleken wordt voorbij deze
+    ** positie. Worst case situatie bij het zoeken van een macth 0:
+    ** match0 < MAX_MATCH   (current_pos)
+    ** match1 == MAX_MATCH  (current_pos+1)
+    ** match2 == ????       (current_pos+match0)
+    ** match3 == ????       (current_pos+match0+1)
+    ** match4 == ????       (current_pos+1+MAX_MATCH)
+    ** match5 == MAX_MATCH  (current_pos+1+MAX_MATCH+1)
+    ** Maximaal wordt er dus op positie current_pos+2*MAX_MATCH+2 gekeken,
+    ** althans, daar wordt de sentry neer gezet, die willen we ook mee
+    ** laten doen. Dus current_pos+2*MAX_MATCH+2 moet kleiner zijn dan
+    ** refill_pos+4*MAX_MATCH+6 behalve in het begin, dan staat refill_pos
+    ** dichter bij, maar dan moet eerst de volledige dictionary worden door gewerkt.
+    ** in dit geval is refill_count > (DIC_DELTA_SIZE)
+    ** Als refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos betekent dit dat de
+    ** tot het einde is gevuld, current_pos+2*MAX_MATCH+2 moet altijd kleiner
+    ** zijn dan DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL, de dictionary
+    ** size minus vier, deze vier bytes staan aan het begin van de
+    ** dictionary.
+    ** In het geval dat refill_pos+4*MAX_MATCH+6 kleiner is dan current_pos moet er
+    ** 65536+2*MAX_MATCH bytes tussen refill_pos+4*MAX_MATCH+6 en current pos zitten,
+    ** nl de hele 64k dictionary en 2*MAX_MATCH bytes wegens back_matches zit er
+    ** tussen. Dit geldt echter niet voor de begin situatie, omdat dan de hele
+    ** dictionary in een keer gevuld wordt en er nog geen 64k aan dictionary
+    ** verwerkt is. In dit geval is de variabele refill_count groter dan
+    ** DIC_DELTA_SIZE omdat er gevuld wordt als refill_count <= 0 en er wordt dan
+    ** met DIC_DELTA_SIZE bytes gevuld.
+    ** Verder mag bij een match current_pos niet kleiner dan nul zijn.
+    ** Dus het is misse boel als een van de volgende uitdrukkingen waar is:
+    ** (((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE))
+    ** ((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL))
+    ** (((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE))
+    ** (current_pos<0)
+    ** voor de asserts moeten we dus bovenstaande uitdrukkingen ontkennen.
+    */
 
-  uint16 huffbuf = com->hufbufsize + 2;  /* +2 voor pointerSWAP, pswp kan 2 waarde terughalen */
-  long current_pos = 0;                /* wijst de te packen byte aan        */
-  long refill_pos =M17(DIC_START_SIZE);
-  unsigned long bytes_to_do;
-  /*
-    refill count:
-    om betrouwbare backmatches te krijgen moet een volledige sessie
-    unstores mogenlijk zijn. Dat is: twee maal max_match, plus twee
-    maal een literal.
-    dus: DIC_START_SIZE+2*MAX_MATCH+6
+    uint16 huffbuf = com->hufbufsize + 2;  /* +2 voor pointerSWAP, pswp kan 2 waarde terughalen */
+    long current_pos = 0;                /* wijst de te packen byte aan        */
+    long refill_pos =M17(DIC_START_SIZE);
+    unsigned long bytes_to_do;
+    /*-
+    ** refill count:
+    ** om betrouwbare backmatches te krijgen moet een volledige sessie
+    ** unstores mogenlijk zijn. Dat is: twee maal max_match, plus twee
+    ** maal een literal.
+    ** dus: DIC_START_SIZE+2*MAX_MATCH+6
+    **
+    ** de maximale buffer vulling moet zo zijn dat er twee maal max_match
+    ** vooruit kan worden gekeken plus nog eens twee literals
+    ** dus: DIC_START_SIZE+4*MAX_MATCH
+    */
+    signed long refill_count = DIC_START_SIZE+2*MAX_MATCH;
 
-    de maximale buffer vulling moet zo zijn dat er twee maal max_match
-    vooruit kan worden gekeken plus nog eens twee literals
-    dus: DIC_START_SIZE+4*MAX_MATCH
-  */
-  signed long refill_count = DIC_START_SIZE+2*MAX_MATCH;
+    com->charp = com->chars;
+    com->ptrp = com->pointers;
+    { /*- dictionary buffer vullen */
+        long byte_count;
 
-  com->charp = com->chars;
-  com->ptrp = com->pointers;
-  { /*- dictionary buffer vullen */
-    long byte_count;
-
-    if ((byte_count = com->buf_read_crc(DIC_START_SIZE+4*MAX_MATCH+6, com->dictionary, com->brc_propagator)) < 0)
-    {
-      return GUP_READ_ERROR; /* ("Read error"); */
-    }
-    else
-    {
-      if (byte_count == 0)
-      {
-        com->packed_size = com->bytes_packed = 0;
-        return GUP_OK;
-      }
-      #ifndef PP_AFTER
-      com->print_progres(byte_count, com->pp_propagator);
-      #endif
-    }
-    bytes_to_do = byte_count;
-  }
-  com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
-  init_dictionary(com);
-  com->packed_size = 0;
-  com->bits_rest = 0;
-  com->bitbuf = 0;
-  com->bits_in_bitbuf = 0;
-  ALIGN_BUFP(com);
-  *com->charp++ = com->dictionary[current_pos++]; /* eerste karakter heeft geen match */
-  bytes_to_do--;
-  refill_count--;
-  { /* slow speed, best compression */
-    c_codetype match0 = -1;
-    c_codetype match1 = -1;
-    pointer_type ptr0 = 0;
-    pointer_type ptr1 = 0;
-    int hist_1=0; /* history-1 */
-    int hist_2=0; /* history-2 */
-    int hist0=0;
-    int hist1=0;
-    int ptrswap = 0;
-    c_codetype swapmatch0 = 0;
-    c_codetype swapmatch1 = 0;
-    pointer_type swapptr0 = 0;
-    pointer_type swapptr1 = 0;
-    int swaphist0=0;
-    int swaphist1=0;
-    com->msp = com->matchstring;
-    com->bmp = com->backmatch;
-
-    while (bytes_to_do)
-    { /*- hoofd_lus, deze lus zorgt voor al het pack werk */
-      for(;;)
-      {
-        /* Een assert voor alle find_dictionary's. Tussen door wordt current pos niet aangepast */
-        ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE)));
-        ARJ_Assert(!((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL)));
-        ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE)));
-        ARJ_Assert(!(current_pos<0));
-        if (match0 < 0)
+        if ((byte_count = com->buf_read_crc(DIC_START_SIZE+4*MAX_MATCH+6, com->dictionary, com->brc_propagator)) < 0)
         {
-          match0 = find_dictionary(current_pos+2, com);
-          if (match0 == 0)
-          {
-            STORE_LITERAL();
-            match0 = match1;
-            hist0 = hist1;
-            ptr0 = ptr1;
-            match1 = -1;
-            break;
-          }
-          else
-          {
-            hist0 = com->hist_index;
-            ptr0 = com->best_match_pos;
-          }
+            return GUP_READ_ERROR; /* ("Read error"); */
         }
         else
         {
-          if (match0 == 0)
-          {
-            STORE_LITERAL();
-            match0 = match1;
-            hist0 = hist1;
-            ptr0 = ptr1;
-            match1 = -1;
-            break;
-          }
-        }
-        if ((unsigned long)match0 >= bytes_to_do)
-        {
-          int16 diff = (int16)(match0 - bytes_to_do);
-
-          match0 = (c_codetype) bytes_to_do;
-          match1 = 0;
-          if (match0 < MIN_MATCH)
-          {
-            match0 = 0;
-            if (ptrswap > 0)
+            if (byte_count == 0)
             {
-              #ifndef NDEBUG
-                long current_pos_start=current_pos;
-              #endif
-              UNSTORE_MATCH();
-              STORE_LITERAL();
-              STORE_MATCH_NB(swapptr0, swapmatch0, swaphist0);
-              match0 = 0;
-              match1 = 0;
-              ptrswap = 0;
-              ARJ_Assert(current_pos_start<=current_pos);
-              break;
+                com->packed_size = com->bytes_packed = 0;
+                return GUP_OK;
             }
-          }
-          else
-          {
-            if (ptrswap < 0)
-            {
-              swapmatch1 -= diff;
-              if (swapmatch1 < MIN_MATCH)
-              {
-                ptrswap = 0;
-              }
-            }
-          }
-          if (match0 == 0)
-          {
-            STORE_LITERAL();
-            match0 = match1;
-            hist0 = hist1;
-            ptr0 = ptr1;
-            match1 = -1;
-            break; /* tricky */
-          }
-        }
-        if (match1 < 0)
-        {
-          match1 = find_dictionary(current_pos + 3, com);
-          hist1 = com->hist_index;
-          ptr1 = com->best_match_pos;
-        }
-        if ((unsigned long)match1 >= bytes_to_do)
-        {
-          int16 diff = (int16)(match1 - bytes_to_do + 1);
-
-          match1 = (c_codetype)(bytes_to_do - 1);
-          if (ptrswap > 0)
-          {
-            swapmatch1 -= diff;
-            if (swapmatch1 < MIN_MATCH)
-            {
-              ptrswap = 0;
-            }
-          }
-        }
-        if (match1 < match0)
-        {
-          if (ptrswap < 0)
-          {
-            #ifndef NDEBUG
-              long current_pos_start=current_pos;
-            #endif
-            UNSTORE_MATCH();
-            UNSTORE_LITERAL();
-            STORE_MATCH(swapptr0, swapmatch0, swaphist0);
-            STORE_LITERAL();
-            STORE_MATCH_NB(swapptr1, swapmatch1, swaphist1);
-            ARJ_Assert(current_pos_start<=current_pos);
-          }
-          else
-          {
-            STORE_MATCH(ptr0, match0, hist0);
-          }
-          match0 = -1;
-          match1 = -1;
-          ptrswap = 0;
-        }
-        else
-        {
-          c_codetype match2, match3, match4, match5, m0, m1;
-          pointer_type ptr2, ptr3, ptr4, ptr5;
-          int hist2, hist3, hist4, hist5;
-          if (match1 == match0)
-          {
-            match2 = find_dictionary(current_pos + match0+2, com);
-            if (match2 == 0)
-            {
-              /*
-               * literal pointer length, als het andersom moet dan wordt
-               * dit wel gecorrigeerd
-              */
-              m0 = 0;
-              m1 = 8;
-              match3 = -1;
-              match4 = -1;
-              match5 = -1;
-
-              hist2 = 0;
-              hist3 = 0;
-              hist4 = 0;
-              hist5 = 0;
-              ptr2 = 0;
-              ptr3 = 0;
-              ptr4 = 0;
-              ptr5 = 0;
-            }
-            else
-            {
-              hist2 = com->hist_index;
-              ptr2 = com->best_match_pos;
-              match3 = find_dictionary(current_pos + match0 + 3, com);
-              hist3 = com->hist_index;
-              ptr3 = com->best_match_pos;
-              match4 = match3;
-              hist4 = com->hist_index;
-              ptr4 = ptr3;
-              match5 = find_dictionary(current_pos + match1 + 4, com);
-              hist5 = com->hist_index;
-              ptr5 = com->best_match_pos;
-              if (match3 > match2)
-              {
-                m0 = match3 - 1;
-              }
-              else
-              {
-                m0 = match2;
-              }
-              m1 = match5 - 1;
-            }
-          }
-          else
-          {
-            match2 = find_dictionary((current_pos + match0+2), com);
-            hist2 = com->hist_index;
-            ptr2 = com->best_match_pos;
-            match3 = find_dictionary((current_pos + match0 + 3), com);
-            hist3 = com->hist_index;
-            ptr3 = com->best_match_pos;
-            match4 = find_dictionary((current_pos + match1 + 3), com);
-            hist4 = com->hist_index;
-            ptr4 = com->best_match_pos;
-            match5 = find_dictionary((current_pos + match1 + 4), com);
-            hist5 = com->hist_index;
-            ptr5 = com->best_match_pos;
-            if (match3 > match2)
-            {
-              m0 = match3 - 1;
-            }
-            else
-            {
-              m0 = match2;
-            }
-            if (match5 > match4)
-            {
-              m1 = match5 - 1;
-            }
-            else
-            {
-              m1 = match4;
-            }
-          }
-          if (((match1 + m1) > (match0 + m0)) ||
-              ((match1 + 2) >= (match0 + (match2 >= match3 ? match2 : (match3 /*-1???nee*/ )))))
-            /*
-             * Technisch gezien moet het match1+2==match0+m0 zijn,
-             * practisch is dit beter
-            */
-          { /*- er wordt een literal, pointer length opgeslagen */
-            if (ptrswap > 0)
-            {
-              if ((match0 == match1)
-                  && (swapmatch0 == com->charp[-1] - (NLIT - MIN_MATCH))
-                  && ((LOG(com->ptrp[-1]) + LOG(ptr0)) < (LOG(swapptr0) + LOG(ptr1))))
-              {
-                STORE_MATCH(ptr0, match0, hist0);
-                STORE_LITERAL();
-              }
-              else
-              {
-                #ifndef NDEBUG
-                  long current_pos_start=current_pos;
-                #endif
-                UNSTORE_MATCH();
-                STORE_LITERAL();
-                STORE_MATCH_NB(swapptr0, swapmatch0, swaphist0);
-                STORE_MATCH(swapptr1, swapmatch1, swaphist1);
-                ARJ_Assert(current_pos_start<=current_pos);
-              }
-              ptrswap = 0;
-            }
-            else
-            {
-              if ((match0 == match1) && ((ptr0) < (ptr1)))
-              {
-                STORE_MATCH(ptr0, match0, hist0)
-                STORE_LITERAL();
-                ptrswap = 0;
-              }
-              else
-              {
-                if (((match0 + match3) == (match1 + match4)) && (match3 > 0) && (match4 > 0))
-                {
-                  if ((LOG(ptr0) + LOG(ptr3)) < (LOG(ptr1) + LOG(ptr4)))
-                  {
-                    ptrswap = -1;
-                    hist_2=hist_1;
-                    swapmatch0 = match0;
-                    swaphist0 = hist0;
-                    swapptr0 = ptr0;
-                    swapmatch1 = match3;
-                    swaphist1 = hist3;
-                    swapptr1 = ptr3;
-                  }
-                  else
-                  {
-                    ptrswap = 0;
-                  }
-                }
-                else
-                {
-                  ptrswap = 0;
-                }
-                STORE_LITERAL();
-                STORE_MATCH_NB(ptr1, match1, hist1);
-              }
-            }
-            match0 = match4;
-            hist0 = hist4;
-            ptr0 = ptr4;
-            match1 = match5;
-            hist1 = hist5;
-            ptr1 = ptr5;
-          }
-          else
-          { /*- pointer length */
-            if (ptrswap < 0)
-            {
-              #ifndef NDEBUG
-                long current_pos_start=current_pos;
-              #endif
-              UNSTORE_MATCH();
-              UNSTORE_LITERAL();
-              if (swapmatch1 == match0)
-              { /*- we hebben dus eigenlijk match 0 opgeslagen */
-                if (((match0 + match3) == (match1 + match4)) && (match3 > 0) && (match4 > 0))
-                {
-                  if ((LOG(ptr0) + LOG(ptr3)) > (LOG(ptr1) + LOG(ptr4)))
-                  {
-                    ptrswap = 1;
-                    swapmatch0 = match1;
-                    swapmatch1 = match4;
-                    swaphist0 = hist1;
-                    swaphist1 = hist4;
-                    swapptr0 = ptr1;
-                    swapptr1 = ptr4;
-                  }
-                  else
-                  {
-                    ptrswap = 0;
-                  }
-                }
-                else
-                {
-                  ptrswap = 0;
-                }
-              }
-              else
-              {
-                ptrswap = 0;
-              }
-              STORE_MATCH(swapptr0, swapmatch0, swaphist0);
-              STORE_LITERAL();
-              STORE_MATCH_NB(swapptr1, swapmatch1, swaphist1);
-              ARJ_Assert(current_pos_start<=current_pos);
-            }
-            else
-            {
-              if (((match0 + match3) == (match1 + match4)) && (match3 > 0)
-                  && (match4 > 0))
-              {
-                if ((LOG(ptr0) + LOG(ptr3)) > (LOG(ptr1) + LOG(ptr4)))
-                {
-                  ptrswap = 1;
-                  swapmatch0 = match1;
-                  swapmatch1 = match4;
-                  swaphist0 = hist1;
-                  swaphist1 = hist4;
-                  swapptr0 = ptr1;
-                  swapptr1 = ptr4;
-                }
-                else
-                {
-                  ptrswap = 0;
-                }
-              }
-              else
-              {
-                ptrswap = 0;
-              }
-              STORE_MATCH(ptr0, match0, hist0)
-            }
-            if((match0+match2)<=(match1+2))
-            { /* voorkom find_dictionary's op posities die al geweest zijn... */
-              if(bytes_to_do>0)
-              {
-                STORE_LITERAL();
-                match1=0;
-                match0 = match3;
-                hist0 = hist3;
-                ptr0 = ptr3;
-                ARJ_Assert(ptrswap==0);
-              }
-              else
-              {
-                match0=0;
-                match1 = match3;
-                hist1 = hist3;
-                ptr1 = ptr3;
-              }
-            }
-            else
-            {
-              match0 = match2;
-              ptr0 = ptr2;
-              hist0 = hist2;
-              match1 = match3;
-              hist1 = hist3;
-              ptr1 = ptr3;
-            }
-          }
-        }
-        break;
-      }
-      ARJ_Assert_ZEEF34();
-      ARJ_Assert((com->ptrp - com->pointers) == ((com->msp - com->matchstring) / 4));
-      if (com->charp > com->chars + huffbuf)
-      { /*- 64k blok vol gepropt, ga de rotzooi opslaan */
-        com->max_match+=2; /* herstel max_match */
-        {
-          gup_result res;
-          if((res=com->compress(com))!=GUP_OK)
-          {
-            return res;
-          }
-        }
-        if (com->mv_mode)
-        {
-          if (com->mv_next)
-          {
-            {
-              gup_result res;
-              if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
-              {
-                return res;
-              }
-            }
-            return GUP_OK;
-          }
-        }
-        com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
-        if (com->charp==com->chars)
-        {
-          ptrswap=0; /* als alle data is verwerkt kan er geen pointerswap meer zijn */
-        }
-      }
-      if (refill_count <= 0)
-      {
-        long byte_count = 0;
-        refill_count += DIC_DELTA_SIZE;
-        ARJ_Assert(refill_pos>=-4);
-        ARJ_Assert((refill_pos+DIC_DELTA_SIZE+4*MAX_MATCH+6)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
-        if ((byte_count =
-             com->buf_read_crc(DIC_DELTA_SIZE, com->dictionary + refill_pos+4*MAX_MATCH+6, com->brc_propagator)) < 0)
-        {
-          com->max_match+=2; /* herstel max_match */
-          return GUP_READ_ERROR; /* ("Read error"); */
-        }
-        else
-        {
-          if (byte_count!=0)            /* byte count kan ook nul zijn */
-          {
-            ARJ_Assert((refill_pos+4*MAX_MATCH+6+byte_count)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
             #ifndef PP_AFTER
             com->print_progres(byte_count, com->pp_propagator);
             #endif
-            bytes_to_do+=byte_count;
-          }
         }
-        if (refill_pos == 0)
-        {
-          memcpy(com->dictionary-4,com->dictionary + DIC_SIZE-4, MAX_MATCH*4+4+6);
-          current_pos = M17(current_pos);
+        bytes_to_do = byte_count;
+    }
+    uint16 max_match=com->max_match;
+    com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
+    init_dictionary(com);
+    com->packed_size = 0;
+    com->bits_rest = 0;
+    com->bitbuf = 0;
+    com->bits_in_bitbuf = 0;
+    ALIGN_BUFP(com);
+    *com->charp++ = com->dictionary[current_pos++]; /* eerste karakter heeft geen match */
+    bytes_to_do--;
+    refill_count--;
+    { /* best compression routine, more speedy ones are removed */
+        c_codetype match0 = -1;
+        c_codetype match1 = -1;
+        pointer_type ptr0 = 0;
+        pointer_type ptr1 = 0;
+        int hist_1=0; /* history-1 */
+        int hist_2=0; /* history-2 */
+        int hist0=0;
+        int hist1=0;
+        int ptrswap = 0;
+        c_codetype swapmatch0 = 0;
+        c_codetype swapmatch1 = 0;
+        pointer_type swapptr0 = 0;
+        pointer_type swapptr1 = 0;
+        int swaphist0=0;
+        int swaphist1=0;
+        com->msp = com->matchstring;
+        com->bmp = com->backmatch;
+
+        while (bytes_to_do)
+        { /*- hoofd_lus, deze lus zorgt voor al het pack werk */
+            for(;;)
+            {
+                /* Een assert voor alle find_dictionary's. Tussen door wordt current pos niet aangepast */
+                ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)>current_pos) && ((current_pos+2*MAX_MATCH+2)>=(refill_pos+4*MAX_MATCH+6)) && (refill_count<=DIC_DELTA_SIZE)));
+                ARJ_Assert(!((current_pos+2*MAX_MATCH+2)>=(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL - 4UL)));
+                ARJ_Assert(!(((refill_pos+4*MAX_MATCH+6)<current_pos) && ((current_pos-(refill_pos+4*MAX_MATCH+6))<(65536L+2*MAX_MATCH)) && (refill_count<=DIC_DELTA_SIZE)));
+                ARJ_Assert(!(current_pos<0));
+                if (match0 < 0)
+                {
+                    match0 = find_dictionary(current_pos+2, com);
+                    if (match0 == 0)
+                    {
+                        STORE_LITERAL();
+                        match0 = match1;
+                        hist0 = hist1;
+                        ptr0 = ptr1;
+                        match1 = -1;
+                        break;
+                    }
+                    else
+                    {
+                        hist0 = com->hist_index;
+                        ptr0 = com->best_match_pos;
+                    }
+                }
+                else
+                {
+                    if (match0 == 0)
+                    {
+                        STORE_LITERAL();
+                        match0 = match1;
+                        hist0 = hist1;
+                        ptr0 = ptr1;
+                        match1 = -1;
+                        break;
+                    }
+                }
+                if ((unsigned long)match0 >= bytes_to_do)
+                {
+                    int16 diff = (int16)(match0 - bytes_to_do);
+
+                    match0 = (c_codetype) bytes_to_do;
+                    match1 = 0;
+                    if (match0 < MIN_MATCH)
+                    {
+                        match0 = 0;
+                        if (ptrswap > 0)
+                        {
+                            #ifndef NDEBUG
+                            long current_pos_start=current_pos;
+                            #endif
+                            UNSTORE_MATCH();
+                            STORE_LITERAL();
+                            STORE_MATCH_NB(swapptr0, swapmatch0, swaphist0);
+                            match0 = 0;
+                            match1 = 0;
+                            ptrswap = 0;
+                            ARJ_Assert(current_pos_start<=current_pos);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (ptrswap < 0)
+                        {
+                            swapmatch1 -= diff;
+                            if (swapmatch1 < MIN_MATCH)
+                            {
+                                ptrswap = 0;
+                            }
+                        }
+                    }
+                    if (match0 == 0)
+                    {
+                        STORE_LITERAL();
+                        match0 = match1;
+                        hist0 = hist1;
+                        ptr0 = ptr1;
+                        match1 = -1;
+                        break; /* tricky */
+                    }
+                }
+                if (match1 < 0)
+                {
+                    match1 = find_dictionary(current_pos + 3, com);
+                    hist1 = com->hist_index;
+                    ptr1 = com->best_match_pos;
+                }
+                if ((unsigned long)match1 >= bytes_to_do)
+                {
+                    int16 diff = (int16)(match1 - bytes_to_do + 1);
+
+                    match1 = (c_codetype)(bytes_to_do - 1);
+                    if (ptrswap > 0)
+                    {
+                        swapmatch1 -= diff;
+                        if (swapmatch1 < MIN_MATCH)
+                        {
+                            ptrswap = 0;
+                        }
+                    }
+                }
+                if (match1 < match0)
+                {
+                    if (ptrswap < 0)
+                    {
+                        #ifndef NDEBUG
+                        long current_pos_start=current_pos;
+                        #endif
+                        UNSTORE_MATCH();
+                        UNSTORE_LITERAL();
+                        STORE_MATCH(swapptr0, swapmatch0, swaphist0);
+                        STORE_LITERAL();
+                        STORE_MATCH_NB(swapptr1, swapmatch1, swaphist1);
+                        ARJ_Assert(current_pos_start<=current_pos);
+                    }
+                    else
+                    {
+                        STORE_MATCH(ptr0, match0, hist0);
+                    }
+                    match0 = -1;
+                    match1 = -1;
+                    ptrswap = 0;
+                }
+                else
+                {
+                    c_codetype match2, match3, match4, match5, m0, m1;
+                    pointer_type ptr2, ptr3, ptr4, ptr5;
+                    int hist2, hist3, hist4, hist5;
+                    if (match1 == match0)
+                    {
+                        match2 = find_dictionary(current_pos + match0+2, com);
+                        if (match2 == 0)
+                        {
+                            /*
+                            ** literal pointer length, als het andersom moet dan wordt
+                            ** dit wel gecorrigeerd
+                            */
+                            m0 = 0;
+                            m1 = 8;
+                            match3 = -1;
+                            match4 = -1;
+                            match5 = -1;
+                            hist2 = 0;
+                            hist3 = 0;
+                            hist4 = 0;
+                            hist5 = 0;
+                            ptr2 = 0;
+                            ptr3 = 0;
+                            ptr4 = 0;
+                            ptr5 = 0;
+                        }
+                        else
+                        {
+                            hist2 = com->hist_index;
+                            ptr2 = com->best_match_pos;
+                            match3 = find_dictionary(current_pos + match0 + 3, com);
+                            hist3 = com->hist_index;
+                            ptr3 = com->best_match_pos;
+                            match4 = match3;
+                            hist4 = com->hist_index;
+                            ptr4 = ptr3;
+                            match5 = find_dictionary(current_pos + match1 + 4, com);
+                            hist5 = com->hist_index;
+                            ptr5 = com->best_match_pos;
+                            if (match3 > match2)
+                            {
+                                m0 = match3 - 1;
+                            }
+                            else
+                            {
+                                m0 = match2;
+                            }
+                            m1 = match5 - 1;
+                        }
+                    }
+                    else
+                    {
+                        match2 = find_dictionary((current_pos + match0+2), com);
+                        hist2 = com->hist_index;
+                        ptr2 = com->best_match_pos;
+                        match3 = find_dictionary((current_pos + match0 + 3), com);
+                        hist3 = com->hist_index;
+                        ptr3 = com->best_match_pos;
+                        match4 = find_dictionary((current_pos + match1 + 3), com);
+                        hist4 = com->hist_index;
+                        ptr4 = com->best_match_pos;
+                        match5 = find_dictionary((current_pos + match1 + 4), com);
+                        hist5 = com->hist_index;
+                        ptr5 = com->best_match_pos;
+                        if (match3 > match2)
+                        {
+                            m0 = match3 - 1;
+                        }
+                        else
+                        {
+                            m0 = match2;
+                        }
+                        if (match5 > match4)
+                        {
+                            m1 = match5 - 1;
+                        }
+                        else
+                        {
+                            m1 = match4;
+                        }
+                    }
+                    if (((match1 + m1) > (match0 + m0)) ||
+                        ((match1 + 2) >= (match0 + (match2 >= match3 ? match2 : (match3 /*-1???nee*/ )))))
+                    /*
+                    ** Technisch gezien moet het match1+2==match0+m0 zijn,
+                    ** practisch is dit beter
+                    */
+                    { /*- er wordt een literal, pointer length opgeslagen */
+                        if (ptrswap > 0)
+                        {
+                            if ((match0 == match1)
+                                && (swapmatch0 == com->charp[-1] - (NLIT - MIN_MATCH))
+                                && ((LOG(com->ptrp[-1]) + LOG(ptr0)) < (LOG(swapptr0) + LOG(ptr1))))
+                            {
+                                STORE_MATCH(ptr0, match0, hist0);
+                                STORE_LITERAL();
+                            }
+                            else
+                            {
+                                #ifndef NDEBUG
+                                long current_pos_start=current_pos;
+                                #endif
+                                UNSTORE_MATCH();
+                                STORE_LITERAL();
+                                STORE_MATCH_NB(swapptr0, swapmatch0, swaphist0);
+                                STORE_MATCH(swapptr1, swapmatch1, swaphist1);
+                                ARJ_Assert(current_pos_start<=current_pos);
+                            }
+                            ptrswap = 0;
+                        }
+                        else
+                        {
+                            if ((match0 == match1) && ((ptr0) < (ptr1)))
+                            {
+                                STORE_MATCH(ptr0, match0, hist0)
+                                STORE_LITERAL();
+                                ptrswap = 0;
+                            }
+                            else
+                            {
+                                if (((match0 + match3) == (match1 + match4)) && (match3 > 0) && (match4 > 0))
+                                {
+                                    if ((LOG(ptr0) + LOG(ptr3)) < (LOG(ptr1) + LOG(ptr4)))
+                                    {
+                                        ptrswap = -1;
+                                        hist_2=hist_1;
+                                        swapmatch0 = match0;
+                                        swaphist0 = hist0;
+                                        swapptr0 = ptr0;
+                                        swapmatch1 = match3;
+                                        swaphist1 = hist3;
+                                        swapptr1 = ptr3;
+                                    }
+                                    else
+                                    {
+                                        ptrswap = 0;
+                                    }
+                                }
+                                else
+                                {
+                                    ptrswap = 0;
+                                }
+                                STORE_LITERAL();
+                                STORE_MATCH_NB(ptr1, match1, hist1);
+                            }
+                        }
+                        match0 = match4;
+                        hist0 = hist4;
+                        ptr0 = ptr4;
+                        match1 = match5;
+                        hist1 = hist5;
+                        ptr1 = ptr5;
+                    }
+                    else
+                    { /*- pointer length */
+                        if (ptrswap < 0)
+                        {
+                            #ifndef NDEBUG
+                            long current_pos_start=current_pos;
+                            #endif
+                            UNSTORE_MATCH();
+                            UNSTORE_LITERAL();
+                            if (swapmatch1 == match0)
+                            { /*- we hebben dus eigenlijk match 0 opgeslagen */
+                                if (((match0 + match3) == (match1 + match4)) && (match3 > 0) && (match4 > 0))
+                                {
+                                    if ((LOG(ptr0) + LOG(ptr3)) > (LOG(ptr1) + LOG(ptr4)))
+                                    {
+                                        ptrswap = 1;
+                                        swapmatch0 = match1;
+                                        swapmatch1 = match4;
+                                        swaphist0 = hist1;
+                                        swaphist1 = hist4;
+                                        swapptr0 = ptr1;
+                                        swapptr1 = ptr4;
+                                    }
+                                    else
+                                    {
+                                        ptrswap = 0;
+                                    }
+                                }
+                                else
+                                {
+                                    ptrswap = 0;
+                                }
+                            }
+                            else
+                            {
+                                ptrswap = 0;
+                            }
+                            STORE_MATCH(swapptr0, swapmatch0, swaphist0);
+                            STORE_LITERAL();
+                            STORE_MATCH_NB(swapptr1, swapmatch1, swaphist1);
+                            ARJ_Assert(current_pos_start<=current_pos);
+                        }
+                        else
+                        {
+                            if (((match0 + match3) == (match1 + match4)) && (match3 > 0)
+                                && (match4 > 0))
+                            {
+                                if ((LOG(ptr0) + LOG(ptr3)) > (LOG(ptr1) + LOG(ptr4)))
+                                {
+                                    ptrswap = 1;
+                                    swapmatch0 = match1;
+                                    swapmatch1 = match4;
+                                    swaphist0 = hist1;
+                                    swaphist1 = hist4;
+                                    swapptr0 = ptr1;
+                                    swapptr1 = ptr4;
+                                }
+                                else
+                                {
+                                    ptrswap = 0;
+                                }
+                            }
+                            else
+                            {
+                                ptrswap = 0;
+                            }
+                            STORE_MATCH(ptr0, match0, hist0)
+                        }
+                        if((match0+match2)<=(match1+2))
+                        { /* voorkom find_dictionary's op posities die al geweest zijn... */
+                            if(bytes_to_do>0)
+                            {
+                                STORE_LITERAL();
+                                match1=0;
+                                match0 = match3;
+                                hist0 = hist3;
+                                ptr0 = ptr3;
+                                ARJ_Assert(ptrswap==0);
+                            }
+                            else
+                            {
+                                match0=0;
+                                match1 = match3;
+                                hist1 = hist3;
+                                ptr1 = ptr3;
+                            }
+                        }
+                        else
+                        {
+                            match0 = match2;
+                            ptr0 = ptr2;
+                            hist0 = hist2;
+                            match1 = match3;
+                            hist1 = hist3;
+                            ptr1 = ptr3;
+                        }
+                    }
+                }
+                break;
+            }
+            ARJ_Assert_ZEEF34();
+            ARJ_Assert((com->ptrp - com->pointers) == ((com->msp - com->matchstring) / 4));
+            if (com->charp > com->chars + huffbuf)
+            { /*- 64k blok vol gepropt, ga de rotzooi opslaan */
+                com->max_match+=2; /* herstel max_match */
+                {
+                    gup_result res;
+                    if((res=com->compress(com))!=GUP_OK)
+                    {
+                        return res;
+                    }
+                }
+                if (com->mv_mode)
+                {
+                    if (com->mv_next)
+                    {
+                        gup_result res;
+                        if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
+                        {
+                            return res;
+                        }
+                        return GUP_OK;
+                    }
+                }
+                com->max_match-=2; /* de sld werkt met de max_match minus twee waarde */
+                if (com->charp==com->chars)
+                {
+                    ptrswap=0; /* als alle data is verwerkt kan er geen pointerswap meer zijn */
+                }
+            }
+            if (refill_count <= 0)
+            {
+                long byte_count = 0;
+                refill_count += DIC_DELTA_SIZE;
+                ARJ_Assert(refill_pos>=-4);
+                ARJ_Assert((refill_pos+DIC_DELTA_SIZE+4*MAX_MATCH+6)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
+                if ((byte_count =
+                    com->buf_read_crc(DIC_DELTA_SIZE, com->dictionary + refill_pos+4*MAX_MATCH+6, com->brc_propagator)) < 0)
+                {
+                    com->max_match+=2; /* herstel max_match */
+                    return GUP_READ_ERROR; /* ("Read error"); */
+                }
+                else
+                {
+                    if (byte_count!=0)            /* byte count kan ook nul zijn */
+                    {
+                        ARJ_Assert((refill_pos+4*MAX_MATCH+6+byte_count)<=(DIC_SIZE + MAX_MATCH*4 + 6UL));
+                        #ifndef PP_AFTER
+                        com->print_progres(byte_count, com->pp_propagator);
+                        #endif
+                        bytes_to_do+=byte_count;
+                    }
+                }
+                if (refill_pos == 0)
+                {
+                    memcpy(com->dictionary-4,com->dictionary + DIC_SIZE-4, MAX_MATCH*4+4+6);
+                    current_pos = M17(current_pos);
+                }
+                refill_pos = M17(refill_pos + DIC_DELTA_SIZE);
+            }
         }
-        refill_pos = M17(refill_pos + DIC_DELTA_SIZE);
-      }
     }
-  }
-  com->max_match+=2; /* herstel max_match */
-  while (com->charp - com->chars)
-  {
+    com->max_match+=2; /* herstel max_match */
+    while (com->charp - com->chars)
     {
-      gup_result res;
-      if((res=com->compress(com))!=GUP_OK)
-      {
-        return res;
-      }
-    }
-    if (com->mv_mode)
-    {
-      if (com->mv_next)
-      {
         {
-          gup_result res;
-          if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
-          {
+            gup_result res;
+            if((res=com->compress(com))!=GUP_OK)
+            {
+                return res;
+            }
+        }
+        if (com->mv_mode)
+        {
+            if (com->mv_next)
+            {
+                gup_result res;
+                if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
+                {
+                    return res;
+                }
+                return GUP_OK;
+            }
+        }
+    }
+    /*
+    ** Nu alleen compresse bitstram afsluiten
+    */
+    {
+        gup_result res;
+        if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
+        {
             return res;
-          }
         }
-        return GUP_OK;
-      }
     }
-  }
-  /*
-   * Nu alleen compresse bitstram afsluiten
-  */
-  {
-    gup_result res;
-    if((res=com->close_packed_stream(com))!=GUP_OK)   /* flush bitbuf */
-    {
-      return res;
-    }
-  }
-  return GUP_OK;
+    return GUP_OK;
 }
 #endif
