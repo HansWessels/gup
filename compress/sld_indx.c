@@ -1,9 +1,9 @@
 /*
  * Sliding dictionary code voor ARJ
  * Index linked version
- * 
+ *
  * (c) 1998 Hans "Mr Ni! the Great" Wessels
- * 
+ *
  */
 
 #undef NDEBUG
@@ -222,12 +222,9 @@ void init_dictionary(packstruct *com)
 
   /* reset hash table */
   memset(base+com->root.big, 0, HASH_SIZE * sizeof (node_type));
-  if(com->speed<2)
-  {
-    memset(base+com->root2.big, 0, HASH_SIZE * sizeof (node_type));
-    memset(base+com->link.big, 0, com->tree_size * sizeof (node_type));
-    com->hist_index=0;
-  }
+  memset(base+com->root2.big, 0, HASH_SIZE * sizeof (node_type));
+  memset(base+com->link.big, 0, com->tree_size * sizeof (node_type));
+  com->hist_index=0;
   com->last_pos = 2;
   com->del_pos = (uint16) (com->last_pos - com->maxptr - 1);
   if ((com->delta_hash = HASH(DIC_INIT(0))) != 0)
@@ -250,10 +247,7 @@ void init_dictionary(packstruct *com)
     com->rle_size = (uint16)(p - new_key - 1);
     DIC(new_key+com->max_match) = orig;
     com->rle_hash = (com->rle_char << 8) + com->rle_size;
-    if(com->speed<2)
-    {
-      insert2nm(new_key+com->rle_size, NODE_INIT(2), ROOT2_INIT(com->rle_hash), com);
-    }
+    insert2nm(new_key+com->rle_size, NODE_INIT(2), ROOT2_INIT(com->rle_hash), com);
     if (DIC(new_key+com->rle_size) != com->rle_char)
     {
       com->rle_size--;
@@ -1500,4 +1494,3 @@ c_codetype insert_fast(int32 nkey, node_type nnode, node_type hash, packstruct *
 
 
 #endif
- 
