@@ -2,8 +2,10 @@
  * Sliding dictionary code voor ARJ
  * Small machine code
  * (c) 1996 Hans "Mr Ni! the Great" Wessels
- * 
+ *
  */
+
+#if 0
 
 #undef NDEBUG
 #if 0
@@ -75,7 +77,7 @@ void init_dictionary_small(packstruct *com)
       {
         com->rle_size--;
       }
-    }    
+    }
     else
     {
       com->delta_hash=SMALL_HASH(new_key);
@@ -624,7 +626,7 @@ c_codetype insert2s(uint16 nnode, uint16 rle_size, packstruct *com)
           }
           if (best_match == max_match)
           { /*- link met de link van deze node */
-            if(tpc->link!=NO_NODE) 
+            if(tpc->link!=NO_NODE)
             {
               com->tree.small[nnode].link=tpc->link;
               tp[tpc->link].parent=nnode;
@@ -907,7 +909,7 @@ c_codetype inserts(uint16 nnode, uint16 hash, packstruct *com)
             }
             if (best_match == com->max_match)
             { /* link met de link van deze node */
-              if(tpc->link!=NO_NODE) 
+              if(tpc->link!=NO_NODE)
               {
                 com->tree.small[nnode].link=tpc->link;
                 tp[tpc->link].parent=nnode;
@@ -1360,5 +1362,5 @@ c_codetype inserts_fast(uint16 nnode, uint16 hash, packstruct *com)
   return 0;
 }
 #endif
-  
- 
+
+#endif

@@ -1,26 +1,26 @@
 /*
  * Sliding dictionary code voor ARJ
- * 
+ *
  * (c) 1995 Hans "Mr Ni! the Great" Wessels
- * 
+ *
 */
 
 /*
  * Tree for sliding dictionary
- * 
+ *
  * (c) Copyright 1995 Hans Wessels
- * 
+ *
  * Wat is het idee van deze tree?
- * 
+ *
  * De nieuwste nodes zitten altijd boven aan, de beide childs van een node
  * zijn altijd ouder dan de node zelf. Dit heeft tot gevolg dat de leaves
  * van de tree de oudste nodes zijn.
- * 
+ *
  * Hierdoor vind je bij het matchen altijd de dichtbijzijndste match. Een
  * tweede voordeel is dat de oudste nodes altijd helemaal onderaan liggen,
  * op deze manier kun je ze makkelijk verwijderen, gewoon van de parent
  * afknippen.
- * 
+ *
 */
 
 /*-
@@ -56,6 +56,8 @@
     heeft geen aparte rle detectie nodig en is daarom 4 seconden
     sneller dan hier staat aangegeven.
 */
+
+#if 0
 
 #undef NDEBUG
 #if 01
@@ -692,7 +694,7 @@ c_codetype insert2(uint8* nkey, uint16 nnode, uint16 hash, uint16 rle_size, pack
   else
   {
     #if 0
-    /* 
+    /*
       experimentele code 07-06-1997, optimaliseert backmatching bij
       rle cases.
       Resultaat: Gemiddeld lijkt er een kleine verbetering op te treden
@@ -1504,4 +1506,5 @@ c_codetype insert_fast(uint8* nkey, uint16 nnode, uint16 hash, packstruct *com)
 
 
 #endif
- 
+
+#endif
