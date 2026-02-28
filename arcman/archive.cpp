@@ -365,10 +365,6 @@ gup_result archive::create_archive(const char *name, OPTIONS *options,
 	st.pack_str.bufbase = NULL;
 
 	st.pack_str.mode = (uint16) options->mode;	/* Packing mode. */
-	st.pack_str.speed = 0;				/* Packing speed. */
-	st.pack_str.jm = (uint16) options->jm;	/* jm mode. */
-	st.pack_str.speed = (uint16) options->speed;	/* Speed. */
-	st.pack_str.small_code = 0;
 
 	st.pack_str.mv_mode = (uint16) options->mv_mode;
 	st.pack_str.mv_next = 0;			/* Volume break flag. */
@@ -989,11 +985,11 @@ gup_result archive::encode(fileheader *header, int infile)
  * 																			 *
  *****************************************************************************/
 
-// We're virtualizing the core gup I/O functions here, the idea being: 
+// We're virtualizing the core gup I/O functions here, the idea being:
 // when we want to output arbitrary encodings of the packed data (the *DUMP modes)
 // we can achieve such most easily when we keep everything else intact and
 // "just find a way to hook into the raw I/O and reroute and encode it the way
-// we want right now": that's what the {bin,asm,c}dump_archive classes are 
+// we want right now": that's what the {bin,asm,c}dump_archive classes are
 // going to accomplish for us, but they need a bit of a leg up before they *can*:
 // that's us, the *base class*, hooking into raw archive file I/O by providing
 // these conveniently same-name-as-the-C-functions-that-do-the-actual-work
@@ -1064,7 +1060,7 @@ void archive::gup_io_set_position(buf_fhandle_t *file, long position)
 	TRACE_ME();
 	return ::gup_io_set_position(file, position);
 }
-	
+
 /*****************************************************************************
  *																			 *
  * Utility functions.														 *
@@ -1101,9 +1097,9 @@ archive *new_archive(archive_type type)
 		return new asmdump_archive;
 	case AT_CDUMP:
 		return new cdump_archive;
-		
+
 #endif
-		
+
 	default:
 		return NULL;
 	}

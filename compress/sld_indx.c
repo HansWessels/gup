@@ -28,15 +28,15 @@
 
 /* debug 'macro's': include lotsa ASSERTs to have'm checked... */
 #define DIC_INIT(x) __genece_dic_init(com, (x)+DICTIONARY_OFFSET, "DIC_INIT", #x, __FILE__, __LINE__)
-#define NODE_INIT(x) __genece_node_init(com, com->tree.big+(x)*4, "NODE_INIT", #x, __FILE__, __LINE__)
-#define ROOT_INIT(x) __genece_root_init(com, com->root.big+(x), "ROOT_INIT", #x, __FILE__, __LINE__)
-#define ROOT2_INIT(x) __genece_root2_init(com, com->root2.big+(x), "ROOT2_INIT", #x, __FILE__, __LINE__)
+#define NODE_INIT(x) __genece_node_init(com, com->tree+(x)*4, "NODE_INIT", #x, __FILE__, __LINE__)
+#define ROOT_INIT(x) __genece_root_init(com, com->root+(x), "ROOT_INIT", #x, __FILE__, __LINE__)
+#define ROOT2_INIT(x) __genece_root2_init(com, com->root2+(x), "ROOT2_INIT", #x, __FILE__, __LINE__)
 
 #define KEY_INDEX(x) __genece_key_index(com, x, "KEY_INDEX", #x, __FILE__, __LINE__)
 #define PARENT_INDEX(x) __genece_parent_index(com, (x)+1, "PARENT_INDEX", #x, __FILE__, __LINE__)
 #define C_LEFT_INDEX(x) __genece_c_left_index(com, (x)+2, "C_LEFT_INDEX", #x, __FILE__, __LINE__)
 #define C_RIGHT_INDEX(x) __genece_c_right_index(com, (x)+3, "C_RIGHT_INDEX", #x, __FILE__, __LINE__)
-#define LINK_INDEX(x) __genece_link_index(com, com->link.big+(((x)-com->tree.big)>>2), "LINK_INDEX", #x, __FILE__, __LINE__)
+#define LINK_INDEX(x) __genece_link_index(com, com->link+(((x)-com->tree)>>2), "LINK_INDEX", #x, __FILE__, __LINE__)
 
 #define KEY(x) *__genece_key(com, &base[KEY_INDEX(x)], "KEY", #x, __FILE__, __LINE__)
 #define PARENT(x) *__genece_parent(com, &base[PARENT_INDEX(x)], "PARENT", #x, __FILE__, __LINE__)
@@ -71,96 +71,96 @@ static int32 __genece_dic_init(packstruct *com, int32 x, const char *macro, cons
 
 static int32 __genece_node_init(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->tree.big);
-  __GENECE_ASSERT(x < (com->tree.big+com->tree_size*4));
+  __GENECE_ASSERT(x >= com->tree);
+  __GENECE_ASSERT(x < (com->tree+com->tree_size*4));
   return x;
 }
 
 static int32 __genece_root_init(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->root.big);
-  __GENECE_ASSERT(x < (com->root.big+HASH_SIZE));
+  __GENECE_ASSERT(x >= com->root);
+  __GENECE_ASSERT(x < (com->root+HASH_SIZE));
   return x;
 }
 
 static int32 __genece_root2_init(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->root2.big);
-  __GENECE_ASSERT(x < (com->root2.big+HASH2_SIZE));
+  __GENECE_ASSERT(x >= com->root2);
+  __GENECE_ASSERT(x < (com->root2+HASH2_SIZE));
   return x;
 }
 
 static int32 __genece_key_index(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->tree.big);
-  __GENECE_ASSERT(x < (com->tree.big+com->tree_size*4));
-  __GENECE_ASSERT(((x-com->tree.big)&3)==0);
+  __GENECE_ASSERT(x >= com->tree);
+  __GENECE_ASSERT(x < (com->tree+com->tree_size*4));
+  __GENECE_ASSERT(((x-com->tree)&3)==0);
   return x;
 }
 
 static int32 __genece_parent_index(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->tree.big);
-  __GENECE_ASSERT(x < (com->tree.big+com->tree_size*4));
-  __GENECE_ASSERT(((x-com->tree.big)&3)==1);
+  __GENECE_ASSERT(x >= com->tree);
+  __GENECE_ASSERT(x < (com->tree+com->tree_size*4));
+  __GENECE_ASSERT(((x-com->tree)&3)==1);
   return x;
 }
 
 static int32 __genece_c_left_index(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->tree.big);
-  __GENECE_ASSERT(x < (com->tree.big+com->tree_size*4));
-  __GENECE_ASSERT(((x-com->tree.big)&3)==2);
+  __GENECE_ASSERT(x >= com->tree);
+  __GENECE_ASSERT(x < (com->tree+com->tree_size*4));
+  __GENECE_ASSERT(((x-com->tree)&3)==2);
   return x;
 }
 
 static int32 __genece_c_right_index(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->tree.big);
-  __GENECE_ASSERT(x < (com->tree.big+com->tree_size*4));
-  __GENECE_ASSERT(((x-com->tree.big)&3)==3);
+  __GENECE_ASSERT(x >= com->tree);
+  __GENECE_ASSERT(x < (com->tree+com->tree_size*4));
+  __GENECE_ASSERT(((x-com->tree)&3)==3);
   return x;
 }
 
 static int32 __genece_link_index(packstruct *com, int32 x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= com->link.big);
-  __GENECE_ASSERT(x < (com->link.big+com->tree_size));
+  __GENECE_ASSERT(x >= com->link);
+  __GENECE_ASSERT(x < (com->link+com->tree_size));
   return x;
 }
 
 static int32 *__genece_key(packstruct *com, int32 *x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree.big));
-  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree.big+com->tree_size*4)));
+  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree));
+  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree+com->tree_size*4)));
   return x;
 }
 
 static int32 *__genece_parent(packstruct *com, int32 *x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree.big));
-  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree.big+com->tree_size*4)));
+  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree));
+  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree+com->tree_size*4)));
   return x;
 }
 
 static int32 *__genece_c_left(packstruct *com, int32 *x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree.big));
-  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree.big+com->tree_size*4)));
+  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree));
+  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree+com->tree_size*4)));
   return x;
 }
 
 static int32 *__genece_c_right(packstruct *com, int32 *x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree.big));
-  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree.big+com->tree_size*4)));
+  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->tree));
+  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->tree+com->tree_size*4)));
   return x;
 }
 
 static int32 *__genece_link(packstruct *com, int32 *x, const char *macro, const char *msg, const char * filename, int lineno)
 {
-  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->link.big));
-  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->link.big+com->tree_size)));
+  __GENECE_ASSERT(x >= (((int32*)com->bufbase)+com->link));
+  __GENECE_ASSERT(x < (((int32*)com->bufbase)+(com->link+com->tree_size)));
   return x;
 }
 
@@ -174,15 +174,15 @@ static uint8 *__genece_dic(packstruct *com, uint8 *x, const char *macro, const c
 #else
 
 #define DIC_INIT(x) (((int32)(x))+DICTIONARY_OFFSET)
-#define NODE_INIT(x) (com->tree.big+((int32)(x))*4)
-#define ROOT_INIT(x) (com->root.big+((int32)(x)))
-#define ROOT2_INIT(x) (com->root2.big+((int32)(x)))
+#define NODE_INIT(x) (com->tree+((int32)(x))*4)
+#define ROOT_INIT(x) (com->root+((int32)(x)))
+#define ROOT2_INIT(x) (com->root2+((int32)(x)))
 
 #define KEY_INDEX(x) (x)
 #define PARENT_INDEX(x) ((x)+1)
 #define C_LEFT_INDEX(x) ((x)+2)
 #define C_RIGHT_INDEX(x) ((x)+3)
-#define LINK_INDEX(x) (com->link.big+(((x)-com->tree.big)>>2))
+#define LINK_INDEX(x) (com->link+(((x)-com->tree)>>2))
 
 #define KEY(x) (base[KEY_INDEX(x)])
 #define PARENT(x) (base[PARENT_INDEX(x)])
@@ -222,9 +222,9 @@ void init_dictionary(packstruct *com)
     int32* base = (node_type*)com->bufbase;
 
     /* reset hash table */
-    memset(base+com->root.big, 0, HASH_SIZE * sizeof (node_type));
-    memset(base+com->root2.big, 0, HASH_SIZE * sizeof (node_type));
-    memset(base+com->link.big, 0, com->tree_size * sizeof (node_type));
+    memset(base+com->root, 0, HASH_SIZE * sizeof (node_type));
+    memset(base+com->root2, 0, HASH_SIZE * sizeof (node_type));
+    memset(base+com->link, 0, com->tree_size * sizeof (node_type));
     com->hist_index=0;
     com->last_pos = 2;
     com->del_pos = (uint16) (com->last_pos - com->maxptr - 1);

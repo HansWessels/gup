@@ -246,6 +246,8 @@
 #define NDEBUG /* no debugging */
 #endif
 
+//#define INIT_MALLOC_TEST // alles wordt los gemallockt, testen met ./configure --with-sanitizers=asan,ubsan
+
 #if 0
 	/* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
@@ -347,6 +349,32 @@ void free_encode(packstruct *com)
 	}
 }
 
+#ifdef INIT_MALLOC_TEST
+
+void free_encode_r(packstruct *com)
+{
+    com->dictionary = com->dictionary-DICTIONARY_OFFSET;
+    com->gfree(com->dictionary, com->gf_propagator);
+    com->gfree(com->root, com->gf_propagator);
+    com->gfree(com->root2, com->gf_propagator);
+    com->gfree(com->hist, com->gf_propagator);
+    com->gfree(com->link, com->gf_propagator);
+    com->gfree(com->tree, com->gf_propagator);
+    com->gfree(com->charlen, com->gf_propagator);
+    com->gfree(com->char2huffman, com->gf_propagator);
+    com->gfree(com->ptrlen, com->gf_propagator);
+    com->gfree(com->ptr2huffman, com->gf_propagator);
+    com->gfree(com->ptrlen1, com->gf_propagator);
+    com->gfree(com->ptr2huffman1, com->gf_propagator);
+    com->gfree(com->chars, com->gf_propagator);
+    com->gfree(com->pointers, com->gf_propagator);
+    com->gfree(com->matchstring, com->gf_propagator);
+    com->gfree(com->backmatch, com->gf_propagator);
+    com->gfree(com->fast_log, com->gf_propagator);
+}
+
+#else
+
 void free_encode_r(packstruct *com)
 {
   if (com->bufbase)
@@ -356,6 +384,7 @@ void free_encode_r(packstruct *com)
   }
 }
 
+#endif
 
 int32 first_bit_set32(uint32 u)
 { /* first set bit at... pos 1 .. 32, 0 means no bits set */
@@ -388,6 +417,189 @@ gup_result init_encode(packstruct *com)
 	}
 	return GUP_OK;
 }
+
+#ifdef INIT_MALLOC_TEST
+
+gup_result init_encode_r(packstruct *com)
+{
+    void (*i_fastlog)(packstruct *com);
+    com->compress=compress_chars;
+    com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
+    com->use_align=1;              /* use align macro */
+    com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
+    switch(com->mode)
+    {
+    case ARJ_MODE_1:
+    case ARJ_MODE_2:
+    case ARJ_MODE_3:
+    default:
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        com->maxptr= MAX_PTR;
+        i_fastlog=init_fast_log;
+        break;
+    case GNU_ARJ_MODE_7:
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        i_fastlog=init_fast_log;
+        com->maxptr= 65534UL;
+        /*
+        // Voor mode 7 moet dit 65535 zijn, maar op deze positie 65535 wordt de
+        // nieuwe node geinsert, daarom met deze 1 kleiner worden genomen
+        // Als we eerst matchen, dan deleten, en dan pas inserten kunnen we deze
+        // positie ook gebruiken...
+        */
+        break;
+    case LHA_LZS_:
+        com->maxptr= MAX_LHA_LZS_PTR;
+        com->compress=compress_lzs;
+        com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
+        i_fastlog=init_lzs_fast_log;
+        com->use_align=0;             /* do NOT use align macro */
+        break;
+    case LHA_LZ5_:
+    case LHA_AFX_:
+        com->maxptr= MAX_LHA_LZ5_PTR;
+        com->compress=compress_lz5;
+        com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
+        i_fastlog=init_lz5_fast_log;
+        com->use_align=0;             /* do NOT use align macro */
+        break;
+    case LHA_LH4_:
+        com->n_ptr=LHA_NPT;
+        com->m_ptr_bit=LHA_PBIT;
+        com->maxptr=4095;
+        i_fastlog=init_fast_log;
+        break;
+    case 8:
+    case LHA_LH5_:
+        com->n_ptr=LHA_NPT;
+        com->m_ptr_bit=LHA_PBIT;
+        com->maxptr=8191;
+        i_fastlog=init_fast_log;
+        break;
+    case LHA_LH6_:
+        com->n_ptr=ARJ_NPT;
+        com->m_ptr_bit=ARJ_PBIT;
+        i_fastlog=init_fast_log;
+        com->maxptr= 32767UL;
+        break;
+    }
+    if (com->mode > 0)
+    {
+        com->bufbase = NULL;
+
+        com->dictionary = com->gmalloc(DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL, com->gm_propagator);
+        if (com->dictionary == NULL)
+        {
+            return GUP_NOMEM;
+        }
+        com->dictionary = com->dictionary+ DICTIONARY_OFFSET;  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
+
+        com->root = com->gmalloc(sizeof(com->root[0]) * HASH_SIZE, com->gm_propagator);
+        if (com->root == NULL)
+        {
+            return GUP_NOMEM;
+        }
+        com->root2 = com->gmalloc(sizeof(com->root2[0]) * HASH2_SIZE, com->gm_propagator);
+        if (com->root2 == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->hist = com->gmalloc(sizeof(history) * HISTSIZE, com->gm_propagator);
+        if (com->hist == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->link = com->gmalloc(sizeof(com->link[0] * TREE_SIZE), com->gm_propagator);
+        if (com->link == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->tree = com->gmalloc(sizeof(com->tree[0]) * TREE_SIZE, com->gm_propagator);
+        if (com->tree == NULL)
+        {
+            return GUP_NOMEM;
+        }
+        memset(com->tree, 0, sizeof(com->tree[0]) * TREE_SIZE); /* wis geheugen */
+
+        com->charlen = com->gmalloc(sizeof(com->charlen[0]) * (NC), com->gm_propagator);
+        if (com->charlen == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->char2huffman = com->gmalloc(sizeof(com->char2huffman[0]) * (NC), com->gm_propagator);
+        if (com->char2huffman == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->ptrlen = com->gmalloc(sizeof(com->ptrlen[0]) * (MAX_NPT), com->gm_propagator);
+        if (com->ptrlen == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->ptr2huffman = com->gmalloc(sizeof(com->ptr2huffman[0]) * (MAX_NPT), com->gm_propagator);
+        if (com->ptr2huffman == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->ptrlen1 = com->gmalloc(sizeof(com->ptrlen1[0]) * (NCPT), com->gm_propagator);
+        if (com->ptrlen1 == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->ptr2huffman1 = com->gmalloc(sizeof(com->ptr2huffman1[0]) * (NCPT), com->gm_propagator);
+        if (com->ptr2huffman1 == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->chars = com->gmalloc(sizeof(com->chars[0]) * (HUFFBUFSIZE), com->gm_propagator);
+        if (com->chars == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->pointers = com->gmalloc(sizeof(com->pointers[0]) * (HUFFBUFSIZE), com->gm_propagator);
+        if (com->pointers == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->matchstring = com->gmalloc(sizeof(com->matchstring[0]) * (HUFFBUFSIZE * 4UL), com->gm_propagator);
+        if (com->matchstring == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->backmatch = com->gmalloc(sizeof(com->backmatch[0]) * (HUFFBUFSIZE), com->gm_propagator);
+        if (com->backmatch == NULL)
+        {
+            return GUP_NOMEM;
+        }
+
+        com->fast_log = com->gmalloc(sizeof(com->fast_log[0]) * (FASTLOGBUF), com->gm_propagator);
+        if (com->fast_log == NULL)
+        {
+            return GUP_NOMEM;
+        }
+        (*i_fastlog)(com);
+
+        com->tree_size=TREE_SIZE;  /* gewone 64k tree */
+        com->hufbufsize = (uint16)(HUFFBUFSIZE - 4UL);/* voor doorschot en pointerswap */
+    }
+    return GUP_OK; /* succes */
+}
+
+#else
 
 gup_result init_encode_r(packstruct *com)
 {
@@ -500,41 +712,25 @@ gup_result init_encode_r(packstruct *com)
         {
             return GUP_NOMEM;
         }
-        uint8 *cp = com->bufbase;
+        uint8 *cp=com->bufbase;
         uint8 *base = cp;
         /* de copy buffer, die kan worden opgevraagd met de functie get_buf(); start hier met com->dictionary */
         com->dictionary = (void *)(cp + DICTIONARY_OFFSET);  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
         cp += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8); /* sliding dictionary + 4 voor terugkijken */
         ALIGN(base, cp, sizeof(node_type));
-#ifndef INDEX_STRUCT
-        com->root.big = (void *)cp;
-#else
-        com->root.big = ((int32 *)cp)-((int32*)base);
-#endif
+        com->root = ((int32 *)cp)-((int32*)base);
         cp += sizeof (node_type) * HASH_SIZE; /* normal root */
         ALIGN(base, cp, sizeof(node_type));
-#ifndef INDEX_STRUCT
-        com->root2.big = (void *)cp;
-#else
-        com->root2.big = ((int32 *)cp)-((int32*)base);
-#endif
+        com->root2 = ((int32 *)cp)-((int32*)base);
         cp += sizeof (node_type) * HASH2_SIZE;  /* rle root */
         ALIGN(base, cp, sizeof(hist_struct)); /* history is a array of hist_structs */
         com->hist=(void *)cp;          /* match history buffer */
         cp += sizeof (history) * HISTSIZE;
         ALIGN(base, cp, sizeof(node_type));
-#ifndef INDEX_STRUCT
-        com->link.big = (void *)(cp);
-#else
-        com->link.big = ((int32 *)cp)-((int32*)base);
-#endif
+        com->link = ((int32 *)cp)-((int32*)base);
         cp += TREE_SIZE * sizeof (node_type); /* buffer voor link */
         ALIGN(base, cp, sizeof(unsigned long)); /* align on unsigned long for output buffer */
-#ifndef INDEX_STRUCT
-        com->tree.big = (void *)cp;
-#else
-        com->tree.big = ((int32 *)cp)-((int32*)base);
-#endif
+        com->tree = ((int32 *)cp)-((int32*)base);
         memset(cp, 0, sizeof (node_struct) * TREE_SIZE); /* wis geheugen */
         cp += sizeof (node_struct) * TREE_SIZE;  /* sld tree          */
         ALIGN(base, cp, sizeof(uint8));
@@ -572,12 +768,13 @@ gup_result init_encode_r(packstruct *com)
         cp += FASTLOGBUF;
         (*i_fastlog)(com);
         com->tree_size=TREE_SIZE;  /* gewone 64k tree */
-        com->small_code=0;       /* geen small code dus */
         ARJ_Assert((com->bufbase+memneed)==cp); /* al het geheugen gebruiken, nix meer en nix minder */
         NEVER_USE(cp); /* shut up some compilers */
     }
     return GUP_OK; /* succes */
 }
+
+#endif
 
 #endif
 

@@ -313,10 +313,10 @@ typedef struct
 
 /*
   De history array bevat de zoek geschiedenis van een match.
-  in deze array zijn alle gevonden matches tot en met max_match 
+  in deze array zijn alle gevonden matches tot en met max_match
   opgenomen.
-  Hiermee kan een kan een match korter worden gemaakt (door de 
-  daaropvolgende match langer te maken) in de hoop een kortere 
+  Hiermee kan een kan een match korter worden gemaakt (door de
+  daaropvolgende match langer te maken) in de hoop een kortere
   pointer te vinden.
 */
 
@@ -371,7 +371,7 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCODE.MAC aanpassen */
 {
 /* encode.c internals */
-  uint8 *fast_log;               /* pointer naar logtabel, st_optie gaat er van uit dat 
+  uint8 *fast_log;               /* pointer naar logtabel, st_optie gaat er van uit dat
 	                                  dit het eerste element van packstruct is */
 /* bit buffer */
   int16 bits_in_bitbuf;          /* # bits in bitbuf */
@@ -384,7 +384,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   c_codetype* charp;             /* pointer naar chars */
   pointer_type* pointers;        /* buffer met pointers */
   pointer_type* ptrp;            /* pointer naar pointers */
-  uint8* matchstring;            /* Array waar eerste vier karakters 
+  uint8* matchstring;            /* Array waar eerste vier karakters
                                           van een match in zitten */
   uint8 *msp;                    /* pointer naar matchstring */
   uint8 *backmatch;              /* pointer naar backmatch array */
@@ -408,73 +408,37 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   uint8 *ptrlen1;                /* pointer lengte */
   uint16 *ptr2huffman1;          /* huffman codes van de pointers */
 /* sliding dictionary variabelen */
-  int16 speed;                   /* gewenste pack snelheid */
-  union
-  {
-#ifndef INDEX_STRUCT
-    node_type *big;              /* pointer naar link array */
-#else
-    int32 big;                   /* index offset in array */
-#endif
-    small_node_type *small;      /* pointer naar link array, small systems */
-  }link;
+  int32 link;                    /* index offset in array */
   uint16 rle_size;               /* grootte rle */
   uint16 rle_char;               /* karakter rle */
   uint16 rle_hash;               /* rle hash */
   uint16 last_pos;               /* laatst gedane positie */
-  union
-  {
-#ifndef INDEX_STRUCT
-    node_struct *big;            /* sld tree */
-#else
-    int32 big;                   /* tree offset in array */
-#endif
-    small_node_struct *small;    /* sld tree small systems */
-  }tree;
+  int32 tree;                    /* tree offset in array */
   uint16 del_pos;                /* wis positie */
   uint8 *dictionary;             /* sliding dictionary */
   uint16 delta_hash;             /* normal hash */
-  union
-  {
-#ifndef INDEX_STRUCT
-    node_type *big;              /* normal root */
-#else
-    int32 big;                   /* root offset in array */
-#endif
-    small_node_type *small;      /* small root */
-  }root;
+  int32 root;                    /* root offset in array */
   int16 hist_index;              /* history index */
   history *hist;                 /* pointer naar history arrays */
   pointer_type best_match_pos;   /* max_match positie in dictionary */
-  union
-  {
-#ifndef INDEX_STRUCT
-    node_type *big;              /* rle root */
-#else
-    int32 big;                   /* root2 offset in array */
-#endif
-    small_node_type *small;      /* small rle root */
-  }root2;
+  int32 root2;                   /* root2 offset in array */
   pointer_type maxptr;           /* maximale afstand binnen de dictionary */
   long tree_size;                /* grootte van sld tree */
-  int16 small_code;              /* staat small code aan of uit? */
-  uint16 andval;                 /* and value voor small code */
   unsigned long packed_size;     /* file size in bytes */
   int16 bits_rest;               /* number of bits not counted jet */
   int16 use_align;               /* do we use store bits? */
-  
+
   unsigned long bytes_packed;    /* bytes packed in file */
   int16 mode;                    /* pack mode 2B used */
-  int16 jm;                      /* -jm mode, 0 is uit, 1 aan  */
   /* multiple volume support variabelen */
   int16 mv_mode;                 /* 0=mv uit */
   int16 mv_next;                 /* 0=geen next volume */
   unsigned long mv_bytes_left;   /* bytes left voor mv break */
   int16 mv_bits_left;            /* tellen we de bits mee die over zijn */
-  
+
   /* some functions we need */
   gup_result (*compress)(struct packstruct_t *com); /* internal use encode */
-  
+
   void (*print_progres)(unsigned long delta_size, void* pp_propagator); /* routine for displaying packing progress */
   void* pp_propagator;
   void (*init_message)(gup_result message, void* im_propagator); /* routine for displaying init messages */
@@ -511,8 +475,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 #endif
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
-uint8 *get_buf(unsigned long *buflen, packstruct *com); /* geeft begin adres en lengte van buffer, result is NULL als er geen buffer is */
-
 gup_result encode(packstruct *com);
 gup_result init_encode(packstruct *com);
 void free_encode(packstruct *com);
@@ -540,24 +502,24 @@ typedef int16 kartype;
 typedef struct
 {
   /* internals */
-  
+
   uint8 *buffer;
   uint8 *buffstart;
   kartype *huff2kar;
   uint8 *karlen;
   uint8 *huff2ptr;
   uint8 *ptrlen;         /* moet ff exact bepaald worden */
-  
+
   /* input buffer */
   #if 0  /* not needed yet */
   uint8 *buffer_start;           /* echte start output buffer */
   long buffer_size;              /* size of buffer */
   uint8 *rbuf_start;             /* start output buffer */
   #endif
-  
+
   uint8 *rbuf_tail;              /* einde output buffer */
   uint8 *rbuf_current;           /* output buffer */
-  
+
   uint16 n_ptr;                  /* number of pointers */
   uint16 m_ptr_bit;              /* pointer bits */
 
@@ -572,12 +534,12 @@ typedef struct
   void* gm_propagator;
   void (*gfree)(void *ptr, void* gf_propagator); /* routine for freeing encode buffers */
   void* gf_propagator;
-  
+
   /* function for reading the arj file */
   gup_result (*buf_fill)(buf_fhandle_t* br_buf, void* br_propagator);
   buf_fhandle_t* br_buf;
   void* br_propagator;
-  
+
   /* function for writing the decompressed file */
   gup_result (*write_crc)(long count, void *buf, void* wc_propagator);
   void* wc_propagator;
@@ -595,5 +557,3 @@ void free_decode(decode_struct *com);
 #endif
 
 #endif
-
- 
