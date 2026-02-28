@@ -1,5 +1,5 @@
 /*
- * include file for the compression engine 
+ * include file for the compression engine
  */
 
 #ifndef __ENCODE_H__
@@ -15,21 +15,9 @@ extern "C"
 #endif
 
 #define BIG_HUFFSIZE (65536UL)           /* memory for ouput file */
-#if 01
-  #define HUFFSIZE (8192UL+4UL)          /* max size huffman table */
-  #define HUFFBUFSIZE (MAX_ENTRIES-EXPANTIE_SLACK + 4UL) /* Grootte huffman buffer in -jm mode */
-  #define M4HUFFSIZE (1024UL+4UL)        /* Grootte van huffman buffer in m4 mode */
-#else
-  #if 0
-    #define HUFFSIZE (8192UL+4UL)        /* max size huffman table */
-    #define HUFFBUFSIZE (8192UL+4UL)     /* Grootte huffman buffer in -jm mode */
-    #define M4HUFFSIZE (8192UL+4UL)      /* Grootte van huffman buffer in m4 mode */
-  #else
-    #define HUFFSIZE (257L+4UL)            /* max size for testing */
-    #define HUFFBUFSIZE (257UL+4UL)        /* Grootte huffman buffer in -jm mode */
-    #define M4HUFFSIZE (257UL+4UL)         /* Grootte van huffman buffer in m4 mode */
-  #endif
-#endif
+#define HUFFSIZE (8192UL+4UL)          /* max size huffman table */
+#define HUFFBUFSIZE (MAX_ENTRIES-EXPANTIE_SLACK + 4UL) /* Grootte huffman buffer in -jm mode */
+#define M4HUFFSIZE (1024UL+4UL)        /* Grootte van huffman buffer in m4 mode */
 #define HUFFDELTA 2048                 /* grootte deltablok bij bepaling huffsize */
 #define HUFFSTART (2*HUFFDELTA)        /* startgrootte voor bepaling huffsize */
 
@@ -57,11 +45,9 @@ extern "C"
 #define HASH_SIZE32 65536
 #define RLE32_DEPTH 32768
 #define HASH_SIZE_RLE32 (256U*RLE32_DEPTH)
-#define SMALL_HASH2_SIZE 256
-#define SMALL_HASH_SIZE 256
 #define DICTIONARY_OFFSET 4UL
 
-#if 1
+
 #define DIC_START_SIZE  DIC_SIZE /* Geeft aan in hoeverre de sliding dictionary bij
                                     de start gevuld wordt, moet macht van twee zijn,
                                     DIC_START_SIZE<DIC_SIZE
@@ -72,15 +58,9 @@ extern "C"
                                        DIC_DELTA_SIZE<=(DIC_SIZE/4),
                                        DIC_DELTA_SIZE<=DIC_START_SIZE
                                      */
-#else
-#define DIC_START_SIZE 8192      /* kleine waarden voor deze variabelen geeft  */
-#define DIC_DELTA_SIZE 8192      /* veel output op print_progres() */
-#endif
-
 
 #define HUFF_MAX_SINGLE_FREQ 31        /* Karakter frequenties die direct in tabel verdwijnen, moet 2^n-1 zijn */
 #define HUFF_HIGH_FREQS (16-5)         /* 16-LOG(HUFF_MAX_SINGLE_FREQ) */
-#define X_CHARS (HUFF_MAX_SINGLE_FREQ+HUFF_HIGH_FREQS) /* Aantal hulp karakters voor de huffman table */
 #define MAX_DEFLATE_HUFFLEN 15         /* maximale hufflength deflate is 15 */
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
 #define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
@@ -93,20 +73,17 @@ extern "C"
 #define MAX_MATCH 258         /* maximale match lengte = 258 */
 #define MATCH_CONV MAX_MATCH+1         /* array count start bij 0! */
 #define DIC_SIZE 2*65536UL
-#define DIC_SIZE_MEDIUM 65536UL
-#define DIC_SIZE_SMALL 65536UL
 
 /* sld.c definities */
 
 #define TREE_SIZE 65536UL              /* treesize */
 #define MAXDELTA  7                    /* maximale afstand tussen twee pointers */
 
-#define M16(x) ((x) & 0xffff)          /* make 16 bits */
 #define M17(x) ((x) & 0x1ffffUL)       /* buffer is 128k groot */
 
 #define MAXD_MATCH 9 /* het maximum voor MAXD_MATCH is 16, anders sld.c veranderen */
 
-/*- 
+/*-
   grootte van buffsize:
   als we een huffmanblok altijd in de buffer kwijt willen is moet buffsize zijn
   64k * 9 bits charsize
@@ -137,4 +114,3 @@ gup_result n9_init(packstruct *com);
 #endif
 
 #endif
-  

@@ -325,15 +325,6 @@ void free_encode_r(packstruct *com);
  */
 #define ALIGN(start,ptr,size) ptr+=((size)-((ptr)-(start)))&((size)-1)
 
-#ifndef ALIGN_BUFP
-  /*
-   * x=packstruct pointer.
-   * Function to allign buffer_pointer pointers, needed in some optimisations of
-   * storebits, only align when in the packstruct use_align!=0
-   */
-  #define ALIGN_BUFP(x) /* */
-#endif
-
 void free_encode(packstruct *com)
 {
 	if (com->buffer_start)
@@ -425,7 +416,6 @@ gup_result init_encode_r(packstruct *com)
     void (*i_fastlog)(packstruct *com);
     com->compress=compress_chars;
     com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
-    com->use_align=1;              /* use align macro */
     com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
     switch(com->mode)
     {
@@ -455,7 +445,6 @@ gup_result init_encode_r(packstruct *com)
         com->compress=compress_lzs;
         com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
         i_fastlog=init_lzs_fast_log;
-        com->use_align=0;             /* do NOT use align macro */
         break;
     case LHA_LZ5_:
     case LHA_AFX_:
@@ -463,7 +452,6 @@ gup_result init_encode_r(packstruct *com)
         com->compress=compress_lz5;
         com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
         i_fastlog=init_lz5_fast_log;
-        com->use_align=0;             /* do NOT use align macro */
         break;
     case LHA_LH4_:
         com->n_ptr=LHA_NPT;
@@ -606,7 +594,6 @@ gup_result init_encode_r(packstruct *com)
     void (*i_fastlog)(packstruct *com);
     com->compress=compress_chars;
     com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
-    com->use_align=1;              /* use align macro */
     com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
     switch(com->mode)
     {
@@ -636,7 +623,6 @@ gup_result init_encode_r(packstruct *com)
         com->compress=compress_lzs;
         com->max_match = 17;          /* grootte van max_match voor LHA_LZx_ */
         i_fastlog=init_lzs_fast_log;
-        com->use_align=0;             /* do NOT use align macro */
         break;
     case LHA_LZ5_:
     case LHA_AFX_:
@@ -644,7 +630,6 @@ gup_result init_encode_r(packstruct *com)
         com->compress=compress_lz5;
         com->max_match = 18;          /* grootte van max_match voor LHA_LZx_ */
         i_fastlog=init_lz5_fast_log;
-        com->use_align=0;             /* do NOT use align macro */
         break;
     case LHA_LH4_:
         com->n_ptr=LHA_NPT;
@@ -669,7 +654,6 @@ gup_result init_encode_r(packstruct *com)
     if (com->mode > 0)
     {
         unsigned long memneed = 0;
-        long buf;
         memneed += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
         ALIGN(0, memneed, sizeof(node_struct)); /* align on node struct */
         memneed += sizeof (node_struct) * TREE_SIZE; /* sld tree        */
@@ -681,22 +665,21 @@ gup_result init_encode_r(packstruct *com)
         ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
         memneed += 4UL*BIG_HUFFSIZE;
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (NC + NC); /* karakter lengte */
+        memneed += sizeof (uint8) * (NC); /* karakter lengte */
         ALIGN(0, memneed, sizeof(uint16));
         memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (MAX_NPT + MAX_NPT); /* pointer lengte */
+        memneed += sizeof (uint8) * (MAX_NPT); /* pointer lengte */
         ALIGN(0, memneed, sizeof(uint16));
         memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (NCPT + NCPT); /* pointer lengte */
+        memneed += sizeof (uint8) * (NCPT); /* pointer lengte */
         ALIGN(0, memneed, sizeof(uint16));
         memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
-        buf = HUFFBUFSIZE;
         ALIGN(0, memneed, sizeof(c_codetype));
-        memneed += buf * sizeof (c_codetype);
+        memneed += HUFFBUFSIZE * sizeof (c_codetype);
         ALIGN(0, memneed, sizeof(pointer_type));
-        memneed += buf * sizeof (pointer_type);
+        memneed += HUFFBUFSIZE * sizeof (pointer_type);
         /* linking */
         ALIGN(0, memneed, sizeof(node_type));
         memneed += sizeof (node_type) * HASH2_SIZE; /* rle root */
@@ -706,7 +689,7 @@ gup_result init_encode_r(packstruct *com)
         memneed += TREE_SIZE * sizeof (node_type);  /* buffer voor link */
         /* zeef 34 */
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += buf * 5;
+        memneed += HUFFBUFSIZE * 5;
         com->bufbase = com->gmalloc(memneed, com->gm_propagator);
         if (com->bufbase == NULL)
         {
@@ -735,34 +718,34 @@ gup_result init_encode_r(packstruct *com)
         cp += sizeof (node_struct) * TREE_SIZE;  /* sld tree          */
         ALIGN(base, cp, sizeof(uint8));
         com->charlen = (void *)cp;
-        cp += sizeof (uint8) * (NC + NC);  /* karakter lengte */
+        cp += sizeof (uint8) * (NC);  /* karakter lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->char2huffman = (void *)cp;
         cp += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
         ALIGN(base, cp, sizeof(uint8));
         com->ptrlen = (void *)cp;
-        cp += sizeof (uint8) * (MAX_NPT + MAX_NPT);  /* pointer lengte */
+        cp += sizeof (uint8) * (MAX_NPT);  /* pointer lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->ptr2huffman = (void *)cp;
         cp += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
         ALIGN(base, cp, sizeof(uint8));
         com->ptrlen1 = (void *)cp;
-        cp += sizeof (uint8) * (NCPT + NCPT);  /* pointer lengte */
+        cp += sizeof (uint8) * (NCPT);  /* pointer lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->ptr2huffman1 = (void *)cp;
         cp += sizeof (uint16) * (NCPT);/* huffman codes van de pointers */
         ALIGN(base, cp, sizeof(c_codetype));
         com->chars = (void *)(cp);
-        cp += buf * sizeof (c_codetype);
-        com->hufbufsize = (uint16)(buf - 4UL);/* voor doorschot en pointerswap */
+        cp += HUFFBUFSIZE * sizeof (c_codetype);
+        com->hufbufsize = (uint16)(HUFFBUFSIZE - 4UL);/* voor doorschot en pointerswap */
         ALIGN(base, cp, sizeof(pointer_type));
         com->pointers = (void *)(cp);
-        cp += buf * sizeof (pointer_type);
+        cp += HUFFBUFSIZE * sizeof (pointer_type);
         ALIGN(base, cp, sizeof(uint8));
         com->matchstring = cp;
-        cp += buf * 4UL;
+        cp += HUFFBUFSIZE * 4UL;
         com->backmatch = cp;
-        cp += buf;
+        cp += HUFFBUFSIZE;
         ALIGN(base, cp, sizeof(uint8));
         com->fast_log = cp;
         cp += FASTLOGBUF;
@@ -1037,10 +1020,8 @@ gup_result announce(unsigned long bytes, packstruct *com)
 gup_result compress_chars(packstruct *com)
 {
   uint16 entriesextra = 0;
-  uint16 charfreq1[NC + NC + X_CHARS];
-  uint16 *charfreq = charfreq1 + X_CHARS;/* frequentie tabel voor karakters, charfreq[-1 .. -X_CHARS] bestaan */
-  uint16 freq1[MAX_NPT + MAX_NPT + X_CHARS];
-  uint16 *freq = freq1 + X_CHARS;        /* frequentie tabel pointers          */
+  uint16 charfreq[NC];
+  uint16 freq[MAX_NPT];
   uint16 pointer_count;
   uint16 entries;
   uint16 charct;
@@ -2980,8 +2961,10 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
 {
   unsigned long header_bits = 0;
   unsigned long message_bits = 0;
-  uint16 freq1[NCPT + NCPT + X_CHARS];
-  uint16 *freq = freq1 + X_CHARS;        /* frequentie tabel, freq[-1] bestaat */
+//  uint16 freq1[NCPT + NCPT + X_CHARS];
+//  uint16 *freq = freq1 + X_CHARS;        /* frequentie tabel, freq[-1] bestaat */
+
+  uint16 freq[NCPT];
 
   com->special_header=NORMAL_HEADER;
   { /*- bereken aantal bytes dat gepacked gaat worden */

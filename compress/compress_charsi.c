@@ -40,19 +40,19 @@ static void make_hufftable32(uint8 * len,        /* O: lengths of the Huffman co
 	{
 		for(;;)
 		{
-			int up1[X_CHARS + NC + NC + 1];  /* linked list of characters          */
-			uint16 xfreq[X_CHARS + NC + NC];   /* modified character frequencies     */
-			int *up = (up1 + X_CHARS);
+			int up1[ NC + NC + 1];  /* linked list of characters          */
+			uint16 xfreq[NC + NC];   /* modified character frequencies     */
+			int *up = (up1);
 			{ /*- link de X_CHARS met elkaar */
 				int *p = up1;
-				int i = -X_CHARS + 2;
+				int i =  2;
 
 				*p++ = 2 * nchar - 1;          /* terminate up array */
 				do
 				{
 					*p++ = i;
 				} while(++i < 0);
-				*p = -X_CHARS;
+				*p = 0;
 			}
 			{ /*- zet X_CHARS freq op 0xffff */
 				int i = HUFF_HIGH_FREQS;
@@ -62,7 +62,7 @@ static void make_hufftable32(uint8 * len,        /* O: lengths of the Huffman co
 				{
 					*--p = tmp;
 				} while(--i!=0);
-				freq[-X_CHARS] = tmp;
+				freq[0] = tmp;
 				/* zet freq[] boven nchar op 0xffff */
 				i = nchar;
 				p = freq + nchar;
@@ -114,7 +114,7 @@ static void make_hufftable32(uint8 * len,        /* O: lengths of the Huffman co
 				int *child = mem;              /* left and right child of the pseudo-characters */
 				int new_char = nchar;          /* pseudo-character                   */
 				{
-					int low_p = -X_CHARS + 1;    /* source index for low half          */
+					int low_p = 1;    /* source index for low half          */
 					int high_p = nchar;          /* source index for high half         */
 					uint16 new_freq;               /* frequency of new character         */
 					while((low_p = up[low_p]) < 0)
@@ -186,10 +186,10 @@ static void make_hufftable32(uint8 * len,        /* O: lengths of the Huffman co
 					}
 					else
 					{
-						if((xfreq + X_CHARS) != freq)
+						if((xfreq) != freq)
 						{
-							memcpy(xfreq + X_CHARS, freq, nchar * sizeof (*freq));
-							freq = xfreq + X_CHARS;
+							memcpy(xfreq , freq, nchar * sizeof (*freq));
+							freq = xfreq ;
 						}
 						freq[*child]++;            /* fix lowest freq */
 						do
@@ -270,10 +270,10 @@ static void make_huffmancodes32(uint16 * table,   /* Tabel waarin de huffman cod
 
 static gup_result compress_chars32(index_t *pos, uint16 entries, packstruct *com)
 {
-	uint16 charfreq1[NC + NC + X_CHARS];
-	uint16 *charfreq = charfreq1 + X_CHARS; /* frequentie tabel voor karakters, charfreq[-1 .. -X_CHARS] bestaan */
-	uint16 ptrfreq1[MAX_NPT + MAX_NPT + X_CHARS];
-	uint16 *ptrfreq = ptrfreq1 + X_CHARS;        /* frequentie tabel pointers          */
+	uint16 charfreq1[NC + NC];
+	uint16 *charfreq = charfreq1; /* frequentie tabel voor karakters, charfreq[-1 .. -X_CHARS] bestaan */
+	uint16 ptrfreq1[MAX_NPT + MAX_NPT ];
+	uint16 *ptrfreq = ptrfreq1;        /* frequentie tabel pointers          */
 	uint16 pointer_count;
 	uint16 charct;
 	memset(charfreq, 0, NC * sizeof (*charfreq));	/* character frequentie op nul zetten */
@@ -317,15 +317,15 @@ static gup_result compress_chars32(index_t *pos, uint16 entries, packstruct *com
 	/*-
 	* we hebben nu de huffman codes van de karakterset berekend, nu moeten
 	* we de lengtes gaan coderen. deze staan in charlen c_len coderings
-	* blok: 
+	* blok:
 	* lengte van de pointers die c_len coderen, er zijn 19 pointers:
-	* 0          = c_len = 0 
+	* 0          = c_len = 0
 	* 1 + 4 bits = de volgende 3-18 karakters hebben lengte 0
 	* 2 + 9 bits = de volgende 20-531 karakters hebben lengte 0
-	* 3          = c_len = 1 
+	* 3          = c_len = 1
 	* :
-	* n          = c_len = n-2 
-	* : 
+	* n          = c_len = n-2
+	* :
 	* 18         = c_len = 16
 	*/
 	if(com->special_header!=NORMAL_HEADER)

@@ -264,24 +264,6 @@ typedef int16 c_codetype;   /* type waarin literals en lengths worden opgeslagen
 typedef uint16 pointer_type; /* type waarin de pointers van pointer length in wordt opgeslagen */
 struct node_struct_t;
 
-#ifndef INDEX_STRUCT
-/*
-  struct is linked with pointers
-*/
-typedef struct node_struct_t* node_type; /* type voor tree nodes */
-
-typedef struct node_struct_t
-{
-  uint8* key;
-  node_type* parent;
-  node_type c_left;
-  node_type c_right;
-} node_struct;
-
-#else
-/*
-  struct is linked with indices
-*/
 typedef int32 node_type; /* type voor tree nodes */
 
 typedef struct node_struct_t
@@ -291,24 +273,6 @@ typedef struct node_struct_t
   node_type c_left;
   node_type c_right;
 } node_struct;
-
-#endif
-
-
-/*
-  struct for small systems
-*/
-#define MS(x) ((x) & (com->andval))
-
-typedef uint16 small_node_type; /* type voor tree nodes */
-
-typedef struct
-{
-  small_node_type parent;
-  small_node_type c_left;
-  small_node_type c_right;
-  small_node_type link;
-} small_node_struct;
 
 
 /*
@@ -364,9 +328,6 @@ typedef hist_struct history[256 /* MAX_MATCH-MIN_MATCH, 256 rekent makkelijker *
 #define LHA_LH7_ 0x10c   /* 64k sliding dictionary(max 256 bytes) + static Huffman + improved encoding of position and trees */
 
 #define GZIP     0x200   /* GZIP implode method, 32k dictionary, maxmatch = 258 */
-
-
-#ifndef NOT_USE_STD_packstruct
 
 typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCODE.MAC aanpassen */
 {
@@ -426,8 +387,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   long tree_size;                /* grootte van sld tree */
   unsigned long packed_size;     /* file size in bytes */
   int16 bits_rest;               /* number of bits not counted jet */
-  int16 use_align;               /* do we use store bits? */
-
   unsigned long bytes_packed;    /* bytes packed in file */
   int16 mode;                    /* pack mode 2B used */
   /* multiple volume support variabelen */
@@ -472,7 +431,6 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	index_t *link2_hist; /* linked list met len 2 matches */
 	index_t *link3_hist; /* linked list met len 3 of meer matches */
 } packstruct;
-#endif
 
 gup_result re_crc(unsigned long origsize, packstruct *com);
 gup_result encode(packstruct *com);
