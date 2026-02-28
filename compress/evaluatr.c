@@ -548,6 +548,13 @@ gup_result encode_big(packstruct *com)
                 com->packed_size = com->bytes_packed = 0;
                 return GUP_OK;
             }
+            else
+            {
+                if(byte_count<(long)(DIC_START_SIZE+4*MAX_MATCH+6))
+                {
+                    memset(com->dictionary+byte_count, com->dictionary[byte_count-1], (DIC_START_SIZE+4*MAX_MATCH+6)-byte_count);
+                }
+            }
             #ifndef PP_AFTER
             com->print_progres(byte_count, com->pp_propagator);
             #endif
@@ -1016,6 +1023,10 @@ gup_result encode_big(packstruct *com)
                         #endif
                         bytes_to_do+=byte_count;
                     }
+                }
+                if(byte_count<(long)(DIC_DELTA_SIZE))
+                {
+                    memset(com->dictionary + refill_pos+4*MAX_MATCH+6+byte_count, com->dictionary[refill_pos+4*MAX_MATCH+6+byte_count-1], (DIC_DELTA_SIZE)-byte_count);
                 }
                 if (refill_pos == 0)
                 {

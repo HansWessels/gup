@@ -193,8 +193,8 @@ static uint8 *__genece_dic(packstruct *com, uint8 *x, const char *macro, const c
 
 #endif
 
-#define HASH(x) (((DIC(x)^DIC((x)+1))<<8) ^ (DIC((x)+1)^DIC((x)+2)))
-#define DELTA_HASH(x) ((com->delta_hash<<8) ^ (DIC((x)-1)^DIC(x)))
+#define HASH(x) (((DIC((x)-2)^DIC((x)-1))<<8) ^ (DIC((x)-1)^DIC(x)))
+#define DELTA_HASH(x) ((com->delta_hash<<8)   ^ (DIC((x)-1)^DIC(x)))
 
 c_codetype insert2(int32 nkey, node_type pos, node_type hash, uint16 rle_size, packstruct *com);
 c_codetype insert(int32 nkey, node_type pos, node_type hash, packstruct *com);
@@ -211,49 +211,50 @@ void insertnm_fast(int32 nkey, node_type pos, node_type hash, packstruct *com);
 */
 
 #ifndef NOT_USE_STD_init_dictionary
+
 void init_dictionary(packstruct *com)
 {
-  /*
-   * initialiseert de sliding dictionary initialiseert de
-   * slidingdictionary structuren en zet eerste byte in dictionary
-  */
+    /*
+    ** initialiseert de sliding dictionary initialiseert de
+    ** slidingdictionary structuren en zet eerste byte in dictionary
+    */
 
-  int32* base = (node_type*)com->bufbase;
+    int32* base = (node_type*)com->bufbase;
 
-  /* reset hash table */
-  memset(base+com->root.big, 0, HASH_SIZE * sizeof (node_type));
-  memset(base+com->root2.big, 0, HASH_SIZE * sizeof (node_type));
-  memset(base+com->link.big, 0, com->tree_size * sizeof (node_type));
-  com->hist_index=0;
-  com->last_pos = 2;
-  com->del_pos = (uint16) (com->last_pos - com->maxptr - 1);
-  if ((com->delta_hash = HASH(DIC_INIT(0))) != 0)
-  {
-    com->rle_size = 0;
-    insertnm(DIC_INIT(2), NODE_INIT(2), ROOT_INIT(com->delta_hash), com);
-  }
-  else
-  {
-    uint8 orig;
-    int32 new_key=DIC_INIT(2);
-    int32 p = new_key;
-    com->rle_char = DIC(new_key);
-    orig = DIC(new_key+com->max_match);
-    DIC(new_key+com->max_match) = ~(uint8)com->rle_char;
-    while (DIC(p++) == com->rle_char)
+    /* reset hash table */
+    memset(base+com->root.big, 0, HASH_SIZE * sizeof (node_type));
+    memset(base+com->root2.big, 0, HASH_SIZE * sizeof (node_type));
+    memset(base+com->link.big, 0, com->tree_size * sizeof (node_type));
+    com->hist_index=0;
+    com->last_pos = 2;
+    com->del_pos = (uint16) (com->last_pos - com->maxptr - 1);
+    if ((com->delta_hash = HASH(DIC_INIT(2))) != 0)
     {
-      ;
+        com->rle_size = 0;
+        insertnm(DIC_INIT(2), NODE_INIT(2), ROOT_INIT(com->delta_hash), com);
     }
-    com->rle_size = (uint16)(p - new_key - 1);
-    DIC(new_key+com->max_match) = orig;
-    com->rle_hash = (com->rle_char << 8) + com->rle_size;
-    insert2nm(new_key+com->rle_size, NODE_INIT(2), ROOT2_INIT(com->rle_hash), com);
-    if (DIC(new_key+com->rle_size) != com->rle_char)
+    else
     {
-      com->rle_size--;
-      com->rle_hash--;
+        uint8 orig;
+        int32 new_key=DIC_INIT(2);
+        int32 p = new_key;
+        com->rle_char = DIC(new_key);
+        orig = DIC(new_key+com->max_match);
+        DIC(new_key+com->max_match) = ~(uint8)com->rle_char;
+        while (DIC(p++) == com->rle_char)
+        {
+            ;
+        }
+        com->rle_size = (uint16)(p - new_key - 1);
+        DIC(new_key+com->max_match) = orig;
+        com->rle_hash = (com->rle_char << 8) + com->rle_size;
+        insert2nm(new_key+com->rle_size, NODE_INIT(2), ROOT2_INIT(com->rle_hash), com);
+        if (DIC(new_key+com->rle_size) != com->rle_char)
+        {
+            com->rle_size--;
+            com->rle_hash--;
+        }
     }
-  }
 }
 
 #endif

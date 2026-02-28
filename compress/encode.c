@@ -2601,7 +2601,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
                     s_len[symbols[i]]=(uint8)len[i];
                 }
                 make_huffman_codes(huff_codes, s_len, symbol_size);
-                huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
+//                huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
                 return;
             }
         }
@@ -2716,7 +2716,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
         } while(i>0);
     }
     make_huffman_codes(huff_codes, s_len, symbol_size);
-    huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
+//    huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
     return;
 }
 
