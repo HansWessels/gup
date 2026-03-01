@@ -129,15 +129,6 @@
   #error "Dictionary delta size > dictionary start size"
 #endif
 
-#ifndef ALIGN_BUFP
-  /*
-   * x=packstruct pointer.
-   * Function to allign buffer_pointer pointers, needed in some optimisations of
-   * storebits, oly align when in the packstruct use_align!=0
-   */
-  #define ALIGN_BUFP(x) /* */
-#endif
-
 #ifndef NDEBUG
 #define ARJ_Assert_ZEEF34()     \
   if (((com->msp - com->matchstring) < 0)\
@@ -567,7 +558,6 @@ gup_result encode_big(packstruct *com)
     com->bits_rest = 0;
     com->bitbuf = 0;
     com->bits_in_bitbuf = 0;
-    ALIGN_BUFP(com);
     *com->charp++ = com->dictionary[current_pos++]; /* eerste karakter heeft geen match */
     bytes_to_do--;
     refill_count--;
