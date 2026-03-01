@@ -299,8 +299,10 @@ gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
-                         unsigned long* packed_bytes, int charct, uint16 entries,
-                         uint8* charlen, uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
+                         unsigned long* packed_bytes, uint16 entries, uint8* charlen,
+                         uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
+void set_maxlen(int count, uint8 len[]);
+uint16 get_max_character(uint16 freq[], int max_index);
 
 #define MAX_HUFFMAN_LEN MAX_HUFFLEN
 #define MAX_SYMBOL_SIZE NC
@@ -434,39 +436,39 @@ gup_result init_encode_r(packstruct *com)
     if(com->mode > 0)
     {
         unsigned long memneed = 0;
-        memneed += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8);  /* sliding dictionary + 4 voor terugkijken */
+        memneed += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof(uint8);  /* sliding dictionary + 4 voor terugkijken */
         ALIGN(0, memneed, sizeof(node_struct)); /* align on node struct */
-        memneed += sizeof (node_struct) * TREE_SIZE; /* sld tree        */
+        memneed += sizeof(node_struct) * TREE_SIZE; /* sld tree        */
         ALIGN(0, memneed, sizeof(node_type)); /* align on node_type */
-        memneed += sizeof (node_type) * HASH_SIZE;  /* normal root */
+        memneed += sizeof(node_type) * HASH_SIZE;  /* normal root */
 
         memneed += FASTLOGBUF;           /* grootte fastlog buffer */
 
         ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
         memneed += 4UL*BIG_HUFFSIZE;
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (NC); /* karakter lengte */
+        memneed += sizeof(uint8) * (NC); /* karakter lengte */
         ALIGN(0, memneed, sizeof(uint16));
-        memneed += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
+        memneed += sizeof(uint16) * (NC);  /* huffman codes van de karakters */
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (MAX_NPT); /* pointer lengte */
+        memneed += sizeof(uint8) * (MAX_NPT); /* pointer lengte */
         ALIGN(0, memneed, sizeof(uint16));
-        memneed += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
+        memneed += sizeof(uint16) * (MAX_NPT); /* huffman codes van de pointers */
         ALIGN(0, memneed, sizeof(uint8));
-        memneed += sizeof (uint8) * (NCPT); /* pointer lengte */
+        memneed += sizeof(uint8) * (NCPT); /* pointer lengte */
         ALIGN(0, memneed, sizeof(uint16));
-        memneed += sizeof (uint16) * (NCPT);  /* huffman codes van de pointers */
+        memneed += sizeof(uint16) * (NCPT);  /* huffman codes van de pointers */
         ALIGN(0, memneed, sizeof(c_codetype));
-        memneed += HUFFBUFSIZE * sizeof (c_codetype);
+        memneed += HUFFBUFSIZE * sizeof(c_codetype);
         ALIGN(0, memneed, sizeof(pointer_type));
-        memneed += HUFFBUFSIZE * sizeof (pointer_type);
+        memneed += HUFFBUFSIZE * sizeof(pointer_type);
         /* linking */
         ALIGN(0, memneed, sizeof(node_type));
-        memneed += sizeof (node_type) * HASH2_SIZE; /* rle root */
+        memneed += sizeof(node_type) * HASH2_SIZE; /* rle root */
         ALIGN(0, memneed, sizeof(hist_struct)); /* history is a array of hist_struct */
-        memneed += sizeof (history) * HISTSIZE;     /* match history buffer */
+        memneed += sizeof(history) * HISTSIZE;     /* match history buffer */
         ALIGN(0, memneed, sizeof(node_type));
-        memneed += TREE_SIZE * sizeof (node_type);  /* buffer voor link */
+        memneed += TREE_SIZE * sizeof(node_type);  /* buffer voor link */
         /* zeef 34 */
         ALIGN(0, memneed, sizeof(uint8));
         memneed += HUFFBUFSIZE * 5;
@@ -479,48 +481,48 @@ gup_result init_encode_r(packstruct *com)
         uint8 *base = cp;
         /* de copy buffer, die kan worden opgevraagd met de functie get_buf(); start hier met com->dictionary */
         com->dictionary = (void *)(cp + DICTIONARY_OFFSET);  /* DICTIONARY_OFFSET extra om terug te kunnen kijken */
-        cp += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof (uint8); /* sliding dictionary + 4 voor terugkijken */
+        cp += (DIC_SIZE + MAX_MATCH*4 + 6UL + 4UL) * sizeof(uint8); /* sliding dictionary + 4 voor terugkijken */
         ALIGN(base, cp, sizeof(node_type));
         com->root = ((int32 *)cp)-((int32*)base);
-        cp += sizeof (node_type) * HASH_SIZE; /* normal root */
+        cp += sizeof(node_type) * HASH_SIZE; /* normal root */
         ALIGN(base, cp, sizeof(node_type));
         com->root2 = ((int32 *)cp)-((int32*)base);
-        cp += sizeof (node_type) * HASH2_SIZE;  /* rle root */
+        cp += sizeof(node_type) * HASH2_SIZE;  /* rle root */
         ALIGN(base, cp, sizeof(hist_struct)); /* history is a array of hist_structs */
         com->hist=(void *)cp;          /* match history buffer */
-        cp += sizeof (history) * HISTSIZE;
+        cp += sizeof(history) * HISTSIZE;
         ALIGN(base, cp, sizeof(node_type));
         com->link = ((int32 *)cp)-((int32*)base);
-        cp += TREE_SIZE * sizeof (node_type); /* buffer voor link */
+        cp += TREE_SIZE * sizeof(node_type); /* buffer voor link */
         ALIGN(base, cp, sizeof(unsigned long)); /* align on unsigned long for output buffer */
         com->tree = ((int32 *)cp)-((int32*)base);
-        memset(cp, 0, sizeof (node_struct) * TREE_SIZE); /* wis geheugen */
-        cp += sizeof (node_struct) * TREE_SIZE;  /* sld tree          */
+        memset(cp, 0, sizeof(node_struct) * TREE_SIZE); /* wis geheugen */
+        cp += sizeof(node_struct) * TREE_SIZE;  /* sld tree          */
         ALIGN(base, cp, sizeof(uint8));
         com->charlen = (void *)cp;
-        cp += sizeof (uint8) * (NC);  /* karakter lengte */
+        cp += sizeof(uint8) * (NC);  /* karakter lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->char2huffman = (void *)cp;
-        cp += sizeof (uint16) * (NC);  /* huffman codes van de karakters */
+        cp += sizeof(uint16) * (NC);  /* huffman codes van de karakters */
         ALIGN(base, cp, sizeof(uint8));
         com->ptrlen = (void *)cp;
-        cp += sizeof (uint8) * (MAX_NPT);  /* pointer lengte */
+        cp += sizeof(uint8) * (MAX_NPT);  /* pointer lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->ptr2huffman = (void *)cp;
-        cp += sizeof (uint16) * (MAX_NPT); /* huffman codes van de pointers */
+        cp += sizeof(uint16) * (MAX_NPT); /* huffman codes van de pointers */
         ALIGN(base, cp, sizeof(uint8));
         com->ptrlen1 = (void *)cp;
-        cp += sizeof (uint8) * (NCPT);  /* pointer lengte */
+        cp += sizeof(uint8) * (NCPT);  /* pointer lengte */
         ALIGN(base, cp, sizeof(uint16));
         com->ptr2huffman1 = (void *)cp;
-        cp += sizeof (uint16) * (NCPT);/* huffman codes van de pointers */
+        cp += sizeof(uint16) * (NCPT);/* huffman codes van de pointers */
         ALIGN(base, cp, sizeof(c_codetype));
         com->chars = (void *)(cp);
-        cp += HUFFBUFSIZE * sizeof (c_codetype);
+        cp += HUFFBUFSIZE * sizeof(c_codetype);
         com->hufbufsize = (uint16)(HUFFBUFSIZE - 4UL);/* voor doorschot en pointerswap */
         ALIGN(base, cp, sizeof(pointer_type));
         com->pointers = (void *)(cp);
-        cp += HUFFBUFSIZE * sizeof (pointer_type);
+        cp += HUFFBUFSIZE * sizeof(pointer_type);
         ALIGN(base, cp, sizeof(uint8));
         com->matchstring = cp;
         cp += HUFFBUFSIZE * 4UL;
@@ -772,40 +774,51 @@ gup_result announce(unsigned long bytes, packstruct *com)
 
 #endif
 
+void set_maxlen(int count, uint8 len[])
+{
+    uint8 max_len=0;
+    int i;
+    for(i=0; i<count; i++)
+    {
+        if(len[i]>max_len)
+        {
+            max_len=len[i];
+        }
+    }
+    max_len++;
+    for(i=0; i<count; i++)
+    {
+        if(len[i]==0)
+        {
+            len[i]=max_len;
+        }
+    }
+}
+
+uint16 get_max_character(uint16 freq[], int max_index)
+{
+    while(max_index>0)
+    {
+        max_index--;
+        if(freq[max_index]!=0)
+        {
+            return max_index+1;
+        }
+    }
+    return 0;
+}
+
 gup_result compress_chars(packstruct *com)
 {
     uint16 entriesextra = 0;
     uint16 charfreq[NC];
     uint16 ptrfreq[MAX_NPT];
-    uint16 pointer_count;
     uint16 entries;
-    uint16 charct;
 
     { /*- aantal entries berekenen */
         uint16 lentries;
 
         lentries = (uint16) (com->charp - com->chars);
-        #if !defined(NDEBUG) || 0
-        { /*- for debugging use */
-            long i = lentries;
-            c_codetype *cp = com->chars;
-
-            while(--i!=0)
-            {
-                c_codetype tmp = *cp++;
-                if(tmp<0)
-                {
-                    fprintf(assert_redir_fptr, "te klein!");
-                }
-                if(tmp>(NLIT-MIN_MATCH+com->max_match))
-                {
-                    fprintf(assert_redir_fptr, "te groot!");
-                }
-                ARJ_Assert(tmp>=0);
-                ARJ_Assert(tmp<=(NLIT-MIN_MATCH+com->max_match));
-            }
-        }
-        #endif
         if(lentries > com->hufbufsize)
         {
             lentries = com->hufbufsize;
@@ -813,8 +826,8 @@ gup_result compress_chars(packstruct *com)
         if(lentries > HUFFSTART)
         { /*- aantal entries dynamisch berekenen */
             int count = (int)(HUFFSTART / HUFFDELTA);
-            c_codetype *cp = com->chars;
-            pointer_type *pp = com->pointers;
+            uint16 char_index=0;
+            uint16 ptr_index=0;
             uint16 delta;
             uint16 dentries = HUFFSTART;
 
@@ -822,28 +835,20 @@ gup_result compress_chars(packstruct *com)
             /* character frequentie op nul zetten */
             memset(charfreq, 0, NC * sizeof(charfreq[0]));
             /* zet pointer_count op nul */
-            memset(ptrfreq, 0, MAX_NPT * sizeof (ptrfreq[0]));
+            memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
             while(dentries < lentries)
             {
                 { /*- character frequentie tellen */
-                    uint16 i = delta;
-                    do
+                    for(int i=0; i<delta; i++)
                     {
-                        c_codetype tmp = *cp++;
-
-                        ARJ_Assert(cp - 1 >= com->chars);
-                        ARJ_Assert(cp - 1 < com->charp);
-                        ARJ_Assert(tmp >= 0);
-                        ARJ_Assert(tmp < NC + NC);
-                        ARJ_Assert(tmp < NC);
+                        c_codetype tmp = com->chars[char_index++];
                         charfreq[tmp]++;
                         if(tmp > (NLIT - 1))
                         {
-                            ptrfreq[LOG(*pp++)]++;
+                            ptrfreq[LOG(com->pointers[ptr_index++])]++;
                         }
-                    }  while(--i!=0);
+                    }
                 }
-                /* hier kunnen we charct niet gebruiken omdat de bovenkant van charfreq schoon moet blijven */
                 make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
                 make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
                 /*
@@ -854,60 +859,13 @@ gup_result compress_chars(packstruct *com)
                 {
                     unsigned long h_bits, m_bits, m_size;
                     unsigned long newsize = 0;
-                    { /*- bepalen tot welke wat het hoogste gebruikte character is */
-                        uint16 *p = charfreq + NC;
-                        while(!*--p)
-                        {
-                            ;
-                        }
-                        ARJ_Assert(p >= charfreq);
-                        charct = (uint16)(p + 1 - charfreq);
-                    }
-                    count_bits(&h_bits, &m_bits, &m_size, charct, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                    count_bits(&h_bits, &m_bits, &m_size, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
                     { /*- nu alleen newsize nog berekenen */
-                        c_codetype *p = cp;
-                        pointer_type *q = pp;
-                        uint8 *r = com->charlen+charct;
-                        uint8 maxlen = 0;
-                        uint16 i = charct;
-                        do
-                        {
-                            if(*--r > maxlen)
-                            {
-                                maxlen = *r;
-                            }
-                        } while(--i!=0);
-                        maxlen++;
-                        r+=NC;
-                        i=NC;
-                        do
-                        {
-                            if(*--r == 0)
-                            {
-                                *r = maxlen;
-                            }
-                        } while(--i!=0);
-                        maxlen = 0;
-                        i = com->n_ptr;
-                        r = com->ptrlen+com->n_ptr;
-                        do
-                        {
-                            if(*--r > maxlen)
-                            {
-                                maxlen = *r;
-                            }
-                        }
-                        while(--i!=0);
-                        maxlen++;
-                        i = com->n_ptr;
-                        r += com->n_ptr;
-                        do
-                        {
-                            if(*--r == 0)
-                            {
-                                *r = maxlen;
-                            }
-                        } while(--i!=0);
+                        uint16 newchar_index = char_index;
+                        uint16 newptr_index = ptr_index;
+                        uint16 i;
+                        set_maxlen(NC, com->charlen);
+                        set_maxlen(com->n_ptr, com->ptrlen);
                         i = HUFFDELTA;
                         if(dentries + i > lentries)
                         {
@@ -916,10 +874,8 @@ gup_result compress_chars(packstruct *com)
                         }
                         do
                         {
-                            c_codetype tmp = *p++;
+                            c_codetype tmp = com->chars[newchar_index++];
                             #if 0
-                            ARJ_Assert((p - 1) >= com->chars);
-                            ARJ_Assert((p - 1) < com->charp);
                             ARJ_Assert(tmp >= 0);
                             ARJ_Assert(tmp < NC + NC);
                             ARJ_Assert(tmp < NC);
@@ -929,7 +885,7 @@ gup_result compress_chars(packstruct *com)
                             {
                                 int lenq;
                                 {
-                                    lenq = LOG(*q++);
+                                    lenq = LOG(com->pointers[newptr_index++]);
                                     newsize += com->ptrlen[lenq];
                                     if(lenq > 0)
                                     {
@@ -965,14 +921,13 @@ gup_result compress_chars(packstruct *com)
         entries = (uint16) lentries;
     }
     /* character frequentie op nul zetten */
-    memset(charfreq, 0, NC * sizeof (*charfreq));
+    memset(charfreq, 0, NC * sizeof(*charfreq));
     /* zet pointer count op nul */
-    memset(ptrfreq, 0, MAX_NPT * sizeof (*ptrfreq));
+    memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
     { /*- character frequentie tellen */
         uint16 i = entries;
         c_codetype *p = com->chars;
         pointer_type *q = com->pointers;
-
         do
         {
             c_codetype tmp = *p++;
@@ -982,7 +937,8 @@ gup_result compress_chars(packstruct *com)
                 ptrfreq[LOG(*q++)]++;
             }
         } while(--i!=0);
-        pointer_count = (uint16) (q - com->pointers);
+        ARJ_Assert(com->backmatch!=NULL);
+        com->backmatch[(uint16) (q - com->pointers)]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
     make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
     make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
@@ -990,11 +946,8 @@ gup_result compress_chars(packstruct *com)
     ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
     */
-    if(com->matchstring != NULL)
     {
         uint16 old_entries;
-        ARJ_Assert(com->backmatch!=NULL);
-        com->backmatch[pointer_count]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
 
         do
         {
@@ -1009,27 +962,7 @@ gup_result compress_chars(packstruct *com)
             */
             /* c_len is bekend */
             old_entries = entries;
-            { /*- bepaal de maximum lengte */
-                uint8 maxlen = 0;
-                uint8 *p = com->charlen; /* van achter naar voor werken, pointers hebben meestal de kleinste frequentie */
-                uint16 i = NC;
-                while(i--!=0)
-                {
-                    if(p[i] > maxlen)
-                    {
-                        maxlen = p[i];
-                    }
-                }
-                maxlen++;
-                i = NC;
-                while(i--!=0)
-                {
-                    if(p[i] == 0)
-                    {
-                        p[i] = maxlen;
-                    }
-                }
-            }
+            set_maxlen(NC, com->charlen);
             {
                 pointer_type *q = com->pointers;
                 uint8 *mstp = com->matchstring;
@@ -1101,7 +1034,6 @@ gup_result compress_chars(packstruct *com)
                                             charfreq[kar]--;
                                             charfreq[*p]--;
                                             ptrfreq[lenq]--;
-                                            pointer_count--;
                                             p[-1] = -1;
                                             *p+=bml;
                                             charfreq[*p]++;
@@ -1142,7 +1074,6 @@ gup_result compress_chars(packstruct *com)
                                                 charfreq[kar]--;
                                                 charfreq[*p]--;
                                                 ptrfreq[lenq]--;
-                                                pointer_count--;
                                                 p[-1] = -2;
                                                 *p+=bml;
                                                 charfreq[*p]++;
@@ -1182,7 +1113,6 @@ gup_result compress_chars(packstruct *com)
                                                     charfreq[kar]--;
                                                     charfreq[*p]--;
                                                     ptrfreq[lenq]--;
-                                                    pointer_count--;
                                                     p[-1] = -3;
                                                     *p+=bml;
                                                     charfreq[*p]++;
@@ -1220,7 +1150,6 @@ gup_result compress_chars(packstruct *com)
                                                         charfreq[kar]--;
                                                         charfreq[*p]--;
                                                         ptrfreq[lenq]--;
-                                                        pointer_count--;
                                                         p[-1] = -4;
                                                         *p+=bml;
                                                         charfreq[*p]++;
@@ -1261,7 +1190,6 @@ gup_result compress_chars(packstruct *com)
                                         entries += 2;
                                         ptrfreq[lenq]--;
                                         bp[-2]=0; /* hier geen backmatch meer mogelijk */
-                                        pointer_count--;
                                     }
                                 }
                                 else if(((lengte1+len4) >= com->charlen[mstp[3]]) && (entries <= (MAX_ENTRIES - (MIN_MATCH + 1)))) /* entries moet kleiner MAX_ENTRIES blijven */
@@ -1275,7 +1203,6 @@ gup_result compress_chars(packstruct *com)
                                     entries += 3;
                                     ptrfreq[lenq]--;
                                     bp[-2]=0; /* hier geen backmatch meer mogelijk */
-                                    pointer_count--;
                                 }
                             }
                             mstp += 4;
@@ -1317,9 +1244,7 @@ gup_result compress_chars(packstruct *com)
             }
             #endif
             entriesextra += entries - old_entries;
-            /* recalc charlen */
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-            /* recalc ptrlen */
             make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
         }
         while(entries != old_entries);
@@ -1335,32 +1260,11 @@ gup_result compress_chars(packstruct *com)
             do
             {
                 redo=0;
-                { /*- bepaal de maximum lengte */
-                    uint8 maxlen = 0;
-                    uint8 *p = com->charlen+NC;
-                    uint16 i = NC;
-                    do
-                    {
-                        if(*--p > maxlen)
-                        {
-                            maxlen = *p;
-                        }
-                    } while(--i!=0);
-                    maxlen++;
-                    i = NC-NLIT;
-                    p +=NC;
-                    do
-                    {
-                        if(*--p == 0)
-                        {
-                            *p = maxlen;
-                        }
-                    } while(--i!=0);
-                    /* voorkomen dat we een match kleiner dan drie maken */
-                    *--p=32;
-                    *--p=32;
-                    *--p=32;
-                }
+                set_maxlen(NC, com->charlen);
+                /* voorkomen dat we een match kleiner dan drie maken */
+                com->charlen[NLIT-1]=32;
+                com->charlen[NLIT-2]=32;
+                com->charlen[NLIT-3]=32;
                 {
                     uint8* bp=com->backmatch;
                     c_codetype *p = com->chars;
@@ -1451,15 +1355,7 @@ gup_result compress_chars(packstruct *com)
     {
         unsigned long m_size, bits_comming;
         unsigned long h_bits, m_bits;
-        {
-            /* bepalen tot welke wat het hoogste gebruikte character is */
-            charct=NC;
-            while(!charfreq[charct - 1])
-            {
-                charct--;
-            }
-        }
-        bits_comming = count_bits(&h_bits, &m_bits, &m_size, charct, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
         /*
         ** Nu hebben we de data geoptimaliseerd en kan het de file in, maar past
         ** het wel in de file? dat beslist de multiple volume code!
@@ -1484,16 +1380,15 @@ gup_result compress_chars(packstruct *com)
                 {
                     delta_size >>= 1;
                     /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof (*charfreq));
+                    memset(charfreq, 0, NC * sizeof(*charfreq));
                     /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof (*ptrfreq));
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
                     { /*- character frequentie tellen */
                         uint16 i = entries;
                         c_codetype *p = com->chars;
                         pointer_type *q = com->pointers;
                         uint8 *mstp = com->matchstring;
                         entriesextra = 0;
-                        pointer_count = 0;
                         do
                         {
                             c_codetype tmp = *p++;
@@ -1509,7 +1404,6 @@ gup_result compress_chars(packstruct *com)
                             else
                             {
                                 q++;
-                                pointer_count--;
                                 charfreq[*mstp++]++;
                                 if(tmp < -1)
                                 {
@@ -1527,22 +1421,13 @@ gup_result compress_chars(packstruct *com)
                                 mstp+=4+tmp;
                             }
                         } while(--i!=0);
-                        pointer_count += (uint16)(q - com->pointers);
-                    }
-                    { /*- bepalen tot welke wat het hoogste gebruikte character is */
-                        uint16 *p = charfreq + NC;
-                        while(!*--p)
-                        {
-                            ;
-                        }
-                        charct = (uint16)(p + 1 - charfreq);
                     }
                     {
                         unsigned long h_bits, m_bits;
-                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
                         make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-                        bits = count_bits(&h_bits, &m_bits, &m_size, charct, (uint16)(entries + entriesextra),
-                                            com->charlen, com->ptrlen, charfreq, ptrfreq, com) + com->mv_bits_left+7;
+                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+                        bits = count_bits(&h_bits, &m_bits, &m_size, (uint16)(entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                        bits+=com->mv_bits_left+7;
                         bits >>= 3;                  /* bytes=bits/8 */
                     }
                     if(bits > com->mv_bytes_left)
@@ -1572,14 +1457,13 @@ gup_result compress_chars(packstruct *com)
                     entriesextra = 0;
                     delta_size >>= 1;
                     /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof (*charfreq));
+                    memset(charfreq, 0, NC * sizeof(*charfreq));
                     /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof (*ptrfreq));
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
                     { /*- character frequentie tellen */
                         uint16 i = entries;
                         c_codetype *p = com->chars;
                         pointer_type *q = com->pointers;
-                        pointer_count = 0;
                         do
                         {
                             c_codetype tmp = *p++;
@@ -1595,7 +1479,6 @@ gup_result compress_chars(packstruct *com)
                             else
                             {
                                 q++;
-                                pointer_count--;
                                 charfreq[*mstp++]++;
                                 if(tmp < -1)
                                 {
@@ -1613,23 +1496,13 @@ gup_result compress_chars(packstruct *com)
                                 mstp+=4+tmp;
                             }
                         } while(--i!=0);
-                        pointer_count += (uint16)(q - com->pointers);
-                    }
-                    { /*- bepalen tot wat het hoogste gebruikte character is */
-                        uint16 *p = charfreq + NC;
-                        while(!*--p)
-                        {
-                            ;
-                        }
-                        charct = (uint16)(p + 1 - charfreq);
                     }
                     {
                         unsigned long h_bits, m_bits;
+                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
                         make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
                         entries += entriesextra;
-                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-                        bits_comming = count_bits(&h_bits, &m_bits, &m_size, charct, entries,
-                                                    com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
                     }
                 }
             }
@@ -1659,7 +1532,6 @@ gup_result compress_chars(packstruct *com)
     /*
     ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
-    ** charct is bekend
     */
     /*-
     ** we hebben nu de huffman codes van de karakterset berekend, nu moeten
@@ -1677,16 +1549,10 @@ gup_result compress_chars(packstruct *com)
     */
     if(com->special_header!=NORMAL_HEADER)
     { /* minimale header, alles literal */
-        {
+        { /* de MAME testset triggert deze case */
             uint16 xentries=entries;
-            if(charct>NLIT)
-            { /* tel len twee en dries op */
-                xentries+=2*charfreq[NLIT];
-                if(charct>(NLIT+1))
-                {
-                    xentries+=3*charfreq[NLIT+1];
-                }
-            }
+            xentries+=2*charfreq[NLIT];
+            xentries+=3*charfreq[NLIT+1];
             ST_BITS(xentries, 16);           /* aantal huffman karakters */
         }
         { /*- special case 1, er is maar een character lengte */
@@ -1740,10 +1606,12 @@ gup_result compress_chars(packstruct *com)
         }
     }
     else
-    { /* vanaf hier hebben wij charfreq niet meer nodig! */
+    {
         int i;
+        int charct=get_max_character(charfreq, NC);
+        /* vanaf hier hebben wij charfreq niet meer nodig! */
         /* frequentie tabel op nul zetten voor gebruik pointers */
-        memset(charfreq, 0, NCPT * sizeof (*charfreq));
+        memset(charfreq, 0, NCPT * sizeof(*charfreq));
         /* frequentie character lengtes tellen */
         for(i = 0; i < charct; i++)
         {
@@ -2070,8 +1938,8 @@ gup_result compress_chars(packstruct *com)
                 com->msp -= 4 * (long)ptrctr;
                 com->bmp-=ptrctr;
             }
-            memmove(com->chars, r, i * sizeof (c_codetype));
-            memmove(com->pointers, s, i * sizeof (pointer_type));
+            memmove(com->chars, r, i * sizeof(c_codetype));
+            memmove(com->pointers, s, i * sizeof(pointer_type));
             com->ptrp -= ptrctr;
             com->charp -= entries;
         }
@@ -2616,7 +2484,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
                          unsigned long *message_size, /* komt message size in bits in te staan */
                          unsigned long *packed_bytes, /* aantal bytes dat gepacked wordt */
           /* nu de variabelen die nodig zijn voor de berekening */
-                         int charct,   /* hoogste character dat in gebruik is */
                          uint16 entries, /* aantal character die moeten worden gepacked */
                          uint8 * charlen,  /* character lengte tabel          */
                          uint8 * ptrlen,/* pointerlengte tabel                */
@@ -2627,10 +2494,8 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
 {
   unsigned long header_bits = 0;
   unsigned long message_bits = 0;
-//  uint16 freq1[NCPT + NCPT + X_CHARS];
-//  uint16 *freq = freq1 + X_CHARS;        /* frequentie tabel, freq[-1] bestaat */
-
   uint16 freq[NCPT];
+  int charct=get_max_character(charfreq, NC);
 
   com->special_header=NORMAL_HEADER;
   { /*- bereken aantal bytes dat gepacked gaat worden */
@@ -2656,7 +2521,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
     /* frequentie tabel op nul zetten voor gebruik pointers */
     int i;
 
-    memset(freq, 0, NCPT * sizeof (*freq));
+    memset(freq, 0, NCPT * sizeof(*freq));
     /* frequentie character lengtes tellen */
     for(i = 0; i < charct; i++)
     {
