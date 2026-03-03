@@ -15,7 +15,6 @@ extern "C"
 #endif
 
 #define BIG_HUFFSIZE (65536UL)           /* memory for ouput file */
-#define HUFFSIZE (8192UL+4UL)          /* max size huffman table */
 #define HUFFBUFSIZE (MAX_ENTRIES-EXPANTIE_SLACK + 4UL) /* Grootte huffman buffer in -jm mode */
 #define M4HUFFSIZE (1024UL+4UL)        /* Grootte van huffman buffer in m4 mode */
 #define HUFFDELTA 2048                 /* grootte deltablok bij bepaling huffsize */

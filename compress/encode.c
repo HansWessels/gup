@@ -815,114 +815,95 @@ gup_result compress_chars(packstruct *com)
     uint16 ptrfreq[MAX_NPT];
     uint16 entries;
 
-    { /*- aantal entries berekenen */
-        uint16 lentries;
-
-        lentries = (uint16) (com->charp - com->chars);
-        if(lentries > com->hufbufsize)
+    entries = (uint16) (com->charp - com->chars);
+    if(entries > com->hufbufsize)
+    {
+        entries = com->hufbufsize;
+    }
+    if(entries > HUFFSTART)
+    { /*- aantal entries dynamisch berekenen */
+        int count = (int)(HUFFSTART / HUFFDELTA);
+        uint16 char_index=0;
+        uint16 ptr_index=0;
+        uint16 delta;
+        uint16 dentries = HUFFSTART;
+        delta = dentries;
+        memset(charfreq, 0, NC * sizeof(charfreq[0]));
+        memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
+        while(dentries < entries)
         {
-            lentries = com->hufbufsize;
-        }
-        if(lentries > HUFFSTART)
-        { /*- aantal entries dynamisch berekenen */
-            int count = (int)(HUFFSTART / HUFFDELTA);
-            uint16 char_index=0;
-            uint16 ptr_index=0;
-            uint16 delta;
-            uint16 dentries = HUFFSTART;
-
-            delta = dentries;
-            /* character frequentie op nul zetten */
-            memset(charfreq, 0, NC * sizeof(charfreq[0]));
-            /* zet pointer_count op nul */
-            memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
-            while(dentries < lentries)
-            {
-                { /*- character frequentie tellen */
-                    for(int i=0; i<delta; i++)
-                    {
-                        c_codetype tmp = com->chars[char_index++];
-                        charfreq[tmp]++;
-                        if(tmp > (NLIT - 1))
-                        {
-                            ptrfreq[LOG(com->pointers[ptr_index++])]++;
-                        }
-                    }
-                }
-                make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-                make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
-                /*
-                ** Karakter frequenties zijn bekend, karakter huffman tabel is
-                ** berekend. Pointer frequenties zijn bekend, pointer huffman
-                ** tabel is berekend.
-                */
+            for(int i=0; i<delta; i++)
+            { /* update charachter and ptr freq */
+                c_codetype cur_char = com->chars[char_index++];
+                charfreq[cur_char]++;
+                if(cur_char > (NLIT - 1))
                 {
-                    unsigned long h_bits, m_bits, m_size;
-                    unsigned long newsize = 0;
-                    count_bits(&h_bits, &m_bits, &m_size, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
-                    { /*- nu alleen newsize nog berekenen */
-                        uint16 newchar_index = char_index;
-                        uint16 newptr_index = ptr_index;
-                        uint16 i;
-                        set_maxlen(NC, com->charlen);
-                        set_maxlen(com->n_ptr, com->ptrlen);
-                        i = HUFFDELTA;
-                        if(dentries + i > lentries)
+                    ptrfreq[LOG(com->pointers[ptr_index++])]++;
+                }
+            }
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+            /*
+            ** Karakter frequenties zijn bekend, karakter huffman tabel is
+            ** berekend. Pointer frequenties zijn bekend, pointer huffman
+            ** tabel is berekend.
+            */
+            {
+                unsigned long h_bits, m_bits, m_size;
+                unsigned long newsize = 0;
+                count_bits(&h_bits, &m_bits, &m_size, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                { /*- nu alleen newsize nog berekenen */
+                    uint16 newchar_index = char_index;
+                    uint16 newptr_index = ptr_index;
+                    uint16 i;
+                    set_maxlen(NC, com->charlen);
+                    set_maxlen(com->n_ptr, com->ptrlen);
+                    i = HUFFDELTA;
+                    if(dentries + i > entries)
+                    {
+                        i = entries - dentries;
+                        ARJ_Assert(((long)lentries - (long)dentries) >= 0);
+                    }
+                    do
+                    {
+                        c_codetype cur_char = com->chars[newchar_index++];
+                        newsize += com->charlen[cur_char];
+                        if(cur_char > (NLIT - 1))
                         {
-                            i = lentries - dentries;
-                            ARJ_Assert(((long)lentries - (long)dentries) >= 0);
-                        }
-                        do
-                        {
-                            c_codetype tmp = com->chars[newchar_index++];
-                            #if 0
-                            ARJ_Assert(tmp >= 0);
-                            ARJ_Assert(tmp < NC + NC);
-                            ARJ_Assert(tmp < NC);
-                            #endif
-                            newsize += com->charlen[tmp];
-                            if(tmp > (NLIT - 1))
+                            int ptrbits;
+                            ptrbits = LOG(com->pointers[newptr_index++]);
+                            newsize += com->ptrlen[ptrbits];
+                            if(ptrbits > 0)
                             {
-                                int lenq;
-                                {
-                                    lenq = LOG(com->pointers[newptr_index++]);
-                                    newsize += com->ptrlen[lenq];
-                                    if(lenq > 0)
-                                    {
-                                        newsize += lenq - 1;
-                                    }
-                                }
+                                newsize+=ptrbits-1;
                             }
-                        } while(--i!=0);
-                    }
-                    if((unsigned long)labs((long)(m_bits / count - newsize)) < h_bits)
-                    {
-                        count++;
-                        delta = HUFFDELTA;
-                        dentries += HUFFDELTA;
-                        if(dentries > lentries)
-                        {
-                            dentries = lentries;
-                            break;
                         }
-                    }
-                    else
+                    } while(--i!=0);
+                }
+                if((unsigned long)labs((long)((m_bits/count) - newsize)) < h_bits)
+                {
+                    count++;
+                    delta = HUFFDELTA;
+                    dentries += HUFFDELTA;
+                    if(dentries > entries)
                     {
-                        if((lentries - dentries) < HUFFDELTA)
-                        {
-                            dentries = lentries;
-                        }
+                        dentries = entries;
                         break;
                     }
                 }
+                else
+                {
+                    if(((entries - dentries) < HUFFDELTA) && ((com->charp - com->chars)<com->hufbufsize))
+                    {
+                        dentries = entries;
+                    }
+                    break;
+                }
             }
-            lentries = dentries;
         }
-        entries = (uint16) lentries;
+        entries = dentries;
     }
-    /* character frequentie op nul zetten */
     memset(charfreq, 0, NC * sizeof(*charfreq));
-    /* zet pointer count op nul */
     memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
     { /*- character frequentie tellen */
         uint16 i = entries;
@@ -948,7 +929,6 @@ gup_result compress_chars(packstruct *com)
     */
     {
         uint16 old_entries;
-
         do
         {
             /*
@@ -969,10 +949,8 @@ gup_result compress_chars(packstruct *com)
                 uint8* bp=com->backmatch+1;
                 c_codetype *p = com->chars;
                 {
-                    /* char-length for element 'MIN_MATCH': */
-                    int8 len3 = com->charlen[MIN_MATCH + (NLIT - MIN_MATCH)];
-                    /* char-length for element 'MIN_MATCH+1': */
-                    int8 len4 = com->charlen[(MIN_MATCH + 1) + (NLIT - MIN_MATCH)];
+                    int8 len3 = com->charlen[MIN_MATCH + (NLIT - MIN_MATCH)]; /* char-length for element 'MIN_MATCH' */
+                    int8 len4 = com->charlen[(MIN_MATCH + 1) + (NLIT - MIN_MATCH)]; /* char-length for element 'MIN_MATCH+1' */
                     uint16 i = entries-entriesextra;
 
                     do
@@ -1882,66 +1860,44 @@ gup_result compress_chars(packstruct *com)
     */
     entries -= entriesextra;
     {
-        c_codetype *r = com->chars;
-        pointer_type *s = com->pointers;
-        uint8 *s3 = com->matchstring;
-        uint16 i = entries;
-        do
+        uint_fast32_t ptrctr=0;
+        for(int_fast16_t i=0; i<entries; i++)
         {
-            c_codetype kar = *r++;
+            c_codetype kar = com->chars[i];
             if(kar < 0)
             {
-                c_codetype xkar;
-                xkar = *s3++;
-                ST_BITS(com->char2huffman[xkar], com->charlen[xkar]);
-                if(kar< -1)
+                kar=-kar;
+                for(int_fast8_t j=0; j<kar; j++)
                 {
-                    xkar = *s3++;
-                    ST_BITS(com->char2huffman[xkar], com->charlen[xkar]);
-                    if(kar< -2)
-                    {
-                        xkar = *s3++;
-                        ST_BITS(com->char2huffman[xkar], com->charlen[xkar]);
-                        if(kar< -3)
-                        {
-                            xkar = *s3++;
-                            ST_BITS(com->char2huffman[xkar], com->charlen[xkar]);
-                        }
-                    }
+                    ST_BITS(com->char2huffman[com->matchstring[4*ptrctr+j]], com->charlen[com->matchstring[4*ptrctr+j]]);
                 }
-                s3+=4+kar;
-                s++;
+                ptrctr++;
             }
             else
             {
                 ST_BITS(com->char2huffman[kar], com->charlen[kar]);
                 if(kar > (NLIT - 1))
                 {
-                    int j = LOG(*s);
-                    ST_BITS(com->ptr2huffman[j], com->ptrlen[j]);
-                    if(--j > 0)
+                    int ptrbits = LOG(com->pointers[ptrctr]);
+                    ST_BITS(com->ptr2huffman[ptrbits], com->ptrlen[ptrbits]);
+                    if(--ptrbits > 0)
                     {
-                        ST_BITS(((*s) & (0xffff >> (16 - j))), j);
+                        ST_BITS(((com->pointers[ptrctr]) & (0xffff >> (16 - ptrbits))), ptrbits);
                     }
-                    s3 += 4;
-                    s++;
+                    ptrctr++;
                 }
             }
-        } while(--i!=0);
+        }
         {
             long i = (com->charp - com->chars) - entries;
-            long ptrctr = s - com->pointers;
-            if(com->matchstring != NULL)
-            {
-                memmove(com->matchstring, s3, i * 4);
-                memmove(com->backmatch, com->backmatch+ptrctr, i);
-                com->msp -= 4 * (long)ptrctr;
-                com->bmp-=ptrctr;
-            }
-            memmove(com->chars, r, i * sizeof(c_codetype));
-            memmove(com->pointers, s, i * sizeof(pointer_type));
+            memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
+            com->charp-=entries;
+            memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
+            com->msp-=4*ptrctr;
+            memmove(com->backmatch, com->backmatch+ptrctr, i);
+            com->bmp-=ptrctr;
+            memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
             com->ptrp -= ptrctr;
-            com->charp -= entries;
         }
     }
     return GUP_OK;
