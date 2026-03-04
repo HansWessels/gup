@@ -282,7 +282,7 @@
 #include "compress.h"
 #include "evaluatr.h"
 #include "encode.h"
-
+#include "assume_compat.h"
 
 /* eerst ff wat definities */
 
@@ -814,7 +814,6 @@ gup_result compress_chars(packstruct *com)
     uint16 charfreq[NC];
     uint16 ptrfreq[MAX_NPT];
     uint16 entries;
-
     entries = (uint16) (com->charp - com->chars);
     if(entries > com->hufbufsize)
     {
@@ -1358,9 +1357,9 @@ gup_result compress_chars(packstruct *com)
                 {
                     delta_size >>= 1;
                     /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof(*charfreq));
+                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
                     /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
                     { /*- character frequentie tellen */
                         uint16 i = entries;
                         c_codetype *p = com->chars;
@@ -1435,9 +1434,9 @@ gup_result compress_chars(packstruct *com)
                     entriesextra = 0;
                     delta_size >>= 1;
                     /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof(*charfreq));
+                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
                     /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
                     { /*- character frequentie tellen */
                         uint16 i = entries;
                         c_codetype *p = com->chars;
@@ -1494,11 +1493,11 @@ gup_result compress_chars(packstruct *com)
         */
         {
             gup_result res;
-            bits_comming+=com->bits_rest;
-            if((res=announce((bits_comming+com->bits_in_bitbuf)>>3, com))!=GUP_OK)
+            if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
             {
                 return res;
             }
+            bits_comming+=com->bits_rest;
             com->bits_rest=(int16)(bits_comming&7);
             com->packed_size += bits_comming>>3;
         }
@@ -1589,7 +1588,7 @@ gup_result compress_chars(packstruct *com)
         int charct=get_max_character(charfreq, NC);
         /* vanaf hier hebben wij charfreq niet meer nodig! */
         /* frequentie tabel op nul zetten voor gebruik pointers */
-        memset(charfreq, 0, NCPT * sizeof(*charfreq));
+        memset(charfreq, 0, NCPT * sizeof(charfreq[0]));
         /* frequentie character lengtes tellen */
         for(i = 0; i < charct; i++)
         {
@@ -1790,66 +1789,37 @@ gup_result compress_chars(packstruct *com)
         /*
         ** charlen is overgestuurd, nu weer een ptrlen
         */
-        {
-            /*
-            ** wat is de specialcase voor de pointers? 1 er is maar een
-            ** pointerlengte
-            */
+        {   /* wat is de specialcase voor de pointers? 1 er is maar een pointerlengte */
             uint16 vp = 0;
-            uint16 *p = ptrfreq;
-            i = com->n_ptr;
-            do
+            int ptrct=0;
+            for(int_fast8_t i=0; i<com->n_ptr; i++)
             {
-                if(*p++)
+                if(ptrfreq[i]!=0)
                 {
                     vp++;
+                    ptrct=i;
                 }
-            } while(--i!=0);
+            }
             if(vp < 2)
             { /*- special case 3, er is maar een pointerlengte */
-                int j;
-                if(vp == 1)
-                {
-                    uint16 *p = ptrfreq;
-                    while(*p++ == 0)
-                    {
-                        ;
-                    }
-                    j = (int)(p - 1 - ptrfreq);
-                }
-                else
-                {
-                    j = 0;
-                }
                 ST_BITS(0, com->m_ptr_bit);
-                ST_BITS(j, com->m_ptr_bit);
-                com->ptrlen[j] = 0;
-                com->ptr2huffman[j] = 0;
+                ST_BITS(ptrct, com->m_ptr_bit);
             }
             else
             {
-                int ptrct = com->n_ptr;
-                while((ptrct) && (!com->ptrlen[ptrct - 1]))
-                {
-                    ptrct--;
-                }
+                ptrct++;
                 ST_BITS(ptrct, com->m_ptr_bit);
-                for(i = 0; i < ptrct; i++)
+                for(int_fast8_t i=0; i<ptrct; i++)
                 {
-                    if(com->ptrlen[i] < 7)
+                    if(com->ptrlen[i]<7)
                     {
                         ST_BITS(com->ptrlen[i], 3);
                     }
                     else
                     {
-                        int rest = com->ptrlen[i] - 7;
+                        int tail=com->ptrlen[i]-6;
                         ST_BITS(7, 3);
-                        while(rest!=0)
-                        {
-                            rest--;
-                            ST_BITS(1, 1);
-                        }
-                        ST_BITS(0, 1);
+                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
                     }
                 }
             }
@@ -1861,12 +1831,13 @@ gup_result compress_chars(packstruct *com)
     entries -= entriesextra;
     {
         uint_fast32_t ptrctr=0;
-        for(int_fast16_t i=0; i<entries; i++)
+        for(uint_fast16_t i=0; i<entries; i++)
         {
             c_codetype kar = com->chars[i];
             if(kar < 0)
             {
                 kar=-kar;
+                ASSUME(kar<=4);
                 for(int_fast8_t j=0; j<kar; j++)
                 {
                     ST_BITS(com->char2huffman[com->matchstring[4*ptrctr+j]], com->charlen[com->matchstring[4*ptrctr+j]]);
@@ -2477,7 +2448,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
     /* frequentie tabel op nul zetten voor gebruik pointers */
     int i;
 
-    memset(freq, 0, NCPT * sizeof(*freq));
+    memset(freq, 0, NCPT * sizeof(freq[0]));
     /* frequentie character lengtes tellen */
     for(i = 0; i < charct; i++)
     {
@@ -2774,11 +2745,11 @@ gup_result compress_lzs(packstruct *com)
     }
     {
       gup_result res;
-      bits_comming+=com->bits_rest;
-      if((res=announce((bits_comming+com->bits_in_bitbuf)>>3, com))!=GUP_OK)
+      if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
       {
         return res;
       }
+      bits_comming+=com->bits_rest;
       com->bits_rest=(int16)(bits_comming&7);
       com->packed_size += bits_comming>>3;
     }
