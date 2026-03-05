@@ -1223,8 +1223,7 @@ gup_result compress_chars(packstruct *com)
             entriesextra += entries - old_entries;
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
             make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
-        }
-        while(entries != old_entries);
+        } while(entries != old_entries);
         {
             /*
             //  Code die backmatch stringlengtes optimaliseert.
@@ -1245,8 +1244,7 @@ gup_result compress_chars(packstruct *com)
                 {
                     uint8* bp=com->backmatch;
                     c_codetype *p = com->chars;
-                    uint16 i = entries-entriesextra;
-                    do
+                    for(uint_fast16_t i=0; i<(uint16)(entries-entriesextra); i++)
                     {
                         c_codetype kar = *p++;
                         if(kar > (NLIT-1))
@@ -1295,7 +1293,7 @@ gup_result compress_chars(packstruct *com)
                                 bp++;
                             }
                         }
-                    } while(--i!=0);
+                    }
                 }
                 #if !defined(NDEBUG) || 0
                 { /*- for debugging use */
@@ -1524,7 +1522,7 @@ gup_result compress_chars(packstruct *com)
     ** :
     ** 18         = c_len = 16
     */
-    if(com->special_header!=NORMAL_HEADER)
+    if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
     { /* minimale header, alles literal */
         { /* de MAME testset triggert deze case */
             uint16 xentries=entries;
@@ -1584,17 +1582,16 @@ gup_result compress_chars(packstruct *com)
     }
     else
     {
-        int i;
         int charct=get_max_character(charfreq, NC);
         /* vanaf hier hebben wij charfreq niet meer nodig! */
         /* frequentie tabel op nul zetten voor gebruik pointers */
         memset(charfreq, 0, NCPT * sizeof(charfreq[0]));
         /* frequentie character lengtes tellen */
-        for(i = 0; i < charct; i++)
+        for(int_fast16_t i=0; i < charct; i++)
         {
-            if(com->charlen[i])
+            if(com->charlen[i]!=0)
             {
-                charfreq[com->charlen[i] + 2]++;
+                charfreq[com->charlen[i]+2]++;
             }
             else
             { /*- charlen nul krijgt een speciale behandeling */
@@ -1639,16 +1636,14 @@ gup_result compress_chars(packstruct *com)
             */
             int vp = 0;
             int np = 1;
-            uint8 *p = com->charlen;
-            int len = *p;
-            i = charct;
-            do
+            int len = com->charlen[0];
+            for(int_fast16_t i=0; i<charct; i++)
             {
-                int tmp = *p++;
-                if(tmp)
+                int karlen=com->charlen[i];
+                if(karlen!=0)
                 {
                     vp++;
-                    if(tmp != len)
+                    if(karlen!=len)
                     {
                         np = 0;
                     }
@@ -1657,96 +1652,72 @@ gup_result compress_chars(packstruct *com)
                 {
                     np = 0;
                 }
-            } while(--i!=0);
-            if((vp < 2) || np)
-            { /*- special case 1, er is maar een character lengte */
+            }
+            if((vp < 2) || (np!=0))
+            { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als np!=0 */
                 ST_BITS(0, 5);
                 ST_BITS(*com->charlen + 2, 5);
             }
             else
             {
                 long ptrct = NCPT;
-                int extra_add = 0;
+                int skip=0;
                 while(!com->ptrlen1[ptrct - 1])
                 {
                     ptrct--;
                 }
                 if(com->ptrlen1[3] == 0)
                 {
-                    extra_add = 1;
+                    skip=1;
                     if(com->ptrlen1[4] == 0)
                     {
-                        extra_add = 2;
+                        skip=2;
                         if(com->ptrlen1[5] == 0)
                         {
-                            extra_add = 3;
+                            skip=3;
                         }
                     }
                 }
                 ST_BITS(ptrct, 5);          /* aantal pointers dat er aan komt */
-                for(i = 0; i < ptrct; i++)
+                for(int_fast8_t i=0; i<ptrct; i++)
                 {
+
                     if(com->ptrlen1[i] < 7)
                     {
                         ST_BITS(com->ptrlen1[i], 3);
                     }
                     else
                     {
-                        int rest = com->ptrlen1[i] - 7;
+                        int tail=com->ptrlen1[i]-6;
                         ST_BITS(7, 3);
-                        while(rest!=0)
-                        {
-                            rest--;
-                            ST_BITS(1, 1);
-                        }
-                        ST_BITS(0, 1);
+                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
                     }
-                    if(i == 2)
+                    if(i==2)
                     {
-                        ST_BITS(extra_add, 2);
-                        i += extra_add;
+                        ST_BITS(skip, 2);
+                        i+=skip;
                     }
                 }
             }
-        }
-        /*
-        ** charlen overgedragen, breng characters
-        */
-        {
-            /*
-            ** De enige special case voor de characters is dat er maar een
-            ** character is.
-            */
-            uint16 vp = 0;
-            uint8 *p = com->charlen;
-            i = charct;
-            do
-            {
-                if(*p++)
-                {
-                    vp++;
-                }
-            } while(--i!=0);
+            /* charlen overgedragen, breng characters  */
             if(vp < 2)
             { /*- special case 2, er is maar een karakter lengte */
-                c_codetype pos = *com->chars;
-                if(pos < 0)
+                c_codetype kar=com->chars[0];
+                if(kar<0)
                 {
-                    pos = *com->matchstring;
+                    kar=com->matchstring[0];
                 }
                 ST_BITS(0, 9);
-                ST_BITS(pos, 9);
-                com->charlen[pos] = 0;
-                com->char2huffman[pos] = 0;
+                ST_BITS(kar, 9);
             }
             else
             {
                 ST_BITS(charct, 9);
-                for(i = 0; i < charct; i++)
+                for(int_fast16_t i=0; i<charct; i++)
                 {
                     if(com->charlen[i])
                     {
-                        ST_BITS(com->ptr2huffman1[com->charlen[i] + 2], com->ptrlen1[com->charlen[i] + 2]);
+                        ST_BITS(com->ptr2huffman1[com->charlen[i]+2], com->ptrlen1[com->charlen[i]+2]);
                     }
                     else
                     {
@@ -2699,9 +2670,9 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
    */
   if(((message_bits+header_bits)>>3)>(*packed_bytes) && (*packed_bytes <= MAX_ENTRIES))
   { /* is een conversie mogelijk */
-    if((com->matchstring!=NULL) && (charct<=(NLIT+2)))
+    if(charct<=(NLIT+2))
     { /* conversie is mogelijk */
-      if((message_bits+header_bits)>((*packed_bytes<<3)+MIN_ASCII_HEADER))
+      if((message_bits+header_bits)>=((*packed_bytes<<3)+MIN_ASCII_HEADER))
       { /* conversie */
         unsigned long size=MIN_ASCII_HEADER+(*packed_bytes<<3);
         com->special_header=SPECIAL_MIN_ASCII_HEADER;
