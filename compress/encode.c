@@ -1584,29 +1584,42 @@ gup_result compress_chars(packstruct *com)
     {
         int charct=get_max_character(charfreq, NC);
         /* vanaf hier hebben wij charfreq niet meer nodig! */
-        /* frequentie tabel op nul zetten voor gebruik pointers */
-        memset(charfreq, 0, NCPT * sizeof(charfreq[0]));
-        /* frequentie character lengtes tellen */
-        for(int_fast16_t i=0; i < charct; i++)
+        ST_BITS(entries, 16); /* aantal huffman karakters */
         {
-            if(com->charlen[i]!=0)
+            /*
+            ** belangrijk item, wat zijn de gevallen dat er slechts 1
+            ** pointerlengte overgedragen hoeft te worden?
+            ** 1: er is maar 1 pointer lengte er
+            ** is maar 1 karakter (dat kan wel meerdere ptrlens veroorzaken)
+            */
+            int vp=0;
+            int nulct=0;
+            int len=com->charlen[0];
+            memset(charfreq, 0, NCPT * sizeof(charfreq[0])); /* frequentie tabel op nul zetten voor gebruik pointers */
+            for(int_fast16_t i=0; i<charct; i++)
             {
-                charfreq[com->charlen[i]+2]++;
-            }
-            else
-            { /*- charlen nul krijgt een speciale behandeling */
-                int nulct = 1;
-                while(!com->charlen[i + nulct])
+                int karlen=com->charlen[i];
+                if(karlen!=0)
                 {
-                    nulct++;
-                }
-                if(nulct < 3)
-                {
-                    charfreq[0] += (uint16)nulct;
+                    charfreq[karlen+2]++;
+                    vp++;
+                    if(karlen!=len)
+                    {
+                        nulct=1;
+                    }
                 }
                 else
-                {
-                    if(nulct < 20)
+                { /*- charlen nul krijgt een speciale behandeling */
+                    nulct=1;
+                    while(!com->charlen[i + nulct])
+                    {
+                        nulct++;
+                    }
+                    if(nulct < 3)
+                    {
+                        charfreq[0] += (uint16)nulct;
+                    }
+                    else if(nulct < 20)
                     {
                         charfreq[1]++;
                         if(nulct == 19)
@@ -1618,43 +1631,11 @@ gup_result compress_chars(packstruct *com)
                     {
                         charfreq[2]++;
                     }
-                }
-                i += nulct - 1;
-            }
-        }
-        make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN);
-        /*
-        ** Nu zijn alle ptrs gedefinieerd, stuur ze de ARJ file in
-        */
-        ST_BITS(entries, 16);           /* aantal huffman karakters */
-        {
-            /*
-            ** belangrijk item, wat zijn de gevallen dat er slechts 1
-            ** pointerlengte overgedragen hoeft te worden? er is maar 1 pointer
-            ** lengte er is maar 1 karakter (dat kan wel meerdere ptrlens
-            ** veroorzaken)
-            */
-            int vp = 0;
-            int np = 1;
-            int len = com->charlen[0];
-            for(int_fast16_t i=0; i<charct; i++)
-            {
-                int karlen=com->charlen[i];
-                if(karlen!=0)
-                {
-                    vp++;
-                    if(karlen!=len)
-                    {
-                        np = 0;
-                    }
-                }
-                else
-                {
-                    np = 0;
+                    i += nulct - 1;
                 }
             }
-            if((vp < 2) || (np!=0))
-            { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als np!=0 */
+            if((vp < 2) || (nulct==0))
+            { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als nulct==0 */
                 ST_BITS(0, 5);
                 ST_BITS(*com->charlen + 2, 5);
             }
@@ -1662,6 +1643,7 @@ gup_result compress_chars(packstruct *com)
             {
                 long ptrct = NCPT;
                 int skip=0;
+                make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN);
                 while(!com->ptrlen1[ptrct - 1])
                 {
                     ptrct--;
