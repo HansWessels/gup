@@ -307,9 +307,16 @@ uint16 get_max_character(uint16 freq[], int max_index);
 #define MAX_HUFFMAN_LEN MAX_HUFFLEN
 #define MAX_SYMBOL_SIZE NC
 
+#define SORT_MASK_CHAR 1
+#define SORT_MASK_PTR 2
+#define SORT_MASK_CHARPTR 4
+
+#define SORT_OPT 1
+
+
 void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
 void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
-void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len);
+void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len, int sort_order);
 void make_huffman_codes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
 gup_result init_encode_r(packstruct *com);
 void free_encode_r(packstruct *com);
@@ -840,8 +847,8 @@ gup_result compress_chars(packstruct *com)
                     ptrfreq[LOG(com->pointers[ptr_index++])]++;
                 }
             }
-            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
             /*
             ** Karakter frequenties zijn bekend, karakter huffman tabel is
             ** berekend. Pointer frequenties zijn bekend, pointer huffman
@@ -920,8 +927,8 @@ gup_result compress_chars(packstruct *com)
         ARJ_Assert(com->backmatch!=NULL);
         com->backmatch[(uint16) (q - com->pointers)]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
-    make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-    make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+    make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+    make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
     /*
     ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
@@ -1221,8 +1228,8 @@ gup_result compress_chars(packstruct *com)
             }
             #endif
             entriesextra += entries - old_entries;
-            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
         } while(entries != old_entries);
         {
             /*
@@ -1242,20 +1249,19 @@ gup_result compress_chars(packstruct *com)
                 com->charlen[NLIT-2]=32;
                 com->charlen[NLIT-3]=32;
                 {
-                    uint8* bp=com->backmatch;
-                    c_codetype *p = com->chars;
+                    uint_fast16_t bmi = 0;
                     for(uint_fast16_t i=0; i<(uint16)(entries-entriesextra); i++)
                     {
-                        c_codetype kar = *p++;
+                        c_codetype kar=com->chars[i];
                         if(kar > (NLIT-1))
                         {
-                            uint8 len=*bp++;
+                            uint8 len=com->backmatch[bmi];
                             if(len>0)
                             {
-                                c_codetype kar_1;
-                                if((kar_1=p[-2])<0)
+                                c_codetype kar_1=com->chars[i-1];
+                                if(kar_1<0)
                                 {
-                                    bp[-1]=0;
+                                    com->backmatch[bmi]=0;
                                 }
                                 else
                                 {
@@ -1268,9 +1274,9 @@ gup_result compress_chars(packstruct *com)
                                             redo=1;
                                             charfreq[kar]--;
                                             charfreq[kar_1]--;
-                                            bp[-1]-=offset;
-                                            p[-2]-=offset;
-                                            p[-1]+=offset;
+                                            com->backmatch[bmi]-=offset;
+                                            com->chars[i-1]-=offset;
+                                            com->chars[i]+=offset;
                                             kar+=offset;
                                             kar_1-=offset;
                                             optlen=com->charlen[kar_1]+com->charlen[kar];
@@ -1285,12 +1291,13 @@ gup_result compress_chars(packstruct *com)
                                     } while(--len!=0);
                                 }
                             }
+                            bmi++;
                         }
                         else
                         {
                             if(kar<0)
                             {
-                                bp++;
+                                bmi++;
                             }
                         }
                     }
@@ -1319,7 +1326,7 @@ gup_result compress_chars(packstruct *com)
                 }
                 #endif
                 /* recalc charlen, ptr len hoeft niet */
-                make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
+                make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
             } while(redo);
         }
     }
@@ -1399,8 +1406,8 @@ gup_result compress_chars(packstruct *com)
                     }
                     {
                         unsigned long h_bits, m_bits;
-                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
                         bits = count_bits(&h_bits, &m_bits, &m_size, (uint16)(entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, com);
                         bits+=com->mv_bits_left+7;
                         bits >>= 3;                  /* bytes=bits/8 */
@@ -1474,8 +1481,8 @@ gup_result compress_chars(packstruct *com)
                     }
                     {
                         unsigned long h_bits, m_bits;
-                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN);
-                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN);
+                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
                         entries += entriesextra;
                         bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
                     }
@@ -1643,7 +1650,7 @@ gup_result compress_chars(packstruct *com)
             {
                 long ptrct = NCPT;
                 int skip=0;
-                make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN);
+                make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & SORT_OPT));
                 while(!com->ptrlen1[ptrct - 1])
                 {
                     ptrct--;
@@ -2080,7 +2087,7 @@ int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t s
               3. <nchar> is less than or equal to <NC>.
 ******************************************************************************/
 
-void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len)
+void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len, int sort_order)
 {
     freq_t freq_array[MAX_SYMBOL_SIZE*2+1]; /* we willen een voor het array ook kunnen lezen */
     symbol_count_t tree_array[MAX_HUFFMAN_LEN*MAX_SYMBOL_SIZE*2];
@@ -2091,19 +2098,7 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
     symbol_count_t pairs_count;
     symbol_count_t i;
     symbol_count=0;
-    if(0)
-    {
-        for(i=0; i<symbol_size; i++)
-        { /* hoeveel symbols zijn er met een freq>0? */
-            if(in_freq[i]!=0)
-            {
-                freq[symbol_count]=in_freq[i];
-                symbols[symbol_count]=i;
-                symbol_count++;
-            }
-        }
-    }
-    else
+    if(sort_order==0)
     {
         i=symbol_size;
         do
@@ -2116,6 +2111,18 @@ void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[
                 symbol_count++;
             }
         } while(i>0);
+    }
+    else
+    {
+        for(i=0; i<symbol_size; i++)
+        { /* hoeveel symbols zijn er met een freq>0? */
+            if(in_freq[i]!=0)
+            {
+                freq[symbol_count]=in_freq[i];
+                symbols[symbol_count]=i;
+                symbol_count++;
+            }
+        }
     }
     memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
     if(symbol_count<3)
@@ -2439,7 +2446,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         i += nulct - 1;
       }
     }
-    make_hufftable(com->ptrlen1, com->ptr2huffman1, freq, NCPT, MAX_HUFFLEN);
+    make_hufftable(com->ptrlen1, com->ptr2huffman1, freq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & SORT_OPT));
     /*
      * Nu zijn alle ptrs gedefinieerd, stuur ze de ARJ file in
     */
