@@ -844,7 +844,7 @@ gup_result compress_chars(packstruct *com)
                 rle_len=i-rle_pos;
                 if(rle_len>=MIN_RLE)
                 {
-                    printf("\n");
+//                    printf("\n");
                     int rle_char;
                     int pre_rle_char=-1;
                     pointer_type ptr=0xffff;
@@ -885,8 +885,8 @@ gup_result compress_chars(packstruct *com)
                     {
                         pre_rle_char=com->chars[rle_pos-1];
                     }
-                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i\n", rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr);
-                    getchar();
+//                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i\n", rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr);
+//                    getchar();
                     break;
                 }
                 rle_len=0;
