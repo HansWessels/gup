@@ -299,7 +299,7 @@ gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
-                         unsigned long* packed_bytes, uint16 entries, uint8* charlen,
+                         unsigned long* packed_bytes, int_fast32_t entries, uint8* charlen,
                          uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
 void set_maxlen(int count, uint8 len[]);
 uint16 get_max_character(uint16 freq[], int max_index);
@@ -382,7 +382,7 @@ gup_result init_encode_r(packstruct *com)
 {
     void (*i_fastlog)(packstruct *com);
     com->compress=compress_chars;
-    com->max_match = 256;          /* grootte van max_match voor Junk & LHA */
+    com->max_match = ARJ_MAX_MATCH;          /* grootte van max_match voor ARJ & LHA */
     com->close_packed_stream=close_m1_m7_stream; /* use close_m1_m7_stream() by default */
     switch(com->mode)
     {
@@ -815,30 +815,102 @@ uint16 get_max_character(uint16 freq[], int max_index)
     return 0;
 }
 
+#define MIN_RLE 16
+
 gup_result compress_chars(packstruct *com)
 {
-    uint16 entriesextra = 0;
+    int_fast32_t entriesextra = 0;
+    int_fast32_t rle_pos;
     uint16 charfreq[NC];
     uint16 ptrfreq[MAX_NPT];
     uint16 entries;
-    entries = (uint16) (com->charp - com->chars);
+    entries = (int_fast32_t) (com->charp - com->chars);
     if(entries > com->hufbufsize)
     {
         entries = com->hufbufsize;
+    }
+    { /* scannen naar een rle */
+        int rle_len=0;
+        int_fast32_t i=1;
+        while(i<entries)
+        {
+            if(com->chars[i]==com->chars[i-1])
+            {
+                rle_pos=i-1;
+                do
+                {
+                    i++;
+                } while((com->chars[i]==com->chars[i-1]) && (i<entries));
+                rle_len=i-rle_pos;
+                if(rle_len>=MIN_RLE)
+                {
+                    printf("\n");
+                    int rle_char;
+                    int pre_rle_char=-1;
+                    pointer_type ptr=0xffff;
+                    if(com->chars[rle_pos]>=NLIT)
+                    { /* we hebben matches als RLE */
+                        int_fast32_t ptrpos=0;
+                        for(int_fast32_t i=0; i<(rle_pos+rle_len); i++)
+                        {
+                            if(com->chars[i]>=NLIT)
+                            {
+                                ptrpos++;
+                            }
+                        }
+                        int oneptr=1;
+                        ptr=com->pointers[rle_pos];
+                        for(int_fast32_t i=rle_pos; i<rle_pos; i++)
+                        { /* zijn alle pointers hetzelfde? */
+                            if(com->pointers[i]!=ptr)
+                            {
+                                oneptr=0;
+                                break;
+                            }
+                        }
+                        if((oneptr!=0) && (ptr==0))
+                        {
+                            rle_char=com->matchstring[rle_pos*4];
+                        }
+                        else
+                        {
+                            rle_char=-1;
+                        }
+                    }
+                    else
+                    {
+                        rle_char=(com->chars[rle_pos]);
+                    }
+                    if(rle_pos>0)
+                    {
+                        pre_rle_char=com->chars[rle_pos-1];
+                    }
+                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i\n", rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr);
+                    getchar();
+                    break;
+                }
+                rle_len=0;
+            }
+            i++;
+        }
+        if(rle_len==0)
+        {
+            rle_pos=i;
+        }
     }
     if(entries > HUFFSTART)
     { /*- aantal entries dynamisch berekenen */
         int count = (int)(HUFFSTART / HUFFDELTA);
         uint16 char_index=0;
         uint16 ptr_index=0;
-        uint16 delta;
-        uint16 dentries = HUFFSTART;
+        int_fast32_t delta;
+        int_fast32_t dentries = HUFFSTART;
         delta = dentries;
         memset(charfreq, 0, NC * sizeof(charfreq[0]));
         memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
         while(dentries < entries)
         {
-            for(int i=0; i<delta; i++)
+            for(int_fast32_t i=0; i<delta; i++)
             { /* update charachter and ptr freq */
                 c_codetype cur_char = com->chars[char_index++];
                 charfreq[cur_char]++;
@@ -868,7 +940,7 @@ gup_result compress_chars(packstruct *com)
                     if(dentries + i > entries)
                     {
                         i = entries - dentries;
-                        ARJ_Assert(((long)lentries - (long)dentries) >= 0);
+                        ARJ_Assert((lentries - dentries) >= 0);
                     }
                     do
                     {
@@ -912,7 +984,7 @@ gup_result compress_chars(packstruct *com)
     memset(charfreq, 0, NC * sizeof(*charfreq));
     memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
     { /*- character frequentie tellen */
-        uint16 i = entries;
+        int_fast32_t i = entries;
         c_codetype *p = com->chars;
         pointer_type *q = com->pointers;
         do
@@ -934,7 +1006,7 @@ gup_result compress_chars(packstruct *com)
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
     */
     {
-        uint16 old_entries;
+        int_fast32_t old_entries;
         do
         {
             /*
@@ -957,7 +1029,7 @@ gup_result compress_chars(packstruct *com)
                 {
                     int8 len3 = com->charlen[MIN_MATCH + (NLIT - MIN_MATCH)]; /* char-length for element 'MIN_MATCH' */
                     int8 len4 = com->charlen[(MIN_MATCH + 1) + (NLIT - MIN_MATCH)]; /* char-length for element 'MIN_MATCH+1' */
-                    uint16 i = entries-entriesextra;
+                    int_fast32_t i = entries-entriesextra;
 
                     do
                     {
@@ -1206,9 +1278,9 @@ gup_result compress_chars(packstruct *com)
             }
             #if !defined(NDEBUG) || 0
             { /*- for debugging use */
-                long lentries = (uint16) (com->charp - com->chars);
+                int_fast32_tlentries = (com->charp - com->chars);
                 {
-                    long i = lentries;
+                    int_fast32_t i = lentries;
                     c_codetype *cp = com->chars;
                     while(--i!=0)
                     {
@@ -1250,7 +1322,7 @@ gup_result compress_chars(packstruct *com)
                 com->charlen[NLIT-3]=32;
                 {
                     uint_fast16_t bmi = 0;
-                    for(uint_fast16_t i=0; i<(uint16)(entries-entriesextra); i++)
+                    for(int_fast32_t i=0; i<(entries-entriesextra); i++)
                     {
                         c_codetype kar=com->chars[i];
                         if(kar > (NLIT-1))
@@ -1304,9 +1376,9 @@ gup_result compress_chars(packstruct *com)
                 }
                 #if !defined(NDEBUG) || 0
                 { /*- for debugging use */
-                    long lentries = (uint16) (com->charp - com->chars);
+                    int_fast32_t lentries = (com->charp - com->chars);
                     {
-                        long i = lentries;
+                        int_fast32_t i = lentries;
                         c_codetype *cp = com->chars;
                         while(--i!=0)
                         {
@@ -1366,7 +1438,7 @@ gup_result compress_chars(packstruct *com)
                     /* pointer frequentie op nul */
                     memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
                     { /*- character frequentie tellen */
-                        uint16 i = entries;
+                        int_fast32_t i = entries;
                         c_codetype *p = com->chars;
                         pointer_type *q = com->pointers;
                         uint8 *mstp = com->matchstring;
@@ -1408,7 +1480,7 @@ gup_result compress_chars(packstruct *com)
                         unsigned long h_bits, m_bits;
                         make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
                         make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
-                        bits = count_bits(&h_bits, &m_bits, &m_size, (uint16)(entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                        bits = count_bits(&h_bits, &m_bits, &m_size, (entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, com);
                         bits+=com->mv_bits_left+7;
                         bits >>= 3;                  /* bytes=bits/8 */
                     }
@@ -1443,7 +1515,7 @@ gup_result compress_chars(packstruct *com)
                     /* pointer frequentie op nul */
                     memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
                     { /*- character frequentie tellen */
-                        uint16 i = entries;
+                        int_fast32_t i = entries;
                         c_codetype *p = com->chars;
                         pointer_type *q = com->pointers;
                         do
@@ -1532,7 +1604,7 @@ gup_result compress_chars(packstruct *com)
     if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
     { /* minimale header, alles literal */
         { /* de MAME testset triggert deze case */
-            uint16 xentries=entries;
+            int_fast32_t xentries=entries;
             xentries+=2*charfreq[NLIT];
             xentries+=3*charfreq[NLIT+1];
             ST_BITS(xentries, 16);           /* aantal huffman karakters */
@@ -1560,7 +1632,7 @@ gup_result compress_chars(packstruct *com)
             }
         }
         {
-            uint16 i=entries-entriesextra;
+            int_fast32_t i=entries-entriesextra;
             c_codetype *r = com->chars;
             do
             {
@@ -2371,7 +2443,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
                          unsigned long *message_size, /* komt message size in bits in te staan */
                          unsigned long *packed_bytes, /* aantal bytes dat gepacked wordt */
           /* nu de variabelen die nodig zijn voor de berekening */
-                         uint16 entries, /* aantal character die moeten worden gepacked */
+                         int_fast32_t entries, /* aantal character die moeten worden gepacked */
                          uint8 * charlen,  /* character lengte tabel          */
                          uint8 * ptrlen,/* pointerlengte tabel                */
                          uint16 * charfreq, /* karakter frequentie tabel       */
@@ -2676,7 +2748,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
 
 gup_result compress_lzs(packstruct *com)
 { /* LZS and LZ5 compression at: https://github.com/fragglet/lhasa/tree/master/lib, decode with lhasa */
-  uint16 entries = (uint16) (com->charp - com->chars);
+  int_fast32_t entries = (int_fast32_t) (com->charp - com->chars);
   unsigned int i;
   c_codetype *p = com->chars;
   pointer_type *q = com->pointers;
@@ -2738,7 +2810,7 @@ gup_result compress_lzs(packstruct *com)
 		}
 		while(--i != 0);
 	}
-  entries=(uint16)(com->charp-p);
+  entries=(int_fast32_t)(com->charp-p);
   if(com->matchstring != NULL)
   {
     long ptrctr = q - com->pointers;
@@ -2756,12 +2828,12 @@ gup_result compress_lzs(packstruct *com)
 
 gup_result compress_lz5(packstruct *com)
 {
-  uint16 entries = (uint16) (com->charp - com->chars);
+  int_fast32_t entries = (uint16) (com->charp - com->chars);
   c_codetype *p = com->chars;
   pointer_type *q = com->pointers;
   uint16 dic_size=4095;
   uint16 pos=(uint16)((dic_size-18+com->bytes_packed)&dic_size);
-  if(entries > (com->hufbufsize & 0xfff8U))
+  if(entries > (int_fast32_t)(com->hufbufsize & 0xfff8))
   {
     entries = com->hufbufsize &0xfff8U;
   }
@@ -2969,7 +3041,7 @@ gup_result compress_lz5(packstruct *com)
       break;
     }
   }
-  entries=(uint16)(com->charp-p);
+  entries=(int_fast32_t)(com->charp-p);
   if(com->matchstring != NULL)
   {
     long ptrctr = q - com->pointers;

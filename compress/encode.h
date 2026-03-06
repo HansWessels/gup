@@ -58,8 +58,6 @@ extern "C"
                                        DIC_DELTA_SIZE<=DIC_START_SIZE
                                      */
 
-#define HUFF_MAX_SINGLE_FREQ 31        /* Karakter frequenties die direct in tabel verdwijnen, moet 2^n-1 zijn */
-#define HUFF_HIGH_FREQS (16-5)         /* 16-LOG(HUFF_MAX_SINGLE_FREQ) */
 #define MAX_DEFLATE_HUFFLEN 15         /* maximale hufflength deflate is 15 */
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
 #define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
@@ -69,7 +67,8 @@ extern "C"
 #define MAX_PTR   26623                /* arj dictionary is 26k */
 #define PTR_CONV MAX_PTR+1             /* array size voor pointer conversie */
 #define MIN_MATCH 3                    /* Minimale match lengte */
-#define MAX_MATCH 258         /* maximale match lengte = 258 */
+#define MAX_MATCH 258                  /* maximale match lengte = 258 */
+#define ARJ_MAX_MATCH 256              /* maximale match in ARJ (en LZH) files */
 #define MATCH_CONV MAX_MATCH+1         /* array count start bij 0! */
 #define DIC_SIZE 2*65536UL
 
