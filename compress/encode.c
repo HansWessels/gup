@@ -844,10 +844,14 @@ gup_result compress_chars(packstruct *com)
                 rle_len=i-rle_pos;
                 if(rle_len>=MIN_RLE)
                 {
-//                    printf("\n");
                     int rle_char;
                     int pre_rle_char=-1;
                     pointer_type ptr=0xffff;
+                    int total_single_len=0;
+                    if(rle_pos>0)
+                    {
+                        pre_rle_char=com->chars[rle_pos-1];
+                    }
                     if(com->chars[rle_pos]>=NLIT)
                     { /* we hebben matches als RLE */
                         int_fast32_t ptrpos=0;
@@ -859,7 +863,7 @@ gup_result compress_chars(packstruct *com)
                             }
                         }
                         int oneptr=1;
-                        ptr=com->pointers[rle_pos];
+                        ptr=com->pointers[ptrpos];
                         for(int_fast32_t i=rle_pos; i<rle_pos; i++)
                         { /* zijn alle pointers hetzelfde? */
                             if(com->pointers[i]!=ptr)
@@ -868,25 +872,86 @@ gup_result compress_chars(packstruct *com)
                                 break;
                             }
                         }
-                        if((oneptr!=0) && (ptr==0))
+                        if(oneptr!=0)
                         {
                             rle_char=com->matchstring[rle_pos*4];
-                        }
-                        else
-                        {
-                            rle_char=-1;
+                            total_single_len=rle_len*(com->chars[rle_pos]-NLIT+MIN_MATCH);
+                            if((com->chars[rle_pos+rle_len]>=NLIT) && (com->pointers[ptrpos+rle_len]==ptr))
+                            {
+                                total_single_len+=com->chars[rle_pos+rle_len]-NLIT+MIN_MATCH;
+                            }
+                            if((total_single_len<MAX_ENTRIES) && (ptr==0) && (rle_char==pre_rle_char))
+                            {
+                                total_single_len++;
+                                //rle_pos--;
+                                if(rle_pos==-1)
+                                { /* sigle character RLE expansion */
+                                    unsigned long m_size=total_single_len;
+                                    unsigned long bits_comming=44+2*com->m_ptr_bit;
+                                    printf("\n");
+                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i, total_len=%i\n",
+                    rle_pos, rle_len, com->chars[rle_pos+1], pre_rle_char, rle_char, com->chars[rle_pos+rle_len+1], (int)ptr, total_single_len);
+                                    printf("m_size=%i\n", (int) m_size);
+                                    printf("bits_comming=%i\n", (int) bits_comming);
+                                    {
+                                        gup_result res;
+                                        if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
+                                        {
+                                            return res;
+                                        }
+                                        bits_comming+=com->bits_rest;
+                                        com->bits_rest=(int16)(bits_comming&7);
+                                        com->packed_size += bits_comming>>3;
+                                        #ifdef PP_AFTER
+                                        com->print_progres(m_size, com->pp_propagator);
+                                        #endif
+                                        com->bytes_packed += m_size; /* alweer een paar bytes gedaan! */
+                                    }
+                                    ST_BITS(total_single_len, 16); /* aantal huffman karakters */
+                                    ST_BITS(0, 5); /* charptr */
+                                    ST_BITS(0, 5); /* charptr */
+                                    ST_BITS(0, 9); /* char */
+                                    ST_BITS(rle_char, 9); /* char */
+                                    ST_BITS(0, com->m_ptr_bit); /* ptr */
+                                    ST_BITS(0, com->m_ptr_bit); /* ptr */
+                                    {
+                                        uint16 ptrctr=rle_len;
+                                        entries=1+rle_len;
+                                        if((com->chars[rle_pos+rle_len]>=NLIT) && (com->pointers[ptrpos+rle_len]==ptr))
+                                        {
+                                            ptrctr++;
+                                            entries++;
+                                        }
+                                        long i = (com->charp - com->chars) - entries;
+                                        memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
+                                        com->charp-=entries;
+                                        memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
+                                        com->msp-=4*ptrctr;
+                                        memmove(com->backmatch, com->backmatch+ptrctr, i);
+                                        com->bmp-=ptrctr;
+                                        memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
+                                        com->ptrp -= ptrctr;
+                                    }
+                                    return GUP_OK;
+                                }
+                            }
                         }
                     }
                     else
                     {
                         rle_char=(com->chars[rle_pos]);
                     }
+//                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i, total_len=%i\n",
+//                    rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr, total_single_len);
+//                    getchar();
                     if(rle_pos>0)
                     {
-                        pre_rle_char=com->chars[rle_pos-1];
+                        entries=rle_pos;
                     }
-//                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i\n", rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr);
-//                    getchar();
+                    else
+                    {
+                        entries=rle_len;
+                    }
                     break;
                 }
                 rle_len=0;
@@ -1278,7 +1343,7 @@ gup_result compress_chars(packstruct *com)
             }
             #if !defined(NDEBUG) || 0
             { /*- for debugging use */
-                int_fast32_tlentries = (com->charp - com->chars);
+                int_fast32_t lentries = (com->charp - com->chars);
                 {
                     int_fast32_t i = lentries;
                     c_codetype *cp = com->chars;

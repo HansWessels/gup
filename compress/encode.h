@@ -39,11 +39,11 @@ extern "C"
 
 /* sld defines */
 
-#define HASH2_SIZE 65536UL
-#define HASH_SIZE 65536UL
+#define HASH2_SIZE 65536
+#define HASH_SIZE 65536
 #define HASH_SIZE32 65536
 #define RLE32_DEPTH 32768
-#define HASH_SIZE_RLE32 (256U*RLE32_DEPTH)
+#define HASH_SIZE_RLE32 (256*RLE32_DEPTH)
 #define DICTIONARY_OFFSET 4UL
 
 
@@ -60,7 +60,7 @@ extern "C"
 
 #define MAX_DEFLATE_HUFFLEN 15         /* maximale hufflength deflate is 15 */
 #define MAX_HUFFLEN 16                 /* maximale lengte van een huffmancode */
-#define MAX_ENTRIES 65534U             /* Maximum aantal entries in huffman blok */
+#define MAX_ENTRIES 65534             /* Maximum aantal entries in huffman blok */
 #define EXPANTIE_SLACK (7*256)         /* space subtracted from MAX_ENTRIES in order to allow ZEEF34 expansions */
 #define MAX_LHA_LZS_PTR 2047           /* max ptr lha_lzs */
 #define MAX_LHA_LZ5_PTR 4095           /* max ptr lha_lz5 */
@@ -70,14 +70,14 @@ extern "C"
 #define MAX_MATCH 258                  /* maximale match lengte = 258 */
 #define ARJ_MAX_MATCH 256              /* maximale match in ARJ (en LZH) files */
 #define MATCH_CONV MAX_MATCH+1         /* array count start bij 0! */
-#define DIC_SIZE 2*65536UL
+#define DIC_SIZE 2*65536
 
 /* sld.c definities */
 
-#define TREE_SIZE 65536UL              /* treesize */
+#define TREE_SIZE 65536              /* treesize */
 #define MAXDELTA  7                    /* maximale afstand tussen twee pointers */
 
-#define M17(x) ((x) & 0x1ffffUL)       /* buffer is 128k groot */
+#define M17(x) ((x) & 0x1ffff)       /* buffer is 128k groot */
 
 #define MAXD_MATCH 9 /* het maximum voor MAXD_MATCH is 16, anders sld.c veranderen */
 
