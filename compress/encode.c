@@ -855,7 +855,7 @@ gup_result compress_chars(packstruct *com)
                     if(com->chars[rle_pos]>=NLIT)
                     { /* we hebben matches als RLE */
                         int_fast32_t ptrpos=0;
-                        for(int_fast32_t i=0; i<(rle_pos+rle_len); i++)
+                        for(int_fast32_t i=0; i<rle_pos; i++)
                         {
                             if(com->chars[i]>=NLIT)
                             {
@@ -864,7 +864,7 @@ gup_result compress_chars(packstruct *com)
                         }
                         int oneptr=1;
                         ptr=com->pointers[ptrpos];
-                        for(int_fast32_t i=rle_pos; i<rle_pos; i++)
+                        for(int_fast32_t i=ptrpos; i<ptrpos+rle_len; i++)
                         { /* zijn alle pointers hetzelfde? */
                             if(com->pointers[i]!=ptr)
                             {
@@ -874,25 +874,20 @@ gup_result compress_chars(packstruct *com)
                         }
                         if(oneptr!=0)
                         {
-                            rle_char=com->matchstring[rle_pos*4];
+                            rle_char=com->matchstring[ptrpos*4];
                             total_single_len=rle_len*(com->chars[rle_pos]-NLIT+MIN_MATCH);
-                            if((com->chars[rle_pos+rle_len]>=NLIT) && (com->pointers[ptrpos+rle_len]==ptr))
+                            if((com->chars[rle_pos+rle_len]>=NLIT) && (com->pointers[ptrpos+rle_len]==ptr) && (rle_pos+rle_len<entries))
                             {
                                 total_single_len+=com->chars[rle_pos+rle_len]-NLIT+MIN_MATCH;
                             }
                             if((total_single_len<MAX_ENTRIES) && (ptr==0) && (rle_char==pre_rle_char))
                             {
                                 total_single_len++;
-                                //rle_pos--;
-                                if(rle_pos==-1)
+                                rle_pos--;
+                                if(rle_pos==0)
                                 { /* sigle character RLE expansion */
                                     unsigned long m_size=total_single_len;
                                     unsigned long bits_comming=44+2*com->m_ptr_bit;
-                                    printf("\n");
-                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i, total_len=%i\n",
-                    rle_pos, rle_len, com->chars[rle_pos+1], pre_rle_char, rle_char, com->chars[rle_pos+rle_len+1], (int)ptr, total_single_len);
-                                    printf("m_size=%i\n", (int) m_size);
-                                    printf("bits_comming=%i\n", (int) bits_comming);
                                     {
                                         gup_result res;
                                         if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
@@ -915,22 +910,25 @@ gup_result compress_chars(packstruct *com)
                                     ST_BITS(0, com->m_ptr_bit); /* ptr */
                                     ST_BITS(0, com->m_ptr_bit); /* ptr */
                                     {
-                                        uint16 ptrctr=rle_len;
-                                        entries=1+rle_len;
-                                        if((com->chars[rle_pos+rle_len]>=NLIT) && (com->pointers[ptrpos+rle_len]==ptr))
+                                        if((com->chars[rle_len+1]>=NLIT) && (com->pointers[rle_len]==ptr) && ((rle_len+1)<entries))
                                         {
-                                            ptrctr++;
-                                            entries++;
+                                            entries=rle_len+2;
+                                        }
+                                        else
+                                        {
+                                            entries=rle_len+1;
                                         }
                                         long i = (com->charp - com->chars) - entries;
                                         memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
                                         com->charp-=entries;
-                                        memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
-                                        com->msp-=4*ptrctr;
-                                        memmove(com->backmatch, com->backmatch+ptrctr, i);
-                                        com->bmp-=ptrctr;
-                                        memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
-                                        com->ptrp -= ptrctr;
+                                        entries--;
+                                        memmove(com->matchstring, com->matchstring+4*entries, i*4);
+                                        com->msp-=4*entries;
+                                        memmove(com->backmatch, com->backmatch+entries, i);
+                                        com->bmp-=entries;
+                                        memmove(com->pointers, com->pointers+entries, i*sizeof(com->pointers[0]));
+                                        com->ptrp -= entries;
+                                        com->backmatch[0]=0;
                                     }
                                     return GUP_OK;
                                 }
@@ -941,9 +939,6 @@ gup_result compress_chars(packstruct *com)
                     {
                         rle_char=(com->chars[rle_pos]);
                     }
-//                    printf("Found rle at: %i, len=%i, rle_symbol=%i, pre_rle_char=%i, rle_char=%i, post_rle_char=%i, rle_ptr=%i, total_len=%i\n",
-//                    rle_pos, rle_len, com->chars[rle_pos], pre_rle_char, rle_char, com->chars[rle_pos+rle_len], (int)ptr, total_single_len);
-//                    getchar();
                     if(rle_pos>0)
                     {
                         entries=rle_pos;
@@ -1061,7 +1056,6 @@ gup_result compress_chars(packstruct *com)
                 ptrfreq[LOG(*q++)]++;
             }
         } while(--i!=0);
-        ARJ_Assert(com->backmatch!=NULL);
         com->backmatch[(uint16) (q - com->pointers)]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
     make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
@@ -1087,7 +1081,7 @@ gup_result compress_chars(packstruct *com)
             old_entries = entries;
             set_maxlen(NC, com->charlen);
             {
-                pointer_type *q = com->pointers;
+                pointer_type *ptr_p = com->pointers;
                 uint8 *mstp = com->matchstring;
                 uint8* bp=com->backmatch+1;
                 c_codetype *p = com->chars;
@@ -1117,11 +1111,11 @@ gup_result compress_chars(packstruct *com)
                                 if((ckar < 5) && (entries < (MAX_ENTRIES-ckar))) /* entries moet kleiner MAX_ENTRIES blijven */
                                 { /* conversie mogelijk */
                                     int8 lengte1;
-                                    int8 lenq = LOG(*q);
-                                    lengte1 = com->ptrlen[lenq];
-                                    if(lenq > 0)
+                                    int8 ptr_bits = LOG(*ptr_p);
+                                    lengte1 = com->ptrlen[ptr_bits];
+                                    if(ptr_bits > 0)
                                     {
-                                        lengte1 += lenq - 1;
+                                        lengte1 += ptr_bits - 1;
                                     }
                                     lengte1 += com->charlen[*p];
                                     lengte1 += com->charlen[kar];
@@ -1154,7 +1148,7 @@ gup_result compress_chars(packstruct *com)
                                             charfreq[*mstp]++;
                                             charfreq[kar]--;
                                             charfreq[*p]--;
-                                            ptrfreq[lenq]--;
+                                            ptrfreq[ptr_bits]--;
                                             p[-1] = -1;
                                             *p+=bml;
                                             charfreq[*p]++;
@@ -1194,7 +1188,7 @@ gup_result compress_chars(packstruct *com)
                                                 charfreq[*mstp]++;
                                                 charfreq[kar]--;
                                                 charfreq[*p]--;
-                                                ptrfreq[lenq]--;
+                                                ptrfreq[ptr_bits]--;
                                                 p[-1] = -2;
                                                 *p+=bml;
                                                 charfreq[*p]++;
@@ -1233,7 +1227,7 @@ gup_result compress_chars(packstruct *com)
                                                     charfreq[*mstp]++;
                                                     charfreq[kar]--;
                                                     charfreq[*p]--;
-                                                    ptrfreq[lenq]--;
+                                                    ptrfreq[ptr_bits]--;
                                                     p[-1] = -3;
                                                     *p+=bml;
                                                     charfreq[*p]++;
@@ -1270,7 +1264,7 @@ gup_result compress_chars(packstruct *com)
                                                         charfreq[*mstp]++;
                                                         charfreq[kar]--;
                                                         charfreq[*p]--;
-                                                        ptrfreq[lenq]--;
+                                                        ptrfreq[ptr_bits]--;
                                                         p[-1] = -4;
                                                         *p+=bml;
                                                         charfreq[*p]++;
@@ -1287,14 +1281,14 @@ gup_result compress_chars(packstruct *com)
                             else if(kar < ((MIN_MATCH + 2) + (NLIT - MIN_MATCH)))
                             { /* check for (MIN_MATCH) or (MIN_MATCH+1) matches only! */
                                 int8 lengte1;
-                                int8 lenq;
+                                int8 ptr_bits;
 
-                                lenq = LOG(*q);
-                                lengte1 = com->ptrlen[lenq];
+                                ptr_bits = LOG(*ptr_p);
+                                lengte1 = com->ptrlen[ptr_bits];
 
-                                if(lenq > 0)
+                                if(ptr_bits > 0)
                                 {
-                                    lengte1 += lenq - 1;
+                                    lengte1 += ptr_bits - 1;
                                 }
                                 lengte1 -= com->charlen[*mstp];
                                 lengte1 -= com->charlen[mstp[1]];
@@ -1309,7 +1303,7 @@ gup_result compress_chars(packstruct *com)
                                         charfreq[kar]--;
                                         p[-1] = -3;
                                         entries += 2;
-                                        ptrfreq[lenq]--;
+                                        ptrfreq[ptr_bits]--;
                                         bp[-2]=0; /* hier geen backmatch meer mogelijk */
                                     }
                                 }
@@ -1322,19 +1316,19 @@ gup_result compress_chars(packstruct *com)
                                     charfreq[kar]--;
                                     p[-1] = -4;
                                     entries += 3;
-                                    ptrfreq[lenq]--;
+                                    ptrfreq[ptr_bits]--;
                                     bp[-2]=0; /* hier geen backmatch meer mogelijk */
                                 }
                             }
                             mstp += 4;
-                            q++;
+                            ptr_p++;
                         }
                         else
                         {
                             if(kar < 0)
                             {
                                 mstp += 4;
-                                q++;
+                                ptr_p++;
                                 bp++;
                             }
                         }
