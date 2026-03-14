@@ -963,7 +963,7 @@ gup_result encode_big(packstruct *com)
             }
             ARJ_Assert_ZEEF34();
             ARJ_Assert((com->ptrp - com->pointers) == ((com->msp - com->matchstring) / 4));
-            if (com->charp > com->chars + huffbuf)
+            while(com->charp > com->chars + huffbuf)
             { /*- 64k blok vol gepropt, ga de rotzooi opslaan */
                 com->max_match+=2; /* herstel max_match */
                 {

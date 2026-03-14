@@ -35,6 +35,7 @@ extern "C"
 #define MIN_ASCII_HEADER (16L+5L+5L+9L+com->m_ptr_bit+com->m_ptr_bit) /* minimum all ascii header */
 #define NORMAL_HEADER 0
 #define SPECIAL_MIN_ASCII_HEADER 1
+#define NO_SPECIAL_MIN_ASCII_HEADER -1
 
 
 /* sld defines */
