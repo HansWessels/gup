@@ -869,11 +869,17 @@ gup_result compress_chars(packstruct *com)
             }
             if((com->chars[i]>=NLIT) && (com->chars[i]==com->chars[i-1]))
             {
-                int single_pointer=1;
-                int skip_pointer=1;
-                int skip_ptr_bits=LOG(com->pointers[ptr_pos]);
-                ptr_pos--;
+                int single_pointer;
                 int ptr_bits=LOG(com->pointers[ptr_pos]);
+                ptr_pos--;
+                if(LOG(com->pointers[ptr_pos])==ptr_bits)
+                {
+                    single_pointer=1;
+                }
+                else
+                {
+                    single_pointer=-1;
+                }
                 rle_pos=i-1;
                 do
                 {
@@ -882,22 +888,17 @@ gup_result compress_chars(packstruct *com)
                     {
                         single_pointer=0;
                     }
-                    if(skip_ptr_bits!=LOG(com->pointers[ptr_pos]))
-                    {
-                        skip_pointer=0;
-                    }
                     i++;
                 } while((com->chars[i]==com->chars[i-1]) && (i<entries));
-                if(skip_pointer==single_pointer)
+                if(single_pointer>=0)
                 {
                     rle_len=i-rle_pos;
                 }
                 else
-                {
+                { /* eerste pointer is anders, sla die over */
                     rle_pos++;
                     rle_len=i-rle_pos;
                     single_pointer=1;
-                    ptr_bits=skip_ptr_bits;
                 }
                 if((0) && ((com->chars[rle_pos]==0x109) || (com->chars[rle_pos]==0x101) || (com->chars[rle_pos]==0x102)|| (com->chars[rle_pos]==0x103)|| (com->chars[rle_pos]==0x104)))
                 {
