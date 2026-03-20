@@ -1601,7 +1601,7 @@ gup_result compress_chars(packstruct *com)
         int_fast32_t start_entries=entries;
         uint_fast32_t best_bits_comming=UINT_FAST32_MAX;
         int best_sort_opt=0;
-        for(sort_opt=1; sort_opt<8; sort_opt++)
+        for(sort_opt=0; sort_opt<4; sort_opt++) /* theoretisch < 8 maar > 3 komt niet voor in de testset */
         {
 //            printf("sort_opt=%i\n", sort_opt);
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
