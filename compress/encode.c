@@ -296,11 +296,12 @@ void init_bitbuffer(packstruct *com);
 gup_result close_m1_m7_stream(packstruct *com);
 gup_result store(packstruct *com);
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
+void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, uint16 charfreq[NC], uint16 ptrfreq[MAX_NPT], int sort_opt);
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
                          unsigned long* packed_bytes, int_fast32_t entries, uint8* charlen,
-                         uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, packstruct *com);
+                         uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, int sort_opt, packstruct *com);
 void set_maxlen(int count, uint8 len[]);
 uint16 get_max_character(uint16 freq[], int max_index);
 
@@ -448,9 +449,6 @@ gup_result init_encode_r(packstruct *com)
         memneed += sizeof(node_struct) * TREE_SIZE; /* sld tree        */
         ALIGN(0, memneed, sizeof(node_type)); /* align on node_type */
         memneed += sizeof(node_type) * HASH_SIZE;  /* normal root */
-
-        memneed += FASTLOGBUF;           /* grootte fastlog buffer */
-
         ALIGN(0, memneed, sizeof(unsigned long)); /* unsigned long is used for writing bitbuffer into huffman buffer */
         memneed += 4UL*BIG_HUFFSIZE;
         ALIGN(0, memneed, sizeof(uint8));
@@ -466,11 +464,13 @@ gup_result init_encode_r(packstruct *com)
         ALIGN(0, memneed, sizeof(uint16));
         memneed += sizeof(uint16) * (NCPT);  /* huffman codes van de pointers */
         ALIGN(0, memneed, sizeof(c_codetype));
-        memneed += HUFFBUFSIZE * sizeof(c_codetype);
+        memneed += HUFFBUFSIZE * sizeof(c_codetype); /* character codes */
         ALIGN(0, memneed, sizeof(c_codetype));
-        memneed += HUFFBUFSIZE * sizeof(c_codetype);
+        memneed += HUFFBUFSIZE * sizeof(c_codetype); /* character codes backup */
         ALIGN(0, memneed, sizeof(pointer_type));
-        memneed += HUFFBUFSIZE * sizeof(pointer_type);
+        memneed += HUFFBUFSIZE * sizeof(pointer_type); /* pointers */
+        ALIGN(0, memneed, sizeof(pointer_type));
+        memneed += HUFFBUFSIZE * sizeof(pointer_type); /* pointers backup */
         /* linking */
         ALIGN(0, memneed, sizeof(node_type));
         memneed += sizeof(node_type) * HASH2_SIZE; /* rle root */
@@ -484,6 +484,10 @@ gup_result init_encode_r(packstruct *com)
         memneed += HUFFBUFSIZE * 4;  /* zeef 34 backup */
         ALIGN(0, memneed, sizeof(uint8));
         memneed += HUFFBUFSIZE;  /* backmatch */
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += HUFFBUFSIZE;  /* backmatch backup */
+        ALIGN(0, memneed, sizeof(uint8));
+        memneed += FASTLOGBUF;           /* grootte fastlog buffer */
         com->bufbase = com->gmalloc(memneed, com->gm_propagator);
         if(com->bufbase == NULL)
         {
@@ -538,13 +542,20 @@ gup_result init_encode_r(packstruct *com)
         ALIGN(base, cp, sizeof(pointer_type));
         com->pointers = (void *)(cp);
         cp += HUFFBUFSIZE * sizeof(pointer_type);
+        ALIGN(base, cp, sizeof(pointer_type));
+        com->pointers_backup = (void *)(cp);
+        cp += HUFFBUFSIZE * sizeof(pointer_type);
         ALIGN(base, cp, sizeof(uint8));
         com->matchstring = cp;
         cp += HUFFBUFSIZE * 4UL;
         ALIGN(base, cp, sizeof(uint8));
         com->matchstring_backup = cp;
         cp += HUFFBUFSIZE * 4UL;
+        ALIGN(base, cp, sizeof(uint8));
         com->backmatch = cp;
+        cp += HUFFBUFSIZE;
+        ALIGN(base, cp, sizeof(uint8));
+        com->backmatch_backup = cp;
         cp += HUFFBUFSIZE;
         ALIGN(base, cp, sizeof(uint8));
         com->fast_log = cp;
@@ -838,11 +849,12 @@ uint16 get_max_character(uint16 freq[], int max_index)
 
 gup_result compress_chars(packstruct *com)
 {
+    int_fast32_t entries;
     int_fast32_t entriesextra;
     int_fast32_t rle_pos;
+    int sort_opt=SORT_OPT;
     uint16 charfreq[NC];
     uint16 ptrfreq[MAX_NPT];
-    uint16 entries;
     if(debug!=0)
     {
         printf("Next:\n");
@@ -1028,6 +1040,7 @@ gup_result compress_chars(packstruct *com)
                         }
                         else
                         {
+//                            printf("Ptr-len RLE: com->backmatch[%i]=%i\n", ptr_pos, com->backmatch[ptr_pos]);
                             total_single_len+=com->backmatch[ptr_pos]; /* zoveel literals extra */
                         }
                         if(0)
@@ -1190,8 +1203,7 @@ gup_result compress_chars(packstruct *com)
                     }
                     else
                     {
-//                    printf("Na: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, entries=%i, rle_pos+rle_len=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], entries, rle_pos+rle_len);
-
+//                        printf("Na: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, entries=%i, rle_pos+rle_len=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], entries, rle_pos+rle_len);
                         if(rle_pos>0)
                         {
                             entries=rle_pos;
@@ -1241,7 +1253,7 @@ gup_result compress_chars(packstruct *com)
                                 {
                                     best_rest=total_len%i;
                                     best_divider=i;
-                                    //printf("divider=%i, rest=%i, total_len=%i\n", (int)i, best_rest, total_len);
+//                                    printf("divider=%i, rest=%i, total_len=%i\n", (int)i, best_rest, total_len);
                                 }
                             }
                             if(best_divider!=0)
@@ -1277,11 +1289,11 @@ gup_result compress_chars(packstruct *com)
                                     {
                                         entries=rle_len+1;
                                         ptrs=rle_len+1;
-                                        //printf("if(best_rest==0)\n");
+//                                        printf("if(best_rest==0)\n");
                                     }
                                     else
                                     { /* fix de laatste match */
-                                        //printf("if(best_rest!=0)\n");
+//                                        printf("if(best_rest!=0)\n");
                                         if(ptr!=0)
                                         { /* ptr == 1 */
                                             int old_count=com->chars[rle_len]-NLIT+MIN_MATCH;
@@ -1300,7 +1312,7 @@ gup_result compress_chars(packstruct *com)
                                         {
                                             if(com->backmatch[rle_len+1]>=best_rest)
                                             { /* alles kan bij de volgende match */
-                                                //printf("alles bij de volgende match\n");
+//                                                printf("alles bij de volgende match\n");
                                                 com->chars[rle_len+1]+=best_rest;
                                                 if(best_rest>=4)
                                                 {
@@ -1336,7 +1348,7 @@ gup_result compress_chars(packstruct *com)
                                             }
                                             else /* best_rest == 2, backmatch>0 */
                                             {
-                                                //printf("rest==2, 1 bij de volgende match\n");
+//                                                printf("rest==2, 1 bij de volgende match\n");
                                                 com->chars[rle_len+1]+=1;
                                                 com->matchstring[4*rle_len+7]=com->matchstring[4*rle_len+6];
                                                 com->matchstring[4*rle_len+6]=com->matchstring[4*rle_len+5];
@@ -1352,14 +1364,14 @@ gup_result compress_chars(packstruct *com)
                                         {
                                             if(best_rest==1)
                                             {
-                                                //printf("rest==1, 1 literal\n");
+//                                                printf("rest==1, 1 literal\n");
                                                 com->chars[rle_len]=com->matchstring[4*rle_len];
                                                 entries=rle_len;
                                                 ptrs=rle_len+1;
                                             }
                                             else
                                             { /* best_rest==2 */
-                                                //printf("rest==2, 2 literal\n");
+//                                                printf("rest==2, 2 literal\n");
                                                 com->chars[rle_len-1]=com->matchstring[4*rle_len];
                                                 com->chars[rle_len]=com->matchstring[4*rle_len+1];
                                                 entries=rle_len-1;
@@ -1454,8 +1466,8 @@ gup_result compress_chars(packstruct *com)
                     ptr_index++;
                 }
             }
-            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
-            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
             /*
             ** Karakter frequenties zijn bekend, karakter huffman tabel is
             ** berekend. Pointer frequenties zijn bekend, pointer huffman
@@ -1464,7 +1476,7 @@ gup_result compress_chars(packstruct *com)
             {
                 unsigned long h_bits, m_bits, m_size;
                 unsigned long newsize = 0;
-                count_bits(&h_bits, &m_bits, &m_size, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
+                count_bits(&h_bits, &m_bits, &m_size, dentries, com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
                 { /*- nu alleen newsize nog berekenen */
                     uint16 newchar_index = char_index;
                     uint16 newptr_index = ptr_index;
@@ -1574,27 +1586,674 @@ gup_result compress_chars(packstruct *com)
                 ptr_index++;
             }
         }
-        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
-        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
-
         com->backmatch[ptr_index]=0; /* om te voorkomen dat hij een backmatch over de huffmangrens vindt */
     }
-    if(get_max_character(charfreq, NC)<=(NLIT+2))
-    {
-        memcpy(com->chars_backup, com->chars, entries*sizeof(com->chars[0]));
-        memcpy(com->matchstring_backup, com->matchstring, entries*4*sizeof(com->matchstring[0]));
-        com->special_header=NORMAL_HEADER;
-    }
-    else
-    {
-        com->special_header=NO_SPECIAL_MIN_ASCII_HEADER;
-    }
-    entries+=entriesextra;
-//    printf("Entriesextra=%i\n", entriesextra);
+    memcpy(com->chars_backup, com->chars, entries*sizeof(com->chars[0]));
+    memcpy(com->pointers_backup, com->pointers, entries*sizeof(com->pointers[0]));
+    memcpy(com->backmatch_backup, com->backmatch, entries*sizeof(com->backmatch[0]));
+    memcpy(com->matchstring_backup, com->matchstring, entries*4*sizeof(com->matchstring[0]));
+//    printf("entries=%i, entriesextra=%i\n",entries, entriesextra);
     /*
     ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
     */
+    {
+        int_fast32_t start_entries=entries;
+        uint_fast32_t best_bits_comming=UINT_FAST32_MAX;
+        int best_sort_opt=0;
+        for(sort_opt=1; sort_opt<8; sort_opt++)
+        {
+//            printf("sort_opt=%i\n", sort_opt);
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
+            if(get_max_character(charfreq, NC)<=(NLIT+2))
+            {
+                com->special_header=NORMAL_HEADER;
+            }
+            else
+            {
+                com->special_header=NO_SPECIAL_MIN_ASCII_HEADER;
+            }
+            entries+=entriesextra;
+            optimize_huffman_block(&entries, &entriesextra, com, charfreq, ptrfreq, sort_opt);
+            {
+                unsigned long m_size, bits_comming;
+                unsigned long h_bits, m_bits;
+                bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
+                if(bits_comming<best_bits_comming)
+                {
+                    best_bits_comming=bits_comming;
+                    best_sort_opt=sort_opt;
+                }
+            }
+            memcpy(com->chars, com->chars_backup, start_entries*sizeof(com->chars[0]));
+            memcpy(com->pointers, com->pointers_backup, start_entries*sizeof(com->pointers[0]));
+            memcpy(com->backmatch, com->backmatch_backup, start_entries*sizeof(com->backmatch[0]));
+            memcpy(com->matchstring, com->matchstring_backup, start_entries*4*sizeof(com->matchstring[0]));
+            { /*- character frequentie tellen */
+                int_fast32_t ptr_index=0;
+                entriesextra=0;
+                entries=start_entries;
+                memset(charfreq, 0, NC * sizeof(*charfreq));
+                memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
+                for(int_fast32_t i=0; i<entries; i++)
+                { /* update charachter and ptr freq */
+                    c_codetype kar = com->chars[i];
+                    if(kar>=0)
+                    {
+                        charfreq[kar]++;
+                        if(kar > (NLIT - 1))
+                        {
+                            ptrfreq[LOG(com->pointers[ptr_index++])]++;
+                        }
+                    }
+                    else // if(kar < 0)
+                    {
+                        kar=-kar;
+                        ASSUME(kar<=4);
+                        for(int_fast8_t j=0; j<kar; j++)
+                        {
+                            charfreq[com->matchstring[4*ptr_index+j]]++;
+                        }
+                        entriesextra+=kar-1;
+                        ptr_index++;
+                    }
+                }
+            }
+        }
+        entries+=entriesextra;
+        sort_opt=best_sort_opt;
+        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
+        if(get_max_character(charfreq, NC)<=(NLIT+2))
+        {
+            com->special_header=NORMAL_HEADER;
+        }
+        else
+        {
+            com->special_header=NO_SPECIAL_MIN_ASCII_HEADER;
+        }
+//        printf("final: sort_opt=%i\n", sort_opt);
+        optimize_huffman_block(&entries, &entriesextra, com, charfreq, ptrfreq, sort_opt);
+    }
+
+    /*
+    ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
+    ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
+    */
+    {
+        unsigned long m_size, bits_comming;
+        unsigned long h_bits, m_bits;
+        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
+        if(debug)
+        {
+            printf("packed_bytes=%i, entries=%i, entriesextra=%i\n", (int)m_size, (int)entries, (int)entriesextra);
+            for(int i=0; i<=entries-entriesextra; i++)
+            {
+                printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
+                com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
+            }
+        }
+
+        /*
+        ** Nu hebben we de data geoptimaliseerd en kan het de file in, maar past
+        ** het wel in de file? dat beslist de multiple volume code!
+        */
+        if(com->mv_mode)
+        {
+            unsigned long bits=bits_comming+com->mv_bits_left+7;
+            bits >>= 3;                      /* bytes=bits/8 */
+            if(bits > com->mv_bytes_left)
+            { /*- gedonder!, MV break! */
+                uint16 delta_size;
+                uint16 the_size = 1;
+                com->mv_next = 1;
+                delta_size=0x8000;
+                entries -= entriesextra;
+                while(delta_size>=entries)
+                {
+                    delta_size>>=1;
+                }
+                entries -= delta_size;
+                do
+                {
+                    delta_size >>= 1;
+                    /* frequentie tabel op nul */
+                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
+                    /* pointer frequentie op nul */
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
+                    { /*- character frequentie tellen */
+                        int_fast32_t i = entries;
+                        c_codetype *p = com->chars;
+                        pointer_type *q = com->pointers;
+                        uint8 *mstp = com->matchstring;
+                        entriesextra = 0;
+                        do
+                        {
+                            c_codetype kar = *p++;
+                            if(kar >= 0)
+                            {
+                                charfreq[kar]++;
+                                if(kar > (NLIT-1))
+                                {
+                                    mstp += 4;
+                                    ptrfreq[LOG(*q++)]++;
+                                }
+                            }
+                            else
+                            {
+                                kar=-kar;
+                                ASSUME(kar<=4);
+                                for(int_fast8_t j=0; j<kar; j++)
+                                {
+                                    charfreq[mstp[j]]++;
+                                }
+                                entriesextra+=kar-1;
+                                q++;
+                                mstp+=4;
+                            }
+                        } while(--i!=0);
+                    }
+                    {
+                        unsigned long h_bits, m_bits;
+                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
+                        bits = count_bits(&h_bits, &m_bits, &m_size, (entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
+                        bits+=com->mv_bits_left+7;
+                        bits >>= 3;                  /* bytes=bits/8 */
+                    }
+                    if(bits > com->mv_bytes_left)
+                    {
+                        if(delta_size>=entries)
+                        {
+                            entries=1;
+                        }
+                        else
+                        {
+                            entries -= delta_size;
+                        }
+                    }
+                    else
+                    {
+                        the_size = entries;
+                        entries += delta_size;
+                    }
+                } while(delta_size);
+                if((the_size == 1) && (bits > com->mv_bytes_left))
+                {
+                    return GUP_OK;
+                }
+                entries = the_size;
+                {
+                    uint8 *mstp = com->matchstring;
+                    entriesextra = 0;
+                    delta_size >>= 1;
+                    /* frequentie tabel op nul */
+                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
+                    /* pointer frequentie op nul */
+                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
+                    { /*- character frequentie tellen */
+                        int_fast32_t i = entries;
+                        c_codetype *p = com->chars;
+                        pointer_type *q = com->pointers;
+                        do
+                        {
+                            c_codetype kar = *p++;
+                            if(kar >= 0)
+                            {
+                                charfreq[kar]++;
+                                if(kar > (NLIT-1))
+                                {
+                                    mstp += 4;
+                                    ptrfreq[LOG(*q++)]++;
+                                }
+                            }
+                            else
+                            {
+                                kar=-kar;
+                                ASSUME(kar<=4);
+                                for(int_fast8_t j=0; j<kar; j++)
+                                {
+                                    charfreq[mstp[j]]++;
+                                }
+                                entriesextra+=kar-1;
+                                q++;
+                                mstp+=4;
+                            }
+                        } while(--i!=0);
+                    }
+                    {
+                        unsigned long h_bits, m_bits;
+                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
+                        entries += entriesextra;
+                        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
+                    }
+                }
+            }
+            bits=bits_comming+com->mv_bits_left;
+            com->mv_bits_left = (int16)(bits&7);
+            com->mv_bytes_left -= bits>>3;
+        }
+        /*
+        ** we weten nu hoveel bits er aan komen, passen deze nog in de buffer,
+        ** of moeten we het ding flushen?
+        */
+        {
+            gup_result res;
+            if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
+            {
+                return res;
+            }
+            bits_comming+=com->bits_rest;
+            com->bits_rest=(int16)(bits_comming&7);
+            com->packed_size += bits_comming>>3;
+        }
+        #ifdef PP_AFTER
+        com->print_progres(m_size, com->pp_propagator);
+        #endif
+        com->bytes_packed += m_size; /* alweer een paar bytes gedaan! */
+    }
+    /*
+    ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
+    ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
+    */
+    /*-
+    ** we hebben nu de huffman codes van de karakterset berekend, nu moeten
+    ** we de lengtes gaan coderen. deze staan in charlen c_len coderings
+    ** blok:
+    ** lengte van de pointers die c_len coderen, er zijn 19 pointers:
+    ** 0          = c_len = 0
+    ** 1 + 4 bits = de volgende 3-18 karakters hebben lengte 0
+    ** 2 + 9 bits = de volgende 20-531 karakters hebben lengte 0
+    ** 3          = c_len = 1
+    ** :
+    ** n          = c_len = n-2
+    ** :
+    ** 18         = c_len = 16
+    */
+    if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
+    { /* minimale header, alles literal */
+        if(debug)
+        {
+            printf("SPECIAL_MIN_ASCII_HEADER____: entries=%i, entriesextra=%i\n", entries, entriesextra);
+        }
+        {
+            int_fast32_t i;
+            entries-=entriesextra;
+            i=entries;
+            entriesextra=0;
+            memcpy(com->chars, com->chars_backup, entries*sizeof(com->chars[0]));
+            memcpy(com->matchstring, com->matchstring_backup, entries*4*sizeof(com->matchstring[0]));
+            for(i=0; i<entries; i++)
+            {
+                if(debug==1)
+                {
+                    printf("com->chars[%i]=%03i\n", (int)i, (int)com->chars[i]);
+                }
+                if(com->chars[i]>=NLIT)
+                {
+                    if(com->chars[i]>NLIT)
+                    { /* len is 4 */
+                        entriesextra+=3;
+                        com->chars[i]=-4;
+                    }
+                    else
+                    { /* len is 3 */
+                        entriesextra+=2;
+                        com->chars[i]=-3;
+                    }
+                }
+                else if(com->chars[i]<0)
+                {
+                    entriesextra-=com->chars[i]+1;
+                }
+            }
+            entries+=entriesextra;
+            if(debug)
+            {
+                printf("SPECIAL_MIN_ASCII_HEADER_END: entries=%i, entriesextra=%i\n\n", entries, entriesextra);
+            }
+        }
+        {
+            for(int_fast32_t i=0;i<NLIT;i++)
+            {
+                com->char2huffman[i]=(uint16)i;
+                com->charlen[i]=8;
+            }
+        }
+    if(debug)
+    {
+        printf("entries:\n");
+    }
+        ST_BITS(entries, 16);
+    if(debug)
+    {
+        printf("special case 1, er is maar een character lengte\n");
+    }
+
+        { /*- special case 1, er is maar een character lengte */
+            ST_BITS(0, 5);
+            ST_BITS(10, 5); /* charlen is 8! */
+        }
+        {
+            ST_BITS(256, 9); /* char count=256 */
+        }
+        /*
+        ** charlen is overgestuurd, nu weer een ptrlen
+        */
+    if(debug)
+    {
+        printf("special case 1, er is maar een ptr lengte\n");
+    }
+        { /*- special case 3, er is maar een pointerlengte */
+            ST_BITS(0, com->m_ptr_bit);
+            ST_BITS(0, com->m_ptr_bit);
+        }
+    }
+    else
+    {
+        int charct=get_max_character(charfreq, NC);
+        /* vanaf hier hebben wij charfreq niet meer nodig! */
+    if(debug)
+    {
+        printf("entries\n");
+    }
+        ST_BITS(entries, 16); /* aantal huffman karakters */
+        {
+            /*
+            ** belangrijk item, wat zijn de gevallen dat er slechts 1
+            ** pointerlengte overgedragen hoeft te worden?
+            ** 1: er is maar 1 pointer lengte er
+            ** is maar 1 karakter (dat kan wel meerdere ptrlens veroorzaken)
+            */
+            int vp=0;
+            int nulct=0;
+            int len=com->charlen[0];
+            memset(charfreq, 0, NCPT * sizeof(charfreq[0])); /* frequentie tabel op nul zetten voor gebruik pointers */
+            for(int_fast16_t i=0; i<charct; i++)
+            {
+                int karlen=com->charlen[i];
+                if(karlen!=0)
+                {
+                    charfreq[karlen+2]++;
+                    vp++;
+                    if(karlen!=len)
+                    {
+                        nulct=1;
+                    }
+                }
+                else
+                { /*- charlen nul krijgt een speciale behandeling */
+                    nulct=1;
+                    while(!com->charlen[i + nulct])
+                    {
+                        nulct++;
+                    }
+                    if(nulct < 3)
+                    {
+                        charfreq[0] += (uint16)nulct;
+                    }
+                    else if(nulct < 20)
+                    {
+                        charfreq[1]++;
+                        if(nulct == 19)
+                        {
+                            charfreq[0]++;
+                        }
+                    }
+                    else
+                    {
+                        charfreq[2]++;
+                    }
+                    i += nulct - 1;
+                }
+            }
+            if((vp < 2) || (nulct==0))
+            { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als nulct==0 */
+        if(debug)
+        {
+            printf("special case 1, er is maar een character lengte\n");
+        }
+                ST_BITS(0, 5);
+                ST_BITS(*com->charlen + 2, 5);
+            }
+            else
+            {
+        if(debug)
+        {
+            printf("char_ptrs\n");
+        }
+                long ptrct = NCPT;
+                int skip=0;
+                make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & sort_opt));
+                while(!com->ptrlen1[ptrct - 1])
+                {
+                    ptrct--;
+                }
+                if(com->ptrlen1[3] == 0)
+                {
+                    skip=1;
+                    if(com->ptrlen1[4] == 0)
+                    {
+                        skip=2;
+                        if(com->ptrlen1[5] == 0)
+                        {
+                            skip=3;
+                        }
+                    }
+                }
+                ST_BITS(ptrct, 5);          /* aantal pointers dat er aan komt */
+                for(int_fast8_t i=0; i<ptrct; i++)
+                {
+
+                    if(com->ptrlen1[i] < 7)
+                    {
+                        ST_BITS(com->ptrlen1[i], 3);
+                    }
+                    else
+                    {
+                        int tail=com->ptrlen1[i]-6;
+                        ST_BITS(7, 3);
+                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
+                    }
+                    if(i==2)
+                    {
+                        ST_BITS(skip, 2);
+                        i+=skip;
+                    }
+                }
+            }
+            /* charlen overgedragen, breng characters  */
+            if(vp < 2)
+            { /*- special case 2, er is maar een karakter lengte */
+        if(debug)
+        {
+            printf("special case 2, er is maar een character lengte\n");
+        }
+                c_codetype kar=com->chars[0];
+                if(kar<0)
+                {
+                    kar=com->matchstring[0];
+                }
+                ST_BITS(0, 9);
+                ST_BITS(kar, 9);
+            }
+            else
+            {
+        if(debug)
+        {
+            printf("chars\n");
+        }
+                ST_BITS(charct, 9);
+                for(int_fast16_t i=0; i<charct; i++)
+                {
+                    if(com->charlen[i])
+                    {
+                        ST_BITS(com->ptr2huffman1[com->charlen[i]+2], com->ptrlen1[com->charlen[i]+2]);
+                    }
+                    else
+                    {
+                        int nulct = 1;
+                        while(!com->charlen[i + nulct])
+                        {
+                            nulct++;
+                        }
+                        i += nulct - 1;
+                        if(nulct < 3)
+                        {
+                            while(nulct!=0)
+                            {
+                                ST_BITS(com->ptr2huffman1[0], com->ptrlen1[0]);
+                                nulct--;
+                            }
+                        }
+                        else
+                        {
+                            if(nulct < 20)
+                            {
+                                if(nulct == 19)
+                                {
+                                    ST_BITS(com->ptr2huffman1[0], com->ptrlen1[0]);
+                                    nulct--;
+                                }
+                                ST_BITS(com->ptr2huffman1[1], com->ptrlen1[1]);
+                                ST_BITS(nulct - 3, 4);
+                            }
+                            else
+                            {
+                                ST_BITS(com->ptr2huffman1[2], com->ptrlen1[2]);
+                                ST_BITS(nulct - 20, 9);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /*
+        ** charlen is overgestuurd, nu weer een ptrlen
+        */
+        {   /* wat is de specialcase voor de pointers? 1 er is maar een pointerlengte */
+            uint16 vp = 0;
+            int ptrct=0;
+            for(int_fast8_t i=0; i<com->n_ptr; i++)
+            {
+                if(ptrfreq[i]!=0)
+                {
+                    vp++;
+                    ptrct=i;
+                }
+            }
+            if(vp < 2)
+            { /*- special case 3, er is maar een pointerlengte */
+        if(debug)
+        {
+            printf("special case 3, er is maar een ptr lengte\n");
+        }
+                ST_BITS(0, com->m_ptr_bit);
+                ST_BITS(ptrct, com->m_ptr_bit);
+            }
+            else
+            {
+        if(debug)
+        {
+            printf("ptrs\n");
+        }
+
+                ptrct++;
+                ST_BITS(ptrct, com->m_ptr_bit);
+                for(int_fast8_t i=0; i<ptrct; i++)
+                {
+                    if(com->ptrlen[i]<7)
+                    {
+                        ST_BITS(com->ptrlen[i], 3);
+                    }
+                    else
+                    {
+                        int tail=com->ptrlen[i]-6;
+                        ST_BITS(7, 3);
+                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
+                    }
+                }
+            }
+        }
+    }
+    /*
+    ** alle codes overgedragen, stuur nu de gecodeerde message
+    */
+    entries -= entriesextra;
+    if(debug)
+    {
+        printf("message:\n");
+    }
+    {
+        uint_fast32_t ptrctr=0;
+        for(uint_fast16_t i=0; i<entries; i++)
+        {
+            c_codetype kar = com->chars[i];
+            if(kar < 0)
+            {
+                kar=-kar;
+                ASSUME(kar<=4);
+                for(int_fast8_t j=0; j<kar; j++)
+                {
+                    ST_BITS(com->char2huffman[com->matchstring[4*ptrctr+j]], com->charlen[com->matchstring[4*ptrctr+j]]);
+                }
+                ptrctr++;
+            }
+            else
+            {
+                ST_BITS(com->char2huffman[kar], com->charlen[kar]);
+                if(kar > (NLIT - 1))
+                {
+                    int ptrbits = LOG(com->pointers[ptrctr]);
+                    ST_BITS(com->ptr2huffman[ptrbits], com->ptrlen[ptrbits]);
+                    if(--ptrbits > 0)
+                    {
+                        ST_BITS(((com->pointers[ptrctr]) & (0xffff >> (16 - ptrbits))), ptrbits);
+                    }
+                    ptrctr++;
+                }
+            }
+        }
+        {
+            long i = (com->charp - com->chars) - entries;
+            if(debug)
+            {
+                printf("move: entries=%i, ptrctr=%i i=%i\n", (int)entries, (int)ptrctr, (int)i);
+                for(int i=0; i<=entries; i++)
+                {
+                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
+                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
+                }
+            }
+            memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
+            com->charp-=entries;
+            memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
+            com->msp-=4*ptrctr;
+            memmove(com->backmatch, com->backmatch+ptrctr, i);
+            com->bmp-=ptrctr;
+            memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
+            com->ptrp -= ptrctr;
+            com->backmatch[0]=0;
+            if(debug)
+            {
+                printf("Na move:\n");
+                for(int i=0; i<=entries; i++)
+                {
+                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
+                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
+                }
+            }
+        }
+    }
+    return GUP_OK;
+}
+
+void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, uint16 charfreq[NC], uint16 ptrfreq[MAX_NPT], int sort_opt)
+{
+    int_fast32_t entries=*entries_p;
+    int_fast32_t entriesextra=*entriesextra_p;
     {
         int_fast32_t old_entries;
         do
@@ -1890,8 +2549,8 @@ gup_result compress_chars(packstruct *com)
             }
             #endif
             entriesextra += entries - old_entries;
-            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
-            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
+            make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
+            make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
         } while(entries != old_entries);
         {
             /*
@@ -1989,583 +2648,13 @@ gup_result compress_chars(packstruct *com)
                 }
                 #endif
                 /* recalc charlen, ptr len hoeft niet */
-                make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
+                make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
             } while(redo);
         }
     }
-    /*
-    ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
-    ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
-    */
-    {
-        unsigned long m_size, bits_comming;
-        unsigned long h_bits, m_bits;
-        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
-        if(debug)
-        {
-            printf("packed_bytes=%i, entries=%i, entriesextra=%i\n", (int)m_size, (int)entries, (int)entriesextra);
-            for(int i=0; i<=entries-entriesextra; i++)
-            {
-                printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-            }
-        }
-
-        /*
-        ** Nu hebben we de data geoptimaliseerd en kan het de file in, maar past
-        ** het wel in de file? dat beslist de multiple volume code!
-        */
-        if(com->mv_mode)
-        {
-            unsigned long bits=bits_comming+com->mv_bits_left+7;
-            bits >>= 3;                      /* bytes=bits/8 */
-            if(bits > com->mv_bytes_left)
-            { /*- gedonder!, MV break! */
-                uint16 delta_size;
-                uint16 the_size = 1;
-                com->mv_next = 1;
-                delta_size=0x8000;
-                entries -= entriesextra;
-                while(delta_size>=entries)
-                {
-                    delta_size>>=1;
-                }
-                entries -= delta_size;
-                do
-                {
-                    delta_size >>= 1;
-                    /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
-                    /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
-                    { /*- character frequentie tellen */
-                        int_fast32_t i = entries;
-                        c_codetype *p = com->chars;
-                        pointer_type *q = com->pointers;
-                        uint8 *mstp = com->matchstring;
-                        entriesextra = 0;
-                        do
-                        {
-                            c_codetype kar = *p++;
-                            if(kar >= 0)
-                            {
-                                charfreq[kar]++;
-                                if(kar > (NLIT-1))
-                                {
-                                    mstp += 4;
-                                    ptrfreq[LOG(*q++)]++;
-                                }
-                            }
-                            else
-                            {
-                                kar=-kar;
-                                ASSUME(kar<=4);
-                                for(int_fast8_t j=0; j<kar; j++)
-                                {
-                                    charfreq[mstp[j]]++;
-                                }
-                                entriesextra+=kar-1;
-                                q++;
-                                mstp+=4;
-                            }
-                        } while(--i!=0);
-                    }
-                    {
-                        unsigned long h_bits, m_bits;
-                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
-                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
-                        bits = count_bits(&h_bits, &m_bits, &m_size, (entries+entriesextra), com->charlen, com->ptrlen, charfreq, ptrfreq, com);
-                        bits+=com->mv_bits_left+7;
-                        bits >>= 3;                  /* bytes=bits/8 */
-                    }
-                    if(bits > com->mv_bytes_left)
-                    {
-                        if(delta_size>=entries)
-                        {
-                            entries=1;
-                        }
-                        else
-                        {
-                            entries -= delta_size;
-                        }
-                    }
-                    else
-                    {
-                        the_size = entries;
-                        entries += delta_size;
-                    }
-                } while(delta_size);
-                if((the_size == 1) && (bits > com->mv_bytes_left))
-                {
-                    return GUP_OK;
-                }
-                entries = the_size;
-                {
-                    uint8 *mstp = com->matchstring;
-                    entriesextra = 0;
-                    delta_size >>= 1;
-                    /* frequentie tabel op nul */
-                    memset(charfreq, 0, NC * sizeof(charfreq[0]));
-                    /* pointer frequentie op nul */
-                    memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
-                    { /*- character frequentie tellen */
-                        int_fast32_t i = entries;
-                        c_codetype *p = com->chars;
-                        pointer_type *q = com->pointers;
-                        do
-                        {
-                            c_codetype kar = *p++;
-                            if(kar >= 0)
-                            {
-                                charfreq[kar]++;
-                                if(kar > (NLIT-1))
-                                {
-                                    mstp += 4;
-                                    ptrfreq[LOG(*q++)]++;
-                                }
-                            }
-                            else
-                            {
-                                kar=-kar;
-                                ASSUME(kar<=4);
-                                for(int_fast8_t j=0; j<kar; j++)
-                                {
-                                    charfreq[mstp[j]]++;
-                                }
-                                entriesextra+=kar-1;
-                                q++;
-                                mstp+=4;
-                            }
-                        } while(--i!=0);
-                    }
-                    {
-                        unsigned long h_bits, m_bits;
-                        make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & SORT_OPT));
-                        make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & SORT_OPT));
-                        entries += entriesextra;
-                        bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, com);
-                    }
-                }
-            }
-            bits=bits_comming+com->mv_bits_left;
-            com->mv_bits_left = (int16)(bits&7);
-            com->mv_bytes_left -= bits>>3;
-        }
-        /*
-        ** we weten nu hoveel bits er aan komen, passen deze nog in de buffer,
-        ** of moeten we het ding flushen?
-        */
-        {
-            gup_result res;
-            if((res=announce(((bits_comming+com->bits_in_bitbuf)>>3)+sizeof(com->bitbuf)-1, com))!=GUP_OK)
-            {
-                return res;
-            }
-            bits_comming+=com->bits_rest;
-            com->bits_rest=(int16)(bits_comming&7);
-            com->packed_size += bits_comming>>3;
-        }
-        #ifdef PP_AFTER
-        com->print_progres(m_size, com->pp_propagator);
-        #endif
-        com->bytes_packed += m_size; /* alweer een paar bytes gedaan! */
-    }
-    /*
-    ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
-    ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
-    */
-    /*-
-    ** we hebben nu de huffman codes van de karakterset berekend, nu moeten
-    ** we de lengtes gaan coderen. deze staan in charlen c_len coderings
-    ** blok:
-    ** lengte van de pointers die c_len coderen, er zijn 19 pointers:
-    ** 0          = c_len = 0
-    ** 1 + 4 bits = de volgende 3-18 karakters hebben lengte 0
-    ** 2 + 9 bits = de volgende 20-531 karakters hebben lengte 0
-    ** 3          = c_len = 1
-    ** :
-    ** n          = c_len = n-2
-    ** :
-    ** 18         = c_len = 16
-    */
-    if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
-    { /* minimale header, alles literal */
-        if(debug)
-        {
-            printf("SPECIAL_MIN_ASCII_HEADER____: entries=%i, entriesextra=%i\n", entries, entriesextra);
-        }
-        {
-            int_fast32_t i;
-            entries-=entriesextra;
-            i=entries;
-            entriesextra=0;
-            memcpy(com->chars, com->chars_backup, entries*sizeof(com->chars[0]));
-            memcpy(com->matchstring, com->matchstring_backup, entries*4*sizeof(com->matchstring[0]));
-            for(i=0; i<entries; i++)
-            {
-                if(debug==1)
-                {
-                    printf("com->chars[%i]=%03i\n", (int)i, (int)com->chars[i]);
-                }
-                if(com->chars[i]>=NLIT)
-                {
-                    if(com->chars[i]>NLIT)
-                    { /* len is 4 */
-                        entriesextra+=3;
-                        com->chars[i]=-4;
-                    }
-                    else
-                    { /* len is 3 */
-                        entriesextra+=2;
-                        com->chars[i]=-3;
-                    }
-                }
-                else if(com->chars[i]<0)
-                {
-                    entriesextra-=com->chars[i]+1;
-                }
-            }
-            entries+=entriesextra;
-            if(debug)
-            {
-                printf("SPECIAL_MIN_ASCII_HEADER_END: entries=%i, entriesextra=%i\n\n", entries, entriesextra);
-            }
-        }
-        {
-            for(int_fast32_t i=0;i<NLIT;i++)
-            {
-                com->char2huffman[i]=(uint16)i;
-                com->charlen[i]=8;
-            }
-        }
-    if(debug)
-    {
-        printf("entries:\n");
-    }
-        ST_BITS(entries, 16);
-    if(debug)
-    {
-        printf("special case 1, er is maar een character lengte\n");
-    }
-
-        { /*- special case 1, er is maar een character lengte */
-            ST_BITS(0, 5);
-            ST_BITS(10, 5); /* charlen is 8! */
-        }
-        {
-            ST_BITS(256, 9); /* char count=256 */
-        }
-        /*
-        ** charlen is overgestuurd, nu weer een ptrlen
-        */
-    if(debug)
-    {
-        printf("special case 1, er is maar een ptr lengte\n");
-    }
-        { /*- special case 3, er is maar een pointerlengte */
-            ST_BITS(0, com->m_ptr_bit);
-            ST_BITS(0, com->m_ptr_bit);
-        }
-    }
-    else
-    {
-        int charct=get_max_character(charfreq, NC);
-        /* vanaf hier hebben wij charfreq niet meer nodig! */
-    if(debug)
-    {
-        printf("entries\n");
-    }
-        ST_BITS(entries, 16); /* aantal huffman karakters */
-        {
-            /*
-            ** belangrijk item, wat zijn de gevallen dat er slechts 1
-            ** pointerlengte overgedragen hoeft te worden?
-            ** 1: er is maar 1 pointer lengte er
-            ** is maar 1 karakter (dat kan wel meerdere ptrlens veroorzaken)
-            */
-            int vp=0;
-            int nulct=0;
-            int len=com->charlen[0];
-            memset(charfreq, 0, NCPT * sizeof(charfreq[0])); /* frequentie tabel op nul zetten voor gebruik pointers */
-            for(int_fast16_t i=0; i<charct; i++)
-            {
-                int karlen=com->charlen[i];
-                if(karlen!=0)
-                {
-                    charfreq[karlen+2]++;
-                    vp++;
-                    if(karlen!=len)
-                    {
-                        nulct=1;
-                    }
-                }
-                else
-                { /*- charlen nul krijgt een speciale behandeling */
-                    nulct=1;
-                    while(!com->charlen[i + nulct])
-                    {
-                        nulct++;
-                    }
-                    if(nulct < 3)
-                    {
-                        charfreq[0] += (uint16)nulct;
-                    }
-                    else if(nulct < 20)
-                    {
-                        charfreq[1]++;
-                        if(nulct == 19)
-                        {
-                            charfreq[0]++;
-                        }
-                    }
-                    else
-                    {
-                        charfreq[2]++;
-                    }
-                    i += nulct - 1;
-                }
-            }
-            if((vp < 2) || (nulct==0))
-            { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als nulct==0 */
-        if(debug)
-        {
-            printf("special case 1, er is maar een character lengte\n");
-        }
-                ST_BITS(0, 5);
-                ST_BITS(*com->charlen + 2, 5);
-            }
-            else
-            {
-        if(debug)
-        {
-            printf("char_ptrs\n");
-        }
-                long ptrct = NCPT;
-                int skip=0;
-                make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & SORT_OPT));
-                while(!com->ptrlen1[ptrct - 1])
-                {
-                    ptrct--;
-                }
-                if(com->ptrlen1[3] == 0)
-                {
-                    skip=1;
-                    if(com->ptrlen1[4] == 0)
-                    {
-                        skip=2;
-                        if(com->ptrlen1[5] == 0)
-                        {
-                            skip=3;
-                        }
-                    }
-                }
-                ST_BITS(ptrct, 5);          /* aantal pointers dat er aan komt */
-                for(int_fast8_t i=0; i<ptrct; i++)
-                {
-
-                    if(com->ptrlen1[i] < 7)
-                    {
-                        ST_BITS(com->ptrlen1[i], 3);
-                    }
-                    else
-                    {
-                        int tail=com->ptrlen1[i]-6;
-                        ST_BITS(7, 3);
-                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
-                    }
-                    if(i==2)
-                    {
-                        ST_BITS(skip, 2);
-                        i+=skip;
-                    }
-                }
-            }
-            /* charlen overgedragen, breng characters  */
-            if(vp < 2)
-            { /*- special case 2, er is maar een karakter lengte */
-        if(debug)
-        {
-            printf("special case 2, er is maar een character lengte\n");
-        }
-                c_codetype kar=com->chars[0];
-                if(kar<0)
-                {
-                    kar=com->matchstring[0];
-                }
-                ST_BITS(0, 9);
-                ST_BITS(kar, 9);
-            }
-            else
-            {
-        if(debug)
-        {
-            printf("chars\n");
-        }
-                ST_BITS(charct, 9);
-                for(int_fast16_t i=0; i<charct; i++)
-                {
-                    if(com->charlen[i])
-                    {
-                        ST_BITS(com->ptr2huffman1[com->charlen[i]+2], com->ptrlen1[com->charlen[i]+2]);
-                    }
-                    else
-                    {
-                        int nulct = 1;
-                        while(!com->charlen[i + nulct])
-                        {
-                            nulct++;
-                        }
-                        i += nulct - 1;
-                        if(nulct < 3)
-                        {
-                            while(nulct!=0)
-                            {
-                                ST_BITS(com->ptr2huffman1[0], com->ptrlen1[0]);
-                                nulct--;
-                            }
-                        }
-                        else
-                        {
-                            if(nulct < 20)
-                            {
-                                if(nulct == 19)
-                                {
-                                    ST_BITS(com->ptr2huffman1[0], com->ptrlen1[0]);
-                                    nulct--;
-                                }
-                                ST_BITS(com->ptr2huffman1[1], com->ptrlen1[1]);
-                                ST_BITS(nulct - 3, 4);
-                            }
-                            else
-                            {
-                                ST_BITS(com->ptr2huffman1[2], com->ptrlen1[2]);
-                                ST_BITS(nulct - 20, 9);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        /*
-        ** charlen is overgestuurd, nu weer een ptrlen
-        */
-        {   /* wat is de specialcase voor de pointers? 1 er is maar een pointerlengte */
-            uint16 vp = 0;
-            int ptrct=0;
-            for(int_fast8_t i=0; i<com->n_ptr; i++)
-            {
-                if(ptrfreq[i]!=0)
-                {
-                    vp++;
-                    ptrct=i;
-                }
-            }
-            if(vp < 2)
-            { /*- special case 3, er is maar een pointerlengte */
-        if(debug)
-        {
-            printf("special case 3, er is maar een ptr lengte\n");
-        }
-                ST_BITS(0, com->m_ptr_bit);
-                ST_BITS(ptrct, com->m_ptr_bit);
-            }
-            else
-            {
-        if(debug)
-        {
-            printf("ptrs\n");
-        }
-
-                ptrct++;
-                ST_BITS(ptrct, com->m_ptr_bit);
-                for(int_fast8_t i=0; i<ptrct; i++)
-                {
-                    if(com->ptrlen[i]<7)
-                    {
-                        ST_BITS(com->ptrlen[i], 3);
-                    }
-                    else
-                    {
-                        int tail=com->ptrlen[i]-6;
-                        ST_BITS(7, 3);
-                        ST_BITS(((1<<tail)-2), tail); /* stuur tail-1 1 bits en dan een 0 bit */
-                    }
-                }
-            }
-        }
-    }
-    /*
-    ** alle codes overgedragen, stuur nu de gecodeerde message
-    */
-    entries -= entriesextra;
-    if(debug)
-    {
-        printf("message:\n");
-    }
-    {
-        uint_fast32_t ptrctr=0;
-        for(uint_fast16_t i=0; i<entries; i++)
-        {
-            c_codetype kar = com->chars[i];
-            if(kar < 0)
-            {
-                kar=-kar;
-                ASSUME(kar<=4);
-                for(int_fast8_t j=0; j<kar; j++)
-                {
-                    ST_BITS(com->char2huffman[com->matchstring[4*ptrctr+j]], com->charlen[com->matchstring[4*ptrctr+j]]);
-                }
-                ptrctr++;
-            }
-            else
-            {
-                ST_BITS(com->char2huffman[kar], com->charlen[kar]);
-                if(kar > (NLIT - 1))
-                {
-                    int ptrbits = LOG(com->pointers[ptrctr]);
-                    ST_BITS(com->ptr2huffman[ptrbits], com->ptrlen[ptrbits]);
-                    if(--ptrbits > 0)
-                    {
-                        ST_BITS(((com->pointers[ptrctr]) & (0xffff >> (16 - ptrbits))), ptrbits);
-                    }
-                    ptrctr++;
-                }
-            }
-        }
-        {
-            long i = (com->charp - com->chars) - entries;
-            if(debug)
-            {
-                printf("move: entries=%i, ptrctr=%i i=%i\n", (int)entries, (int)ptrctr, (int)i);
-                for(int i=0; i<=entries; i++)
-                {
-                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-                }
-            }
-            memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
-            com->charp-=entries;
-            memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
-            com->msp-=4*ptrctr;
-            memmove(com->backmatch, com->backmatch+ptrctr, i);
-            com->bmp-=ptrctr;
-            memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
-            com->ptrp -= ptrctr;
-            com->backmatch[0]=0;
-            if(debug)
-            {
-                printf("Na move:\n");
-                for(int i=0; i<=entries; i++)
-                {
-                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-                }
-            }
-        }
-    }
-    return GUP_OK;
+    *entries_p=entries;
+    *entriesextra_p=entriesextra;
 }
-
 
 #define INSERTION_GRENS 16
 
@@ -3108,6 +3197,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
                          uint8 * ptrlen,/* pointerlengte tabel                */
                          uint16 * charfreq, /* karakter frequentie tabel       */
                          uint16 * ptrfreq, /* pointer frequentie tabel           */
+                         int sort_opt,
                          packstruct *com
 )
 {
@@ -3177,7 +3267,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         i += nulct - 1;
       }
     }
-    make_hufftable(com->ptrlen1, com->ptr2huffman1, freq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & SORT_OPT));
+    make_hufftable(com->ptrlen1, com->ptr2huffman1, freq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & sort_opt));
     /*
      * Nu zijn alle ptrs gedefinieerd, stuur ze de ARJ file in
     */

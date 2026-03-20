@@ -345,11 +345,13 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
   c_codetype* chars_backup;      /* buffer met code karakters, backup */
   c_codetype* charp;             /* pointer naar chars */
   pointer_type* pointers;        /* buffer met pointers */
+  pointer_type* pointers_backup; /* buffer met pointers, back_up */
   pointer_type* ptrp;            /* pointer naar pointers */
   uint8* matchstring;            /* Array waar eerste vier karakters van een match in zitten */
   uint8* matchstring_backup;     /* Array waar eerste vier karakters van een match in zitten, backup */
   uint8 *msp;                    /* pointer naar matchstring */
   uint8 *backmatch;              /* pointer naar backmatch array */
+  uint8 *backmatch_backup;       /* pointer naar backmatch array, back_up */
   uint8 *bmp;                    /* backmatch pointer */
   int special_header;            /* geeft special header aan */
 
