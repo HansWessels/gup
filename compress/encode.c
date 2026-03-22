@@ -650,7 +650,6 @@ gup_result encode(packstruct *com)
 {
 	TRACE_ME();
 	gup_result res;
-//	printf("\n");
 	com->bytes_packed=0;
 	switch(com->mode)
 	{
@@ -758,8 +757,6 @@ gup_result announce(unsigned long bytes, packstruct *com)
   return GUP_OK;
 }
 
-int debug=0;
-
 #ifndef ST_BITS
 
 /*
@@ -777,10 +774,6 @@ int debug=0;
 {                                                          \
   unsigned long val=val_0;                                 \
   int16 bit_count=(int16)bit_count_0;                      \
-  if(debug!=0)                                              \
-  {                                                         \
-      printf("%05i = %04X, len=%i\n", (int)val, (int)val, (int)bit_count);                                        \
-  }                                                         \
   if(bit_count!=0)                                        \
   {                                                        \
     com->bits_in_bitbuf += bit_count;                      \
@@ -844,44 +837,6 @@ uint16 get_max_character(uint16 freq[], int max_index)
     return 0;
 }
 
-void dump(int start, int aantal, packstruct *com);
-
-void dump(int start, int aantal, packstruct *com)
-{
-    int i=0;
-    int ptr_i=0;
-    while(i<(start-1))
-    {
-        if((com->chars[i]<0) || (com->chars[i]>=NLIT))
-        {
-            ptr_i++;
-        }
-        i++;
-    }
-    while(i<(start+aantal+3))
-    {
-        printf("%5i (%5i): char=%3i ($%03X) ", i, i-start, com->chars[i], com->chars[i]&0xFFF);
-        if(com->chars[i]>=NLIT)
-        {
-            printf("len=%3i, ", com->chars[i]-NLIT+MIN_MATCH);
-            printf("ptr[%5i]=%5i, bm=%3i, ms=%3i %3i %3i %3i (%03X %03X %03X %03X)", ptr_i, com->pointers[ptr_i], com->backmatch[ptr_i],
-                    com->matchstring[4*ptr_i+0], com->matchstring[4*ptr_i+1], com->matchstring[4*ptr_i+2], com->matchstring[4*ptr_i+3],
-                    com->matchstring[4*ptr_i+0], com->matchstring[4*ptr_i+1], com->matchstring[4*ptr_i+2], com->matchstring[4*ptr_i+3]);
-            ptr_i++;
-        }
-        else if(com->chars[i]<0)
-        {
-            printf("len=%3i, ", com->chars[i]);
-            printf("ptr[%5i]=%5i, bm=%3i, ms=%3i %3i %3i %3i (%03X %03X %03X %03X)", ptr_i, com->pointers[ptr_i], com->backmatch[ptr_i],
-                    com->matchstring[4*ptr_i+0], com->matchstring[4*ptr_i+1], com->matchstring[4*ptr_i+2], com->matchstring[4*ptr_i+3],
-                    com->matchstring[4*ptr_i+0], com->matchstring[4*ptr_i+1], com->matchstring[4*ptr_i+2], com->matchstring[4*ptr_i+3]);
-            ptr_i++;
-        }
-        i++;
-        printf("\n");
-    }
-}
-
 #define MIN_LITERAL_RLE 3
 #define MIN_SINGLEPTR01_RLE 3
 #define MIN_SINGLE_POINTER_RLE256 6
@@ -896,16 +851,6 @@ gup_result compress_chars(packstruct *com)
     int sort_opt=SORT_OPT;
     uint16 charfreq[NC];
     uint16 ptrfreq[MAX_NPT];
-    if(debug!=0)
-    {
-        printf("Next:\n");
-        for(int i=0; i<=3; i++)
-        {
-            printf("i=%i, char=%03X, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                 com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-        }
-        debug--;
-    }
     entries = (int_fast32_t) (com->charp - com->chars);
     if(entries > com->hufbufsize)
     {
@@ -954,98 +899,38 @@ gup_result compress_chars(packstruct *com)
                     rle_len=i-rle_pos;
                     single_pointer=1;
                 }
-                if(debug)
-                {
-                    printf("!\n");
-                    for(int i=0; i<=rle_len; i++)
-                    {
-                        printf("i=%i, char=%03X, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                            com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-                    }
-                }
                 if((rle_len>=MIN_LITERAL_RLE) && (rle_len<256) && (single_pointer!=0) && (ptr_bits==0) && ((rle_pos>0) || ((rle_pos==0) && (com->backmatch[ptr_pos]!=0))) &&
                    ((com->backmatch[ptr_pos]!=0) || (com->chars[rle_pos-1]<NLIT) || (com->chars[rle_pos-1]>NLIT)))
                 { /* Literal RLE run */
-//                    printf("Start RLE code: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, entries=%i, rle_pos+rle_len=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], entries, rle_pos+rle_len);
-
-                    if(0)
-                    {
-                        int ptrctr=0;
-                        for(int i=0; i<=entries; i++)
-                            {
-                                if((i>=rle_pos-1) && (i<=rle_pos+rle_len))
-                                    {
-                                        printf("char[%02i]=%03i=%02X", i, (int)com->chars[i],  (int)com->chars[i]);
-                                    }
-                                if(com->chars[i]>=NLIT)
-                                    {
-                                        if((i>=rle_pos-1) && (i<=rle_pos+rle_len))
-                                            {
-                                                printf(" ptrpos=%i, ptr=%i, back_match=%i, %02X,%02X,%02X,%02X", ptrctr, (int)com->pointers[ptrctr], com->backmatch[ptrctr], com->matchstring[4*ptrctr+0], com->matchstring[4*ptrctr+1], com->matchstring[4*ptrctr+2], com->matchstring[4*ptrctr+3]);
-                                            }
-                                        ptrctr++;
-                                    }
-                                if((i>=rle_pos-1) && (i<=rle_pos+rle_len))
-                                    {
-                                        printf("\n");
-                                    }
-                            }
-                    }
                     if(rle_pos!=0)
                     {
                         if((com->chars[rle_pos-1]<NLIT) && (com->chars[rle_pos-1]>=0))
                         {
-//                            printf("Literal RLE\n");
                             rle_pos--;
                         }
                         else if((com->chars[rle_pos-1]>=NLIT) && (com->backmatch[ptr_pos]==0) && ((rle_pos+rle_len)<entries))
                         {
                             if(com->chars[rle_pos-1]>NLIT)
                             {
-//                                printf("Snoep 1 RLE: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos]);
-                                if(0)
-                                {
-                                    printf("com->matchstring[4*(ptr_pos-rle_len) = ");
-                                    for(int j=0; j<4; j++)
-                                    {
-                                        printf("%i ", com->matchstring[4*(ptr_pos-rle_len)+j]);
-                                    }
-                                    printf("\n");
-                                    printf("com->matchstring[4*(ptr_pos-rle_len+1) = ");
-                                    for(int j=0; j<4; j++)
-                                    {
-                                        printf("%i ", com->matchstring[4*(ptr_pos-rle_len+1)+j]);
-                                    }
-                                    printf("\n");
-                                }
                                 com->backmatch[ptr_pos]=0x01;
                                 com->chars[rle_pos-1]--;
                             }
                             if((com->chars[rle_pos-1]==(NLIT+1)) && (com->matchstring[4*(ptr_pos-rle_len)+3]==com->matchstring[4*ptr_pos-rle_len+1]))
                             { /* lengte 4 match met match character voor de RLE */
-//                                printf("Snoep macth 4 RLE: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, com->matchstring[4*(ptr_pos-rle_len)+3]=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], com->matchstring[4*(ptr_pos-rle_len)+3]);
                                 com->backmatch[ptr_pos]++;
                                 com->chars[rle_pos-1]--;
                             }
                             if((com->chars[rle_pos-1]==NLIT) && (com->matchstring[4*(ptr_pos-rle_len)+2]==com->matchstring[4*ptr_pos-rle_len+1]))
                             { /* lengte 3 match met match character voor de RLE */
-//                                printf("Snoep macth 3 RLE: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, com->matchstring[4*(ptr_pos-rle_len)+2]=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], com->matchstring[4*(ptr_pos-rle_len)+2]);
-//                                printf("com->backmatch[ptr_pos-rle_len]=%i\n", com->backmatch[ptr_pos-rle_len]);
                                 com->backmatch[ptr_pos]++;
                                 com->chars[rle_pos-1]=-2;
                                 com->backmatch[ptr_pos-rle_len]=0; /* backmatch niet meer mogelijk */
                                 if((com->chars[rle_pos-1]==-2) && (com->matchstring[4*(ptr_pos-rle_len)+1]==com->matchstring[4*ptr_pos-rle_len+1]))
                                 { /* lengte -2 match met match character voor de match */
-//                                    printf("Snoep macth 2 RLE: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, com->matchstring[4*(ptr_pos-rle_len)+1]=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], com->matchstring[4*(ptr_pos-rle_len)+1]);
                                     com->backmatch[ptr_pos]++;
                                     com->chars[rle_pos-1]=-1;
                                 }
                             }
-                        }
-                        else
-                        {
-//                            printf("Niets nieuws: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos]);
-                            (void)0;
                         }
                     }
                     if(rle_pos==0)
@@ -1053,30 +938,20 @@ gup_result compress_chars(packstruct *com)
                         int entrs=rle_len;
                         int ptrs=rle_len;
                         int total_single_len=rle_len*(com->chars[1]-NLIT+MIN_MATCH);
-//                        printf("RLE blok final start!\n");
                         if(com->backmatch[ptr_pos]==0)
                         { /* er zit een literal voor de rle */
-//                            printf("Literal RLE: com->backmatch[%i]=%i\n", ptr_pos, com->backmatch[ptr_pos]);
                             entrs++;
                             rle_len++;
                             total_single_len++; /* 1 literal extra */
                         }
                         else
                         {
-//                            printf("Ptr-len RLE: com->backmatch[%i]=%i\n", ptr_pos, com->backmatch[ptr_pos]);
                             total_single_len+=com->backmatch[ptr_pos]; /* zoveel literals extra */
-                        }
-                        if(0)
-                        {
-                            printf("Start RLE dump: rle_len=%i, ptr_pos=%i\n", rle_len, ptr_pos);
-                            dump(0, rle_len, com);
                         }
                         if((com->chars[rle_len]>=NLIT) && (com->pointers[ptr_pos+1]==ptr_bits) && (rle_len<entries))
                         {
-//                            printf("RLE blok 0!\n");
                             if((total_single_len+com->chars[rle_len]-NLIT+MIN_MATCH)<=MAX_ENTRIES)
                             { /* alles kan er bij */
-//                                printf("RLE blok 1, alles!\n");
                                 total_single_len+=com->chars[rle_len]-NLIT+MIN_MATCH;
                                 entrs++;
                                 ptrs++;
@@ -1087,19 +962,16 @@ gup_result compress_chars(packstruct *com)
                                 if((com->chars[rle_len]-NLIT+MIN_MATCH-max_extra)>=3)
                                 {
                                     com->chars[rle_len]-=max_extra;
-//                                  printf("RLE blok 2A, match over!\n");
                                 }
                                 else if((com->chars[rle_len]-NLIT+MIN_MATCH-max_extra)==2)
                                 {
                                     max_extra--;
                                     com->chars[rle_len]-=max_extra;
-//                                  printf("RLE blok 2B, len2 -> macth over!\n");
                                 }
                                 else // if((com->chars[rle_len]-NLIT+MIN_MATCH-max_extra)==1)
-                                { /* 1 literal overhouden */
+                                {
                                     ptrs++;
                                     com->chars[rle_len]=com->matchstring[0];
-//                                  printf("RLE blok 2C len1 -> literal over!\n");
                                 }
                                 total_single_len+=max_extra;
                             }
@@ -1108,12 +980,10 @@ gup_result compress_chars(packstruct *com)
                         {
                             total_single_len++;
                             entrs++;
-//                            printf("RLE blok 4!\n");
                             if((com->chars[rle_len+1]==com->matchstring[0]) && ((rle_len+1)<entries) && (total_single_len<MAX_ENTRIES))
                             {
                                 total_single_len++;
                                 entrs++;
-//                                printf("RLE blok 5!\n");
                             }
                         }
                         else if((com->chars[rle_len]>=NLIT) && (com->matchstring[(ptr_pos+1)*4]==com->matchstring[0]) && (rle_len<entries))
@@ -1134,7 +1004,6 @@ gup_result compress_chars(packstruct *com)
                                 }
                                 if((com->backmatch[ptr_pos+2]>=match_len)  && ((rle_len+1)<entries))
                                 { /* alles bij volgende match voegen */
-//                                    printf("alles bij volgende match ptr_len na match_len=%i<=4, extra_char=%i, back_match=%i\n", match_len, extra_char, com->backmatch[ptr_pos+2]);
                                     com->chars[rle_len+1]+=match_len;
                                     for(int i=0; i<4; i++)
                                     {
@@ -1159,23 +1028,19 @@ gup_result compress_chars(packstruct *com)
                                     }
                                     if(match_len>2)
                                     {
-//                                        printf("conversie naar len3 volgende match ptr_len na match_len=%i<=4, extra_char=%i, back_match=%i\n", match_len, extra_char, com->backmatch[ptr_pos+2]);
                                         com->chars[rle_len]=match_len+NLIT-MIN_MATCH;
                                     }
                                     else
                                     {
-//                                        printf("conversie naar literals volgende match ptr_len na match_len=%i<=4, extra_char=%i, back_match=%i\n", match_len, extra_char, com->backmatch[ptr_pos+2]);
                                         com->chars[rle_len]=-match_len;
                                     }
                                 }
-//                                printf("na: match_len=%i, back_match=%i\n", com->chars[rle_len], com->backmatch[ptr_pos+2]);
                                 com->backmatch[ptr_pos+2]=0;
                             }
                             else
                             { /* match_len > 4 */
                                 if((com->backmatch[ptr_pos+2]>=(match_len-extra_char)) && ((com->chars[rle_len+1]-NLIT+MIN_MATCH+match_len-extra_char)>4) && ((rle_len+1)<entries))
                                 { /* alles kan bij volgende match */
-//                                    printf("alles bij volgende match ptr_len na match_len=%i>4, extra_char=%i, back_match=%i\n", match_len, extra_char, com->backmatch[ptr_pos+2]);
                                     total_single_len+=extra_char;
                                     com->chars[rle_len+1]+=match_len-extra_char;
                                     match_len=0;
@@ -1189,7 +1054,6 @@ gup_result compress_chars(packstruct *com)
                                 }
                             }
                         }
-//                        printf("Singel new RLE!: total_len%i, entrs=%i, ptrs=%i, entries=%i\n", total_single_len, entrs, ptrs, entries);
                         { /* single character RLE expansion */
                             unsigned long m_size=total_single_len;
                             unsigned long bits_comming=44+2*com->m_ptr_bit;
@@ -1206,11 +1070,6 @@ gup_result compress_chars(packstruct *com)
                                 com->print_progres(m_size, com->pp_propagator);
                                 #endif
                                 com->bytes_packed += m_size; /* alweer een paar bytes gedaan! */
-                            }
-                            if(0)
-                            {
-                                printf("Voor ST_BITS RLE dump: rle_len=%i, ptr_pos=%i\n", rle_len, ptr_pos);
-                                dump(0, entrs, com);
                             }
                             ST_BITS(total_single_len, 16); /* aantal huffman karakters */
                             ST_BITS(0, 5); /* charptr */
@@ -1231,17 +1090,11 @@ gup_result compress_chars(packstruct *com)
                                 com->ptrp -= ptrs;
                                 com->backmatch[0]=0;
                             }
-                            if(0)
-                            {
-                                printf("Na ST_BITS RLE dump: rle_len=%i, ptr_pos=%i\n", rle_len, ptr_pos);
-                                dump(0, entrs, com);
-                            }
                             return GUP_OK;
                         }
                     }
                     else
                     {
-//                        printf("Na: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, entries=%i, rle_pos+rle_len=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], entries, rle_pos+rle_len);
                         if(rle_pos>0)
                         {
                             entries=rle_pos;
@@ -1268,7 +1121,6 @@ gup_result compress_chars(packstruct *com)
                                 {
                                     best_rest=total_len%i;
                                     best_divider=i;
-//                                    printf("divider=%i, rest=%i, total_len=%i\n", (int)i, best_rest, total_len);
                                 }
                             }
                             if(best_divider!=0)
@@ -1301,13 +1153,11 @@ gup_result compress_chars(packstruct *com)
                                     uint16 ptrs;
                                     if(best_rest==0)
                                     {
-//                                        printf("if(best_rest==0)\n");
                                         entries=rle_len+1;
                                         ptrs=rle_len+1;
                                     }
                                     else
                                     { /* fix de laatste match */
-//                                        printf("if(best_rest!=0)\n");
                                         int pos=4*rle_len;
                                         entries=rle_len;
                                         ptrs=rle_len;
@@ -1387,7 +1237,6 @@ gup_result compress_chars(packstruct *com)
                             }
                         }
                     }
-//                    printf("Na: rle_pos=%i, rle_len=%i, ptr_pos=%i, com->chars[rle_pos-1]=%i, com->backmatch[ptr_pos]=%i, entries=%i, rle_pos+rle_len=%i\n", rle_pos, rle_len, ptr_pos, com->chars[rle_pos-1], com->backmatch[ptr_pos], entries, rle_pos+rle_len);
                     if(rle_pos>0)
                     {
                         entries=rle_pos;
@@ -1446,16 +1295,6 @@ gup_result compress_chars(packstruct *com)
             rle_pos=i;
         }
     }
-    if(debug)
-    {
-        printf("1\n");
-        for(int i=0; i<=entries; i++)
-        {
-            printf("i=%i, char=%03X, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                   com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-        }
-    }
-//    printf("entries voor dyn calc=%i\n", entries);
     if(entries > HUFFSTART)
     { /*- aantal entries dynamisch berekenen */
         int count = (int)(HUFFSTART / HUFFDELTA);
@@ -1565,22 +1404,6 @@ gup_result compress_chars(packstruct *com)
         }
         entries = dentries;
     }
-//    printf("entries na dyn calc=%i\n", entries);
-    if(debug)
-    {
-        int ptrctr=0;
-        printf("entries=%i\n", (int)entries);
-        for(int i=0; i<=entries; i++)
-        {
-            printf("char[%02i]=%03i=%02X", i, (int)com->chars[i],  (int)com->chars[i]);
-            if(com->chars[i]>=NLIT)
-            {
-                printf(" ptr=%i, back_match=%i, %02X,%02X,%02X,%02X", (int)com->pointers[ptrctr], com->backmatch[ptrctr], com->matchstring[4*ptrctr+0], com->matchstring[4*ptrctr+1], com->matchstring[4*ptrctr+2], com->matchstring[4*ptrctr+3]);
-                ptrctr++;
-            }
-            printf("\n");
-        }
-    }
     { /*- character frequentie tellen */
         int_fast32_t ptr_index=0;
         entriesextra=0;
@@ -1616,7 +1439,6 @@ gup_result compress_chars(packstruct *com)
     memcpy(com->pointers_backup, com->pointers, entries*sizeof(com->pointers[0]));
     memcpy(com->backmatch_backup, com->backmatch, entries*sizeof(com->backmatch[0]));
     memcpy(com->matchstring_backup, com->matchstring, entries*4*sizeof(com->matchstring[0]));
-//    printf("entries=%i, entriesextra=%i\n",entries, entriesextra);
     /*
     ** Karakter frequenties zijn bekend, karakter huffman tabel is berekend.
     ** Pointer frequenties zijn bekend, pointer huffman tabel is berekend.
@@ -1627,7 +1449,6 @@ gup_result compress_chars(packstruct *com)
         int best_sort_opt=0;
         for(sort_opt=0; sort_opt<4; sort_opt++) /* theoretisch < 8 maar > 3 komt niet voor in de testset */
         {
-//            printf("sort_opt=%i\n", sort_opt);
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
             make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
             if(get_max_character(charfreq, NC)<=(NLIT+2))
@@ -1697,7 +1518,6 @@ gup_result compress_chars(packstruct *com)
         {
             com->special_header=NO_SPECIAL_MIN_ASCII_HEADER;
         }
-//        printf("final: sort_opt=%i\n", sort_opt);
         optimize_huffman_block(&entries, &entriesextra, com, charfreq, ptrfreq, sort_opt);
     }
 
@@ -1709,16 +1529,6 @@ gup_result compress_chars(packstruct *com)
         unsigned long m_size, bits_comming;
         unsigned long h_bits, m_bits;
         bits_comming = count_bits(&h_bits, &m_bits, &m_size, entries, com->charlen, com->ptrlen, charfreq, ptrfreq, sort_opt, com);
-        if(debug)
-        {
-            printf("packed_bytes=%i, entries=%i, entriesextra=%i\n", (int)m_size, (int)entries, (int)entriesextra);
-            for(int i=0; i<=entries-entriesextra; i++)
-            {
-                printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-            }
-        }
-
         /*
         ** Nu hebben we de data geoptimaliseerd en kan het de file in, maar past
         ** het wel in de file? dat beslist de multiple volume code!
@@ -1898,10 +1708,6 @@ gup_result compress_chars(packstruct *com)
     */
     if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
     { /* minimale header, alles literal */
-        if(debug)
-        {
-            printf("SPECIAL_MIN_ASCII_HEADER____: entries=%i, entriesextra=%i\n", entries, entriesextra);
-        }
         {
             int_fast32_t i;
             entries-=entriesextra;
@@ -1911,10 +1717,6 @@ gup_result compress_chars(packstruct *com)
             memcpy(com->matchstring, com->matchstring_backup, entries*4*sizeof(com->matchstring[0]));
             for(i=0; i<entries; i++)
             {
-                if(debug==1)
-                {
-                    printf("com->chars[%i]=%03i\n", (int)i, (int)com->chars[i]);
-                }
                 if(com->chars[i]>=NLIT)
                 {
                     if(com->chars[i]>NLIT)
@@ -1934,10 +1736,6 @@ gup_result compress_chars(packstruct *com)
                 }
             }
             entries+=entriesextra;
-            if(debug)
-            {
-                printf("SPECIAL_MIN_ASCII_HEADER_END: entries=%i, entriesextra=%i\n\n", entries, entriesextra);
-            }
         }
         {
             for(int_fast32_t i=0;i<NLIT;i++)
@@ -1946,16 +1744,7 @@ gup_result compress_chars(packstruct *com)
                 com->charlen[i]=8;
             }
         }
-    if(debug)
-    {
-        printf("entries:\n");
-    }
         ST_BITS(entries, 16);
-    if(debug)
-    {
-        printf("special case 1, er is maar een character lengte\n");
-    }
-
         { /*- special case 1, er is maar een character lengte */
             ST_BITS(0, 5);
             ST_BITS(10, 5); /* charlen is 8! */
@@ -1966,10 +1755,6 @@ gup_result compress_chars(packstruct *com)
         /*
         ** charlen is overgestuurd, nu weer een ptrlen
         */
-    if(debug)
-    {
-        printf("special case 1, er is maar een ptr lengte\n");
-    }
         { /*- special case 3, er is maar een pointerlengte */
             ST_BITS(0, com->m_ptr_bit);
             ST_BITS(0, com->m_ptr_bit);
@@ -1979,10 +1764,6 @@ gup_result compress_chars(packstruct *com)
     {
         int charct=get_max_character(charfreq, NC);
         /* vanaf hier hebben wij charfreq niet meer nodig! */
-    if(debug)
-    {
-        printf("entries\n");
-    }
         ST_BITS(entries, 16); /* aantal huffman karakters */
         {
             /*
@@ -2035,19 +1816,11 @@ gup_result compress_chars(packstruct *com)
             }
             if((vp < 2) || (nulct==0))
             { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als nulct==0 */
-        if(debug)
-        {
-            printf("special case 1, er is maar een character lengte\n");
-        }
                 ST_BITS(0, 5);
                 ST_BITS(*com->charlen + 2, 5);
             }
             else
             {
-        if(debug)
-        {
-            printf("char_ptrs\n");
-        }
                 long ptrct = NCPT;
                 int skip=0;
                 make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & sort_opt));
@@ -2091,10 +1864,6 @@ gup_result compress_chars(packstruct *com)
             /* charlen overgedragen, breng characters  */
             if(vp < 2)
             { /*- special case 2, er is maar een karakter lengte */
-        if(debug)
-        {
-            printf("special case 2, er is maar een character lengte\n");
-        }
                 c_codetype kar=com->chars[0];
                 if(kar<0)
                 {
@@ -2105,10 +1874,6 @@ gup_result compress_chars(packstruct *com)
             }
             else
             {
-        if(debug)
-        {
-            printf("chars\n");
-        }
                 ST_BITS(charct, 9);
                 for(int_fast16_t i=0; i<charct; i++)
                 {
@@ -2170,20 +1935,11 @@ gup_result compress_chars(packstruct *com)
             }
             if(vp < 2)
             { /*- special case 3, er is maar een pointerlengte */
-        if(debug)
-        {
-            printf("special case 3, er is maar een ptr lengte\n");
-        }
                 ST_BITS(0, com->m_ptr_bit);
                 ST_BITS(ptrct, com->m_ptr_bit);
             }
             else
             {
-        if(debug)
-        {
-            printf("ptrs\n");
-        }
-
                 ptrct++;
                 ST_BITS(ptrct, com->m_ptr_bit);
                 for(int_fast8_t i=0; i<ptrct; i++)
@@ -2206,10 +1962,6 @@ gup_result compress_chars(packstruct *com)
     ** alle codes overgedragen, stuur nu de gecodeerde message
     */
     entries -= entriesextra;
-    if(debug)
-    {
-        printf("message:\n");
-    }
     {
         uint_fast32_t ptrctr=0;
         for(uint_fast16_t i=0; i<entries; i++)
@@ -2242,15 +1994,6 @@ gup_result compress_chars(packstruct *com)
         }
         {
             long i = (com->charp - com->chars) - entries;
-            if(debug)
-            {
-                printf("move: entries=%i, ptrctr=%i i=%i\n", (int)entries, (int)ptrctr, (int)i);
-                for(int i=0; i<=entries; i++)
-                {
-                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-                }
-            }
             memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
             com->charp-=entries;
             memmove(com->matchstring, com->matchstring+4*ptrctr, i*4);
@@ -2260,15 +2003,6 @@ gup_result compress_chars(packstruct *com)
             memmove(com->pointers, com->pointers+ptrctr, i*sizeof(com->pointers[0]));
             com->ptrp -= ptrctr;
             com->backmatch[0]=0;
-            if(debug)
-            {
-                printf("Na move:\n");
-                for(int i=0; i<=entries; i++)
-                {
-                    printf("i=%i, char=%03i, ptr=%i, msp=%02X,%02X,%02X,%02X, bm=%i\n", i, (int)com->chars[i], (int)com->pointers[i],
-                    com->matchstring[4*i+0], com->matchstring[4*i+1], com->matchstring[4*i+2], com->matchstring[4*i+3], (int)com->backmatch[i]);
-                }
-            }
         }
     }
     return GUP_OK;
@@ -2549,29 +2283,6 @@ void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_
                     } while(--i!=0);
                 }
             }
-            #if !defined(NDEBUG) || 0
-            { /*- for debugging use */
-                int_fast32_t lentries = (com->charp - com->chars);
-                {
-                    int_fast32_t i = lentries;
-                    c_codetype *cp = com->chars;
-                    while(--i!=0)
-                    {
-                        c_codetype tmp = *cp++;
-                        ARJ_Assert(tmp>=-4);
-                        ARJ_Assert(tmp<=(c_codetype)(NLIT-MIN_MATCH+com->max_match));
-                        if(tmp<-4)
-                        {
-                            fprintf(assert_redir_fptr, "te klein!");
-                        }
-                        if(tmp>(int)(NLIT-MIN_MATCH+com->max_match))
-                        {
-                            fprintf(assert_redir_fptr, "te groot!");
-                        }
-                    }
-                }
-            }
-            #endif
             entriesextra += entries - old_entries;
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
             make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
@@ -2604,7 +2315,6 @@ void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_
                             if(len>0)
                             {
                                 c_codetype kar_1=com->chars[i-1];
-//                                printf("kar=%i, len=%i, kar_1=%i\n", (int)kar, (int)len, (int)kar_1);
                                 if(kar_1<0)
                                 {
                                     com->backmatch[bmi]=0;
@@ -2648,29 +2358,6 @@ void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_
                         }
                     }
                 }
-                #if !defined(NDEBUG) || 0
-                { /*- for debugging use */
-                    int_fast32_t lentries = (com->charp - com->chars);
-                    {
-                        int_fast32_t i = lentries;
-                        c_codetype *cp = com->chars;
-                        while(--i!=0)
-                        {
-                            c_codetype tmp = *cp++;
-                            ARJ_Assert(tmp>=-4);
-                            ARJ_Assert(tmp<=(c_codetype)(NLIT-MIN_MATCH+com->max_match));
-                            if(tmp<-4)
-                            {
-                                fprintf(assert_redir_fptr, "te klein!");
-                            }
-                            if(tmp>(int)(NLIT-MIN_MATCH+com->max_match))
-                            {
-                                fprintf(assert_redir_fptr, "te groot!");
-                            }
-                        }
-                    }
-                }
-                #endif
                 /* recalc charlen, ptr len hoeft niet */
                 make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
             } while(redo);
@@ -2790,124 +2477,6 @@ void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBO
         }
 //        shift+=BUCKET_BITS;
     }
-}
-
-int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t symbol_size, int max_huff_len);
-
-int huffman_sanety_check(uint8 s_len[], huffman_t huff_codes[], symbol_count_t symbol_size, int max_huff_len)
-{
-    symbol_count_t len_count[MAX_HUFFMAN_LEN+1]={0};
-    int max_len=0;
-    symbol_count_t max_len_symbol;
-    symbol_count_t symbol_count=0;
-    symbol_count_t i;
-    i=symbol_size;
-    max_len_symbol=0;
-
-    if(max_huff_len>MAX_HUFFMAN_LEN)
-    {
-        fprintf(stderr, "Given max_huffman len is bigger as the fixed length limit: max_huffman_len=%i > %i (MAX_HUFFMAN_LEN).\n", max_huff_len, MAX_HUFFMAN_LEN);
-        return -1;
-    }
-    do
-    {
-        i--;
-        if(s_len[i]==0)
-        {
-            if(huff_codes[i]!=0)
-            {
-                fprintf(stderr, "Zero length huffman code has a non zero code: s_len[%i]=%i, huffcode=%X\n", i, s_len[i], huff_codes[i]);
-                exit(-1);
-            }
-        }
-        else
-        {
-            symbol_count++;
-            if(s_len[i]>max_huff_len)
-            {
-                fprintf(stderr, "Length huffman code is larger as the limit: s_len[%i]=%i > %i (max_huffman_len)\n", i, s_len[i], max_huff_len);
-                exit(-1);
-            }
-            len_count[s_len[i]]++;
-            if(s_len[i]>=max_len)
-            {
-                max_len=s_len[i];
-                max_len_symbol=i;
-            }
-            { /* test lengte van huffman code */
-                huffman_t code=huff_codes[i];
-                int len=0;
-                while(code!=0)
-                {
-                    len++;
-                    code>>=1;
-                }
-                if(len>s_len[i])
-                {
-                    fprintf(stderr, "Length huffman code is larger as its stated length: len(%i)=%i > s_len[%i]=%i\n", huff_codes[i], len, i, s_len[i]);
-                    exit(-1);
-                }
-            }
-
-        }
-    } while(i>0);
-    if(symbol_count<2)
-    { /* aantal symbolen <2, weinig te checken */
-        if(symbol_count==1)
-        {
-            if(max_len>1)
-            {
-                fprintf(stderr, "Length of the single huffman code is larger as 1: len(%i)=%i > 1\n", max_len_symbol, s_len[i]);
-                exit(-1);
-            }
-            if(huff_codes[max_len_symbol]!=0)
-            {
-                fprintf(stderr, "Huffmancode of the single huffman code is not zero: huffman_code[%i]=%X != 0\n", huff_codes[max_len_symbol], s_len[i]);
-                exit(-1);
-            }
-        }
-        return 0;
-    }
-    /* is de tree compleet? */
-    {
-        huffman_t totaal=0;
-        huffman_t correct=1;
-        for(i=1; i<=max_len; i++)
-        {
-            totaal+=(len_count[i]<<(max_len-i));
-            correct<<=1;
-        }
-        if(totaal!=correct)
-        {
-            fprintf(stderr, "Tree is not complete, totaal: %X != correct: %X\n", totaal, correct);
-            exit(-1);
-        }
-    }
-    /* klopt de tree? */
-    {
-        huffman_t huffcode[MAX_HUFFMAN_LEN+1];
-        huffman_t start_huffcode=0;
-        huffcode[0]=0;
-        for(i=1; i<=MAX_HUFFMAN_LEN; i++)
-        {
-            start_huffcode<<=1;
-            huffcode[i]=start_huffcode;
-            start_huffcode+=len_count[i];
-        }
-        for(i=0; i<symbol_size; i++)
-        {
-            if(huff_codes[i]!=huffcode[s_len[i]])
-            {
-                fprintf(stderr, "Wrong huffman code: huff_code[%i]=%X!=%X\n", i, huff_codes[i], huffcode[s_len[i]]);
-                exit(-1);
-            }
-            if(s_len[i]!=0)
-            {
-                huffcode[s_len[i]]++;
-            }
-        }
-    }
-    return 0;
 }
 
 /*************************    make_hufftable    *************************
@@ -3502,12 +3071,8 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
    * als er alleen maar matches van 3 en 4 zijn kan alles naar karakters worden
    * omgezet, door gebruik te maken van een minimum ASCII header
    */
-  if((message_bits+header_bits)>((*packed_bytes<<3)+SPECIAL_MIN_ASCII_HEADER) && (*packed_bytes <= MAX_ENTRIES) && (debug!=5))
+  if((message_bits+header_bits)>((*packed_bytes<<3)+SPECIAL_MIN_ASCII_HEADER) && (*packed_bytes <= MAX_ENTRIES))
   { /* is een conversie mogelijk */
-    if(debug!=0)
-    {
-        printf("!!\n");
-    }
     if(com->special_header==NORMAL_HEADER)
     { /* conversie is mogelijk */
       if((message_bits+header_bits)>=((*packed_bytes<<3)+MIN_ASCII_HEADER))
@@ -3515,10 +3080,6 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         unsigned long size=MIN_ASCII_HEADER+(*packed_bytes<<3);
         com->special_header=SPECIAL_MIN_ASCII_HEADER;
         message_bits=size-header_bits;
-        if(debug)
-        {
-            printf("packed_bytes=%i\n", (int)*packed_bytes);
-        }
       }
     }
   }
