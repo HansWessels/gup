@@ -650,7 +650,7 @@ gup_result encode(packstruct *com)
 {
 	TRACE_ME();
 	gup_result res;
-	printf("\n");
+//	printf("\n");
 	com->bytes_packed=0;
 	switch(com->mode)
 	{
@@ -882,9 +882,11 @@ void dump(int start, int aantal, packstruct *com)
     }
 }
 
-#define MIN_RLE 11
 #define MIN_LITERAL_RLE 3
 #define MIN_SINGLEPTR01_RLE 3
+#define MIN_SINGLE_POINTER_RLE256 6
+#define MIN_SINGLE_POINTER_RLE 16
+#define MIN_MULTI_POINTER_RLE 23
 
 gup_result compress_chars(packstruct *com)
 {
@@ -951,24 +953,6 @@ gup_result compress_chars(packstruct *com)
                     rle_pos++;
                     rle_len=i-rle_pos;
                     single_pointer=1;
-                }
-                if((0) && ((com->chars[rle_pos]==0x109) || (com->chars[rle_pos]==0x101) || (com->chars[rle_pos]==0x102)|| (com->chars[rle_pos]==0x103)|| (com->chars[rle_pos]==0x104)))
-                {
-                    rle_len=0;
-                }
-                if((0) && (rle_pos<2) && (rle_len==MIN_RLE) && (com->chars[rle_pos]==0x100) && (com->pointers[rle_pos]>(4096+2048-1024-512+256-128-64+32+16-8)))
-                {
-                    rle_len=0;
-                    debug=0;
-                }
-                if((0) && (rle_pos<2) && (rle_len==MIN_RLE) && (com->chars[rle_pos]==0x100) && (com->pointers[rle_pos]<(4096+2048-1024-512+256-128-64+32+16-8)))
-                {
-                    rle_len=0;
-                }
-                if((0) && (rle_pos<2) && (rle_len==MIN_RLE) && (com->chars[rle_pos]==0x100) && (com->pointers[rle_pos]==(4096+2048-1024-512+256-128-64+32+16-8)))
-                {
-                    //rle_len=0;
-                    debug=2;
                 }
                 if(debug)
                 {
@@ -1324,6 +1308,7 @@ gup_result compress_chars(packstruct *com)
                                     else
                                     { /* fix de laatste match */
 //                                        printf("if(best_rest!=0)\n");
+                                        int pos=4*rle_len;
                                         entries=rle_len;
                                         ptrs=rle_len;
                                         if(ptr_bits!=0)
@@ -1332,56 +1317,60 @@ gup_result compress_chars(packstruct *com)
                                             old_count^=best_rest;
                                             if((old_count&1) != 0)
                                             {
-                                                int pos=4*rle_len;
                                                 for(int_fast16_t i=0; i<4; i++)
                                                 { /* matchstring aanpassen */
                                                     com->matchstring[pos+i]=com->matchstring[pos+((i+1)&3)];
                                                 }
                                             }
                                         }
-                                        if(best_rest<MIN_MATCH)
-                                        {
-                                            if((com->chars[rle_len+1]>=NLIT) && (com->backmatch[ptr_pos+2]>0) && ((rle_len+1)<entries))
-                                            {
-                                                int pos=4*rle_len;
+                                        if((com->chars[rle_len+1]>=NLIT) && (com->backmatch[ptr_pos+2]>=best_rest) && ((rle_len+1)<entries))
+                                        { /* alles toevoegen aan de volgende prt/len */
+                                            if(best_rest>=4)
+                                            { /* geen ptoblemen met de matchstring */
                                                 for(int_fast16_t i=0; i<4; i++)
                                                 {
-                                                    com->matchstring[pos+i+best_rest]=com->matchstring[pos+4+i];
-                                                }
-                                                if(com->backmatch[ptr_pos+2]>=best_rest)
-                                                {
-                                                    com->chars[rle_len+1]+=best_rest;
-                                                    com->backmatch[ptr_pos+2]=0;
-                                                    for(int_fast16_t i=0; i<4; i++)
-                                                    {
-                                                        com->matchstring[pos+4+i]=com->matchstring[pos+i];
-                                                    }
-                                                    entries++;
-                                                    ptrs++;
-                                                }
-                                                else
-                                                {
-                                                    com->chars[rle_len+1]+=com->backmatch[ptr_pos+2];
-                                                    best_rest-=com->backmatch[ptr_pos+2];
-                                                    com->chars[rle_len]=-best_rest;
-                                                    com->backmatch[ptr_pos+2]=0;
-                                                    int i=4;
-                                                    do
-                                                    {
-                                                        i--;
-                                                        com->matchstring[pos+4+i]=com->matchstring[pos+i+best_rest];
-                                                    } while(i>0);
+                                                    com->matchstring[pos+4+i]=com->matchstring[pos+i];
                                                 }
                                             }
                                             else
                                             {
-                                                com->chars[rle_len]=-best_rest;
+                                                for(int_fast16_t i=0; i<4; i++)
+                                                {
+                                                    com->matchstring[pos+i+best_rest]=com->matchstring[pos+4+i];
+                                                }
+                                                for(int_fast16_t i=0; i<4; i++)
+                                                {
+                                                    com->matchstring[pos+4+i]=com->matchstring[pos+i];
+                                                }
                                             }
+                                            com->chars[rle_len+1]+=best_rest;
+                                            entries++;
+                                            ptrs++;
+                                        }
+                                        else if(best_rest<MIN_MATCH)
+                                        {
+                                            if((com->chars[rle_len+1]>=NLIT) && (com->backmatch[ptr_pos+2]>0) && ((rle_len+1)<entries))
+                                            {
+                                                for(int_fast16_t i=0; i<4; i++)
+                                                {
+                                                    com->matchstring[pos+i+best_rest]=com->matchstring[pos+4+i];
+                                                }
+                                                com->chars[rle_len+1]+=com->backmatch[ptr_pos+2];
+                                                best_rest-=com->backmatch[ptr_pos+2];
+                                                int i=4;
+                                                do
+                                                {
+                                                    i--;
+                                                    com->matchstring[pos+4+i]=com->matchstring[pos+i+best_rest];
+                                                } while(i>0);
+                                            }
+                                            com->chars[rle_len]=-best_rest;
                                         }
                                         else
                                         {
-                                            com->chars[rle_len]=best_rest+NLIT-MIN_MATCH;
+                                                com->chars[rle_len]=best_rest+NLIT-MIN_MATCH;
                                         }
+                                        com->backmatch[ptr_pos+2]=0;
                                     }
                                     long i=(com->charp-com->chars)-entries;
                                     memmove(com->chars, com->chars+entries, i*sizeof(com->chars[0]));
@@ -1409,7 +1398,31 @@ gup_result compress_chars(packstruct *com)
                     }
                     break;
                 }
-                else if((1) && (rle_len>=MIN_RLE))
+                else if((single_pointer!=0) && ((com->chars[rle_pos]-NLIT+MIN_MATCH)==com->max_match)&& (rle_len>=MIN_SINGLE_POINTER_RLE256))
+                {
+                    if(rle_pos>0)
+                    {
+                        entries=rle_pos;
+                    }
+                    else
+                    {
+                        entries=rle_len;
+                    }
+                    break;
+                }
+                else if((single_pointer!=0) && (rle_len>=MIN_SINGLE_POINTER_RLE))
+                {
+                    if(rle_pos>0)
+                    {
+                        entries=rle_pos;
+                    }
+                    else
+                    {
+                        entries=rle_len;
+                    }
+                    break;
+                }
+                else if(rle_len>=MIN_MULTI_POINTER_RLE)
                 {
                     if(rle_pos>0)
                     {
