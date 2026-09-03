@@ -12,7 +12,7 @@
 **   g NC = 256; Number of Characters, aantal verschillende karaters in uint8
 **   h HASH_SIZE32 = 65536; grootte van de hash array voor de eerste karakter van een insert, we zouden deze NC*NC*NC kunnen maken dan is het altijd raak...
 **                   de RLE's moeten gefilterd worden, anders bij grote matches zelfs op snelle machines erg traag, aparte insert voor RLE's
-**     HASH_SIZE_RLE32 = (256*RLE32_DEPTH) 
+**     HASH_SIZE_RLE32 = (256*RLE32_DEPTH)
 **     RLE32_DEPTH = 1024
 ** 4 back match lengte? Niet van belang, de kostenfunctie met complete matchen maakt dit overbodig
 ** 5 match history voor current match.. hoe lang moet deze zijn? Niet van belang, de kostenfunctie met complete matchen maakt dit overbodig
@@ -52,7 +52,7 @@ static uint32_t hash(index_t pos, packstruct* com);
 static void find_dictionary32(index_t pos, packstruct* com);
 static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packstruct* com);
 
-#if (MAX_HIST!=0) 
+#if (MAX_HIST!=0)
 	static ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match);
 	static void ptr_copy2(ptr_hist_t *src, ptr_hist_t *dst);
 	static void ptr_copy(ptr_t ptr, index_t pos, ptr_hist_t *src, ptr_hist_t *dst);
@@ -63,10 +63,10 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 	#define PTR_COPY(ptr, pos, src, dst) ptr_copy(ptr, pos, src, dst)
 	#define LITERAL_POINTER_SWAP(ptr_hist) literal_pointer_swap(ptr_hist)
 #else
-	#define CHECK_PTR_REUSE(com, pos, cost, ptr, best_match) 
-	#define PTR_COPY2(src, dst) 
-	#define PTR_COPY(ptr, pos, src, dst) 
-	#define LITERAL_POINTER_SWAP(ptr_hist) 
+	#define CHECK_PTR_REUSE(com, pos, cost, ptr, best_match)
+	#define PTR_COPY2(src, dst)
+	#define PTR_COPY(ptr, pos, src, dst)
+	#define LITERAL_POINTER_SWAP(ptr_hist)
 #endif
 
 #ifndef BEST_MATCH
@@ -127,7 +127,7 @@ static gup_result init_dictionary32(packstruct *com)
 		return GUP_NOMEM;
 	}
 	com->compressed_data=(void*)com->cost;
-	#if (MAX_HIST!=0) 
+	#if (MAX_HIST!=0)
 	com->ptr_hist=com->gmalloc((com->origsize+DICTIONARY_START_OFFSET+DICTIONARY_END_OFFSET)*sizeof(ptr_hist_t), com->gm_propagator);
 	if (com->ptr_hist == NULL)
 	{
@@ -168,7 +168,7 @@ static gup_result init_dictionary32(packstruct *com)
 			com->tree32[i].c_left=NO_NODE;
 			com->tree32[i].c_right=NO_NODE;
 			com->cost[i]=0;
-			#if (MAX_HIST!=0) 
+			#if (MAX_HIST!=0)
 			{
 				int j;
 				for(j=0; j<MAX_PTR_HIST; j++)
@@ -198,7 +198,7 @@ static void free_dictionary32(packstruct *com)
 	com->gfree(com->hash_table_rle, com->gf_propagator);
 	com->gfree(com->tree32, com->gf_propagator);
 	com->gfree(com->cost, com->gf_propagator);
-	#if (MAX_HIST!=0) 
+	#if (MAX_HIST!=0)
 	com->gfree(com->ptr_hist, com->gf_propagator);
 	#endif
 	#ifdef LINK_HIST
@@ -216,7 +216,7 @@ static uint32_t hash(index_t pos, packstruct* com)
 	return val;
 }
 
-#if (MAX_HIST!=0) 
+#if (MAX_HIST!=0)
 static ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, ptr_t ptr, match_t best_match)
 { /* kijken of we de pointer kunnen hergebruiken */
 	ptr_t hist_ptr;
@@ -224,7 +224,7 @@ static ptr_t check_ptr_reuse(packstruct* com, index_t pos, unsigned long *cost, 
 	match_t hist_len;
 	index_t p;
 	index_t q;
-	
+
 	hist_pos=com->ptr_hist[pos].pos[1];
 	if(hist_pos<DICTIONARY_START_OFFSET)
 	{
@@ -342,7 +342,7 @@ static void literal_pointer_swap(ptr_hist_t *ptr_hist)
 	ptr_hist->pos[1]=pos;
 }
 
-#endif	// (MAX_HIST!=0) 
+#endif	// (MAX_HIST!=0)
 
 static void find_dictionary32(index_t pos, packstruct* com)
 {
@@ -367,7 +367,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 		com->link3_hist[pos-MAX_PTR32]=NO_NODE;
 		#endif
 	}
-	#if (MAX_HIST!=0) 
+	#if (MAX_HIST!=0)
 	{ /* check for matches at pointer history positions */
 		int i;
 		uint8 orig=com->dictionary[pos+max_match];
@@ -406,7 +406,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					if(best_match==max_match)
 					{
 						break;
-					}	
+					}
 				}
 			}
 		}
@@ -425,7 +425,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 				ptr_t ptr;
 				best_match=1;
 				ptr=pos-match_pos-1;
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
 				#endif
 				if((cost+COST_PTRLEN(best_match, ptr, pos, com->ptr_hist[pos].ptr))<com->cost[pos+best_match], com)
@@ -435,7 +435,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					com->ptr_len[pos+best_match]=ptr;
 					PTR_COPY(ptr, pos+best_match, com->ptr_hist+pos, com->ptr_hist+pos+best_match);
 				}
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					UNSWAP_PTR(swap);
 				#endif
 			}
@@ -500,7 +500,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 	if(max_match>2)
 	{ /* insert pos into slidingdictionary tree and try to find matches */
 		uint32_t h;
-		uint8 orig=com->dictionary[pos+max_match];   
+		uint8 orig=com->dictionary[pos+max_match];
 		if((com->rle_size>0) || ((h=hash(pos, com))==0))
 		{ /* RLE hash */
 			insert_rle(cost, max_match, pos, com);
@@ -579,7 +579,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 					if(best_match==max_match)
 					{ /* found max_match, we are done inserting */
 						break;
-					}	
+					}
 				}
 				if(com->dictionary[p]<com->dictionary[q])
 				{ /* insert node on left side of the tree */
@@ -609,7 +609,7 @@ static void find_dictionary32(index_t pos, packstruct* com)
 				{
 					com->tree32[com->tree32[match_pos].c_left].parent=c_leftp;
 				}
-			}	
+			}
 			else
 			{ /* close the child pointers */
 				*c_leftp=NO_NODE;
@@ -819,7 +819,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			{
 				match_t i=MIN_MATCH;
 				ptr_t ptr=pos-match_pos-1;
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, rle+3);
 				#endif
 				do
@@ -832,7 +832,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 						PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					UNSWAP_PTR(swap);
 				#endif
 			}
@@ -860,7 +860,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			{
 				match_t i=MIN_MATCH;
 				ptr_t ptr=pos-match_pos-1;
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, rle+3);
 				#endif
 				do
@@ -873,7 +873,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 						PTR_COPY(ptr, pos+i, com->ptr_hist+pos, com->ptr_hist+pos+i);
 					}
 				} while(i++<(rle+3));
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 					UNSWAP_PTR(swap);
 				#endif
 			}
@@ -903,7 +903,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 			best_match=p-pos;
 
 			ptr=pos-match_pos-1;
-			#if (MAX_HIST!=0) 
+			#if (MAX_HIST!=0)
 				ptr_t swap=CHECK_PTR_REUSE(com, pos, &cost, ptr, best_match);
 				if(ptr<MATCH_2_CUTTOFF_MAX_PTR)
 				{
@@ -940,13 +940,13 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 					}
 				} while(i++<best_match);
 			}
-			#if (MAX_HIST!=0) 
+			#if (MAX_HIST!=0)
 				UNSWAP_PTR(swap);
 			#endif
 			if((best_match==max_match) || (com->rle_size==(RLE32_DEPTH-1)))
 			{ /* found max_match, we are done inserting */
 				break;
-			}	
+			}
 		}
 		if(com->dictionary[p]<com->dictionary[q])
 		{ /* insert node on left side of the tree */
@@ -976,7 +976,7 @@ static void insert_rle(unsigned long cost, match_t max_match, index_t pos, packs
 		{
 			com->tree32[com->tree32[match_pos].c_left].parent=c_leftp;
 		}
-	}	
+	}
 	else
 	{ /* close the child pointers */
 		*c_leftp=NO_NODE;
@@ -1239,7 +1239,7 @@ static gup_result encode32(packstruct *com)
 				new_ptr=com->ptr_len[current_pos];
 				com->match_len[current_pos]=match;
 				com->ptr_len[current_pos]=ptr;
-				#if (MAX_HIST!=0) 
+				#if (MAX_HIST!=0)
 				{ /* probeer ptr te vervangen door een pointer hystory match */
 					unsigned long cost;
 					cost=com->cost[current_pos];

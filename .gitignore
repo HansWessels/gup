@@ -36,3 +36,4 @@ stamp-h1
 /ni_pack/windows/msvc2022/bin/
 /ni_pack/windows/msvc2022/obj/
 test_resultaten.txt
+.clangd
