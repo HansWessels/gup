@@ -1,3 +1,8 @@
+/*
+** test configute flags: ./configure CFLAGS="-fsanitize=address -g -O1" LDFLAGS="-fsanitize=address"
+** run automake after Makefile.am modifications
+*/
+
 /********************************************************************
  *                                                                  *
  * Arj compression engine. Copyright (c) 1994 H. Wessels.           *
@@ -283,30 +288,22 @@
 #include "evaluatr.h"
 #include "encode.h"
 #include "assume_compat.h"
+#include "huffman.h"
 
 /* eerst ff wat definities */
-
-typedef uint16 huffman_t;
-typedef uint16_t freq_t;
-#define MAX_FREQ_VALUE UINT16_MAX
-typedef uint16 symbol_t;
-typedef int symbol_count_t;
 
 void init_bitbuffer(packstruct *com);
 gup_result close_m1_m7_stream(packstruct *com);
 gup_result store(packstruct *com);
 gup_result compress_chars(packstruct *com); /* maakt huffman tabellen */
-void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, uint16 charfreq[NC], uint16 ptrfreq[MAX_NPT], int sort_opt);
+void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, freq_t charfreq[NC], freq_t ptrfreq[MAX_NPT], int sort_opt);
 gup_result compress_lzs(packstruct *com);
 gup_result compress_lz5(packstruct *com);
 unsigned long count_bits(unsigned long* header_size, unsigned long* message_size,
                          unsigned long* packed_bytes, int_fast32_t entries, uint8* charlen,
-                         uint8* ptrlen, uint16* charfreq, uint16* ptrfreq, int sort_opt, packstruct *com);
-void set_maxlen(int count, uint8 len[]);
-uint16 get_max_character(uint16 freq[], int max_index);
+                         uint8* ptrlen, freq_t* charfreq, freq_t* ptrfreq, int sort_opt, packstruct *com);
 
 #define MAX_HUFFMAN_LEN MAX_HUFFLEN
-#define MAX_SYMBOL_SIZE NC
 
 #define SORT_MASK_CHAR 1
 #define SORT_MASK_PTR 2
@@ -315,10 +312,6 @@ uint16 get_max_character(uint16 freq[], int max_index);
 #define SORT_OPT 1
 
 
-void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
-void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count);
-void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len, int sort_order);
-void make_huffman_codes(uint16* table, uint8* len, int nchar); /* maakt de huffman codes */
 gup_result init_encode_r(packstruct *com);
 void free_encode_r(packstruct *com);
 
@@ -803,40 +796,6 @@ gup_result announce(unsigned long bytes, packstruct *com)
 
 #endif
 
-void set_maxlen(int count, uint8 len[])
-{
-    uint8 max_len=0;
-    int i;
-    for(i=0; i<count; i++)
-    {
-        if(len[i]>max_len)
-        {
-            max_len=len[i];
-        }
-    }
-    max_len++;
-    for(i=0; i<count; i++)
-    {
-        if(len[i]==0)
-        {
-            len[i]=max_len;
-        }
-    }
-}
-
-uint16 get_max_character(uint16 freq[], int max_index)
-{
-    while(max_index>0)
-    {
-        max_index--;
-        if(freq[max_index]!=0)
-        {
-            return max_index+1;
-        }
-    }
-    return 0;
-}
-
 #define MIN_LITERAL_RLE 3
 #define MIN_SINGLEPTR01_RLE 3
 #define MIN_SINGLE_POINTER_RLE256 6
@@ -849,8 +808,8 @@ gup_result compress_chars(packstruct *com)
     int_fast32_t entriesextra;
     int_fast32_t rle_pos;
     int sort_opt=SORT_OPT;
-    uint16 charfreq[NC];
-    uint16 ptrfreq[MAX_NPT];
+    freq_t charfreq[NC];
+    freq_t ptrfreq[MAX_NPT];
     entries = (int_fast32_t) (com->charp - com->chars);
     if(entries > com->hufbufsize)
     {
@@ -1407,8 +1366,8 @@ gup_result compress_chars(packstruct *com)
     { /*- character frequentie tellen */
         int_fast32_t ptr_index=0;
         entriesextra=0;
-        memset(charfreq, 0, NC * sizeof(*charfreq));
-        memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
+        memset(charfreq, 0, NC * sizeof(charfreq[0]));
+        memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
 
         for(int_fast32_t i=0; i<entries; i++)
         { /* update charachter and ptr freq */
@@ -1479,8 +1438,8 @@ gup_result compress_chars(packstruct *com)
                 int_fast32_t ptr_index=0;
                 entriesextra=0;
                 entries=start_entries;
-                memset(charfreq, 0, NC * sizeof(*charfreq));
-                memset(ptrfreq, 0, MAX_NPT * sizeof(*ptrfreq));
+                memset(charfreq, 0, NC * sizeof(charfreq[0]));
+                memset(ptrfreq, 0, MAX_NPT * sizeof(ptrfreq[0]));
                 for(int_fast32_t i=0; i<entries; i++)
                 { /* update charachter and ptr freq */
                     c_codetype kar = com->chars[i];
@@ -1964,7 +1923,7 @@ gup_result compress_chars(packstruct *com)
     entries -= entriesextra;
     {
         uint_fast32_t ptrctr=0;
-        for(uint_fast16_t i=0; i<entries; i++)
+        for(int_fast32_t i=0; i<entries; i++)
         {
             c_codetype kar = com->chars[i];
             if(kar < 0)
@@ -2008,7 +1967,7 @@ gup_result compress_chars(packstruct *com)
     return GUP_OK;
 }
 
-void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, uint16 charfreq[NC], uint16 ptrfreq[MAX_NPT], int sort_opt)
+void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_p, packstruct *com, freq_t charfreq[NC], freq_t ptrfreq[MAX_NPT], int sort_opt)
 {
     int_fast32_t entries=*entries_p;
     int_fast32_t entriesextra=*entriesextra_p;
@@ -2367,419 +2326,6 @@ void optimize_huffman_block(int_fast32_t* entries_p, int_fast32_t* entriesextra_
     *entriesextra_p=entriesextra;
 }
 
-#define INSERTION_GRENS 16
-
-void insertion_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count)
-{
-    symbol_count_t i;
-    for(i=1; i<symbol_count; i++)
-    {
-        freq_t cur_freq=freq[i];
-        symbol_t cur_symbol=symbols[i];
-        symbol_count_t pos=i-1;
-        while(pos>=0 && (freq[pos]>cur_freq))
-        {
-            freq[pos+1]=freq[pos];
-            symbols[pos+1]=symbols[pos];
-            pos--;
-        }
-        freq[pos+1]=cur_freq;
-        symbols[pos+1]=cur_symbol;
-    }
-}
-
-void radix_sort_symbols(symbol_t symbols[MAX_SYMBOL_SIZE], freq_t freq[MAX_SYMBOL_SIZE], symbol_count_t symbol_count)
-{
-    symbol_t tmp_symbols[MAX_SYMBOL_SIZE];
-    freq_t tmp_freq[MAX_SYMBOL_SIZE];
-
-    #define BUCKET_BITS 8
-    #define BUCKET_SIZE (1<<BUCKET_BITS)
-    #define BUCKET_MASK (BUCKET_SIZE-1)
-
-    symbol_count_t bucket[BUCKET_SIZE];
-    freq_t max=0;
-    int shift=0;
-    if(symbol_count<INSERTION_GRENS)
-    {
-        insertion_sort_symbols(symbols, freq, symbol_count);
-        return;
-    }
-    symbol_count_t i=symbol_count;
-    do
-    {
-        i--;
-        if(max<freq[i])
-        {
-            max=freq[i];
-        }
-    } while(i>0);
-
-    for(;;)
-    {
-        symbol_count_t i;
-        i=symbol_count;
-        memset(bucket, 0, sizeof(bucket));
-        do
-        {
-            i--;
-            bucket[((freq[i]>>shift) & BUCKET_MASK)]++;
-        } while(i>0);
-
-        symbol_count_t start;
-        start=0;
-        for(i=0; i<BUCKET_SIZE; i++)
-        {
-            symbol_count_t tmp=bucket[i];
-            bucket[i]=start;
-            start+=tmp;
-        }
-        for(i=0; i<symbol_count; i++)
-        {
-            int tmp=(freq[i]>>shift)&BUCKET_MASK;
-            tmp_freq[bucket[tmp]]=freq[i];
-            tmp_symbols[bucket[tmp]]=symbols[i];
-            bucket[tmp]++;
-        }
-        max>>=BUCKET_BITS;
-        if(max==0)
-        {
-            memcpy(freq, tmp_freq, symbol_count*sizeof(freq[0]));
-            memcpy(symbols, tmp_symbols, symbol_count*sizeof(symbols[0]));
-            return;
-        }
-        shift+=BUCKET_BITS;
-        i=symbol_count;
-        memset(bucket, 0, sizeof(bucket));
-        do
-        {
-            i--;
-            bucket[((tmp_freq[i]>>shift) & BUCKET_MASK)]++;
-        } while(i>0);
-        start=0;
-        for(i=0; i<BUCKET_SIZE; i++)
-        {
-            symbol_count_t tmp=bucket[i];
-            bucket[i]=start;
-            start+=tmp;
-        }
-        for(i=0; i<symbol_count; i++)
-        {
-            int tmp=(tmp_freq[i]>>shift)&BUCKET_MASK;
-            freq[bucket[tmp]]=tmp_freq[i];
-            symbols[bucket[tmp]]=tmp_symbols[i];
-            bucket[tmp]++;
-        }
-//        max>>=BUCKET_BITS;
-//        if(max==0)
-        {
-            return;
-        }
-//        shift+=BUCKET_BITS;
-    }
-}
-
-/*************************    make_hufftable    *************************
- Function:    make_hufftable
- Purpose:     Assign Huffman codes to characters, based on the occurrence
-              frequency of each character.  Normally, standard Huffman codes
-              are assigned.  However, if this means that the longest Huffman
-              code is longer than <max_hufflen> bits, the Huffman codes will
-              be re-assigned to make the longest Huffman code not exceed
-              <max_hufflen> bits.
- Input:       freq       Occurrence frequency of each character.  freq[i]
-                         contains the occurrence frequency for character i.
-              totalfreq  Sum of all occurrence frequencies.
-              nchar      Number of characters in the character set.
- Output:      table      Huffman code for each character.  table[i] will be
-                         the Huffman code for character i.
-              len        Length of the Huffman codes for the characters, in
-                         bits. len[i] will be the length of table[i].
- Assumptions: 1. Elements 0..N-1 of <freq> are defined by the caller.
-              2. <totalfreq> is less than 0xFFFF .  Note that this implies that
-                 all elements freq[0..N-1] are less than 0xFFFF .
-              3. <nchar> is less than or equal to <NC>.
-******************************************************************************/
-
-void make_hufftable(uint8 s_len[], huffman_t huff_codes[], const uint16 in_freq[], const symbol_count_t symbol_size, int max_huff_len, int sort_order)
-{
-    freq_t freq_array[MAX_SYMBOL_SIZE*2+1]; /* we willen een voor het array ook kunnen lezen */
-    symbol_count_t tree_array[MAX_HUFFMAN_LEN*MAX_SYMBOL_SIZE*2];
-    symbol_t symbols[MAX_SYMBOL_SIZE];
-    symbol_count_t* tree=tree_array;
-    freq_t* freq=freq_array+1;
-    symbol_count_t symbol_count;
-    symbol_count_t pairs_count;
-    symbol_count_t i;
-    symbol_count=0;
-    if(sort_order==0)
-    {
-        i=symbol_size;
-        do
-        { /* hoeveel symbols zijn er met een freq>0? */
-            i--;
-            if(in_freq[i]!=0)
-            {
-                freq[symbol_count]=in_freq[i];
-                symbols[symbol_count]=i;
-                symbol_count++;
-            }
-        } while(i>0);
-    }
-    else
-    {
-        for(i=0; i<symbol_size; i++)
-        { /* hoeveel symbols zijn er met een freq>0? */
-            if(in_freq[i]!=0)
-            {
-                freq[symbol_count]=in_freq[i];
-                symbols[symbol_count]=i;
-                symbol_count++;
-            }
-        }
-    }
-    memset(s_len, 0, (size_t)symbol_size*sizeof(s_len[0]));
-    if(symbol_count<3)
-    { /* special cases 0, 1 en 2 symbolen */
-        memset(huff_codes, 0, (size_t)symbol_size*sizeof(huff_codes[0]));
-        if(symbol_count>1)
-        {
-            huffman_t code=0;
-            for(i=0; i<symbol_size; i++)
-            {
-                if(in_freq[i]!=0)
-                {
-                    huff_codes[i]=code;
-                    code++;
-                    s_len[i]=1;
-                }
-            }
-        }
-        return;
-    }
-    {
-        radix_sort_symbols(symbols, freq, symbol_count);
-    }
-    freq+=symbol_count; /* freq array index -1 based */
-    if(1)
-    { /* eerst een traditionele huffmanboom bouwen */
-        symbol_count_t* len=tree+3*symbol_count;
-        symbol_count_t symbol_pos=-symbol_count;
-        symbol_count_t child=0;
-        symbol_count_t pair_pos=symbol_count-1;
-        symbol_count_t node;
-        for(node=0; node<symbol_count; node++)
-        {
-            freq[node]=MAX_FREQ_VALUE; /* sentries */
-        }
-        node=symbol_count-1;
-        do
-        {
-            freq_t node_freq;
-            if(freq[symbol_pos]<=freq[pair_pos])
-            {
-                tree[child++]=symbol_pos;
-                node_freq=freq[symbol_pos];
-                symbol_pos++;
-            }
-            else
-            {
-                tree[child++]=pair_pos;
-                node_freq=freq[pair_pos];
-                pair_pos--;
-            }
-            if(freq[symbol_pos]<=freq[pair_pos])
-            {
-                tree[child++]=symbol_pos;
-                node_freq+=freq[symbol_pos];
-                symbol_pos++;
-            }
-            else
-            {
-                tree[child++]=pair_pos;
-                node_freq+=freq[pair_pos];
-                pair_pos--;
-            }
-            freq[node]=node_freq;
-            node--;
-        } while(node>0);
-        node++;
-        { /* bouw s_len */
-            len[node]=0;
-            do
-            {
-                int current_len;
-                current_len=len[node]+1;
-                len[tree[--child]]=current_len;
-                len[tree[--child]]=current_len;
-                node++;
-            } while(child>0);
-            len-=symbol_count;
-            if(len[0]<=max_huff_len)
-            {
-                for(i=0; i<symbol_count; i++)
-                {
-                    s_len[symbols[i]]=(uint8)len[i];
-                }
-                make_huffman_codes(huff_codes, s_len, symbol_size);
-//                huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
-                return;
-            }
-        }
-    }
-    freq[0]=0; /* sentry */
-    {
-        symbol_count_t symbol_pos;
-        pairs_count=symbol_count>>1;
-        symbol_pos=-1-(symbol_count&1);
-        i=pairs_count;
-        do
-        { /* eerste ronde, gewoon de gegeven character bij elkaar voegen */
-            i--;
-            freq_t node_freq;
-            node_freq=freq[symbol_pos];
-            tree[i*2+1]=symbol_pos;
-            symbol_pos--;
-            node_freq+=freq[symbol_pos];
-            tree[i*2]=symbol_pos;
-            symbol_pos--;
-            freq[i+1]=node_freq;
-        } while(i>0);
-        max_huff_len--;
-    }
-    do
-    { /* merge symbols, max_huff_len-1 keer */
-        symbol_count_t symbol_pos=-1;
-        symbol_count_t pair_pos=pairs_count;
-        freq_t next_symbol_freq=freq[symbol_pos];
-        freq_t next_pair_freq=freq[pair_pos];
-        tree+=symbol_count*2;
-        pairs_count=symbol_count+pairs_count;
-        if((pairs_count)&1)
-        { /* oneven som, waarde met hoogste freq doet niet mee */
-            if(next_pair_freq>=next_symbol_freq)
-            {
-                pair_pos--;
-                next_pair_freq=freq[pair_pos];
-            }
-            else
-            {
-                symbol_pos--;
-                next_symbol_freq=freq[symbol_pos];
-            }
-        }
-        pairs_count>>=1;
-        i=pairs_count;
-        do
-        { /* maak de nieuwe pairs */
-            uint64_t node_freq;
-            i--;
-            if(next_pair_freq>=next_symbol_freq)
-            {
-                node_freq=next_pair_freq;
-                tree[i*2+1]=0;
-                pair_pos--;
-                next_pair_freq=freq[pair_pos];
-            }
-            else
-            {
-                node_freq=next_symbol_freq;
-                tree[i*2+1]=symbol_pos;
-                symbol_pos--;
-                next_symbol_freq=freq[symbol_pos];
-            }
-            if(next_pair_freq>=next_symbol_freq)
-            {
-                node_freq+=next_pair_freq;
-                tree[i*2]=0;
-                pair_pos--;
-                next_pair_freq=freq[pair_pos];
-            }
-            else
-            {
-                node_freq+=next_symbol_freq;
-                tree[i*2]=symbol_pos;
-                symbol_pos--;
-                next_symbol_freq=freq[symbol_pos];
-            }
-            if(node_freq<MAX_FREQ_VALUE)
-            {
-                freq[i+1]=(freq_t)node_freq;
-            }
-            else
-            {
-                freq[i+1]=(freq_t)MAX_FREQ_VALUE;
-            }
-        } while(i>0);
-        max_huff_len--;
-    } while(max_huff_len>0);
-    {
-        symbol_count_t i;
-        memset(freq-symbol_count, 0, (size_t)symbol_count*sizeof(freq[0]));
-        i=2*(symbol_count-1);  /* N symbolen levert altijd N-1 pairs op */
-        do
-        {
-            freq[0]=0;
-            do
-            {
-                i--;
-                freq[tree[i]]++;
-            } while(i>0);
-            i=2*freq[0];
-            tree-=symbol_count*2;
-        } while(i>0);
-        i=symbol_count;
-        freq-=symbol_count; /* undo negatieve symbol index */
-        do
-        {
-            i--;
-            s_len[symbols[i]]=(uint8)freq[i];
-        } while(i>0);
-    }
-    make_huffman_codes(huff_codes, s_len, symbol_size);
-//    huffman_sanety_check(s_len, huff_codes, symbol_size, 16);
-    return;
-}
-
-/************************    make_huffmancodes    ************************
- Function:    make_huffmancodes
- Purpose:     Generate Huffman codes, based on the Huffman code lengths of the
-              characters.
- Input:       len    Length of the Huffman codes for the characters, in bits.
-                     len[i] will be the length of table[i].
-              nchar  Number of characters in the character set.
- Output:      table  Huffman code for each character.  table[i] will be the
-                     Huffman code for character i.
- Assumptions: For all len[i] with 0<=i<nchar: 0<=len[i]<=MAHUFFLEN.
-
-******************************************************************************/
-
-
-void make_huffman_codes(huffman_t huff_codes[], uint8 s_len[], symbol_count_t symbol_count)
-{
-    int len_count[MAX_HUFFMAN_LEN+1]={0};
-    huffman_t huffcode[MAX_HUFFMAN_LEN+1];
-    symbol_count_t i;
-    i=symbol_count;
-    do
-    {
-        i--;
-        len_count[s_len[i]]++;
-    } while(i>0);
-    huffman_t start_huffcode=0;
-    huffcode[0]=0;
-    for(i=1; i<=MAX_HUFFMAN_LEN; i++)
-    {
-        start_huffcode<<=1;
-        huffcode[i]=start_huffcode;
-        start_huffcode+=len_count[i];
-    }
-    for(i=0; i<symbol_count; i++)
-    {
-        huff_codes[i]=huffcode[s_len[i]];
-        huffcode[s_len[i]]+=(s_len[i]!=0);
-    }
-}
 
 unsigned long count_bits(unsigned long *header_size,  /* komt header size in bits in te staan */
                          unsigned long *message_size, /* komt message size in bits in te staan */
@@ -2788,21 +2334,21 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
                          int_fast32_t entries, /* aantal character die moeten worden gepacked */
                          uint8 * charlen,  /* character lengte tabel          */
                          uint8 * ptrlen,/* pointerlengte tabel                */
-                         uint16 * charfreq, /* karakter frequentie tabel       */
-                         uint16 * ptrfreq, /* pointer frequentie tabel           */
+                         freq_t * charfreq, /* karakter frequentie tabel       */
+                         freq_t * ptrfreq, /* pointer frequentie tabel           */
                          int sort_opt,
                          packstruct *com
 )
 {
   unsigned long header_bits = 0;
   unsigned long message_bits = 0;
-  uint16 freq[NCPT];
+  freq_t freq[NCPT];
   int charct=get_max_character(charfreq, NC);
 
   { /*- bereken aantal bytes dat gepacked gaat worden */
     unsigned long packed = entries;    /* alle karakters + pointers          */
     int i;
-    uint16 *p = charfreq + NLIT;
+    freq_t *p = charfreq + NLIT;
     long j = 2;
 
     for(i = NLIT; i < charct; i++)
@@ -2966,7 +2512,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
       }
       else
       {
-        uint16 *p = freq;
+        freq_t *p = freq;
         uint8 *q = com->ptrlen1;
 
         header_bits += 9;
@@ -2983,7 +2529,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         */
         {
           uint8 *q = charlen;
-          uint16 *p = charfreq;
+          freq_t *p = charfreq;
 
           i = charct;
           do
@@ -3020,7 +2566,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         { /*- bereken ruimte ingenomen door pointers */
           int j = 1;
           int i = com->n_ptr - 2;
-          uint16 *p = ptrfreq + 2;
+          freq_t *p = ptrfreq + 2;
 
           do
           {
@@ -3052,7 +2598,7 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
         { /*- bereken ruimte ingenomen door pointers */
           int j = -1;
           uint8 *q = ptrlen;
-          uint16 *p = ptrfreq;
+          freq_t *p = ptrfreq;
 
           (*ptrlen)++;
           i = com->n_ptr;

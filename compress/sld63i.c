@@ -35,6 +35,8 @@
 
 #undef DIC
 #define DIC com->dictionary63 /* 'function' to acces the dictionary */
+#undef KOSTEN
+#define KOSTEN com->kosten63 /* 'function' to acces the dictionary */
 #undef TREE
 #define TREE com->tree63
 
@@ -58,6 +60,46 @@ static void remove_node(lit63_i key, packstruct* com);
 static mb63_i match63(packstruct* com, lit63_i key, match_buffer_i match_buffer_pos);
 static int32_t ptr2bucket(pointer63_t ptr);
 
+#if 0
+static int walk_tree(lit63_i key, node63_i node, node63_i parent, packstruct *com)
+{
+    int ok=0;
+    if((key-TREE[node].key)>com->maxptr)
+    {
+        printf("key[%li]=%li delta=%li\n", node, TREE[node].key, key-TREE[node].key);
+        ok++;
+    }
+    if(TREE[node].parent!=parent)
+    {
+        printf("parent[%li]=%li!=%li\n", node, TREE[node].parent, parent);
+        ok++;
+    }
+    if(TREE[node].c_left!=NO_NODE)
+    {
+        ok+=walk_tree(key, TREE[node].c_left, node, com);
+    }
+    if(TREE[node].c_right!=NO_NODE)
+    {
+        ok+=walk_tree(key, TREE[node].c_right, node, com);
+    }
+    return ok;
+}
+
+static int validate_tree(lit63_i key, packstruct *com)
+{
+    int ok=0;
+    for(int i=0; i<HASH_SIZE63; i++)
+    {
+        node63_i node=com->hash_table63[i];
+        if(node!=NO_NODE)
+        {
+            ok+=walk_tree(key, node, 0, com);
+        }
+    }
+    return ok;
+}
+#endif
+
 static gup_result init_dictionary63(packstruct *com)
 {
     size_t size;
@@ -68,6 +110,13 @@ static gup_result init_dictionary63(packstruct *com)
 		return GUP_NOMEM;
 	}
 	com->dictionary63=com->dictionary63_mem;
+	/* kosten struct */
+	com->kosten63_mem=com->gmalloc(size*sizeof(KOSTEN[0]), com->gm_propagator);
+	if (com->kosten63_mem == NULL)
+	{
+		return GUP_NOMEM;
+	}
+	com->kosten63=com->kosten63_mem;
 	com->mb63_mem=com->gmalloc((com->origsize*MAX_BUCKETS)*sizeof(com->mb63[0]), com->gm_propagator);
 	if (com->mb63_mem == NULL)
 	{
@@ -94,11 +143,11 @@ static gup_result init_dictionary63(packstruct *com)
 static void free_dictionary63(packstruct *com)
 {
 	com->gfree(com->dictionary63_mem, com->gf_propagator);
+	com->gfree(com->kosten63_mem, com->gf_propagator);
 	com->gfree(com->mb63_mem, com->gf_propagator);
 	com->gfree(com->hash_table63, com->gf_propagator);
 	com->gfree(com->tree63_mem, com->gf_propagator);
 }
-
 
 static hash_t calc_hash(lit63_i key, packstruct* com)
 {
@@ -151,17 +200,17 @@ static node63_i init_node(node63_i node, lit63_i key, packstruct* com)
 
 static void remove_node(lit63_i key, packstruct* com)
 {
-    if(key<TREE63_MAX_PTR)
+    if(key<=com->maxptr)
     {
         return;
     }
-    node63_i node=key2node(key-TREE63_MAX_PTR);
+    node63_i node=key2node(key-com->maxptr-1);
     node63_i parent=TREE[node].parent;
     if(parent==NO_NODE)
     {
-        if(com->hash_table63[calc_hash(key, com)]==node)
+        if(com->hash_table63[calc_hash(key-com->maxptr-1, com)]==node)
         {
-            com->hash_table63[calc_hash(key, com)]=NO_NODE;
+            com->hash_table63[calc_hash(key-com->maxptr-1, com)]=NO_NODE;
         }
     }
     else if(TREE[parent].c_left==node)
@@ -172,6 +221,7 @@ static void remove_node(lit63_i key, packstruct* com)
     {
         TREE[parent].c_right=NO_NODE;
     }
+    //validate_tree(key, com);
 }
 
 static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
@@ -203,11 +253,6 @@ static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
     lit63_t orig_lit=DIC[key+max_match];
     while(node!=NO_NODE)
     {
-        if(key==TREE[node].key)
-        {
-            printf("key=%X, node=%X, node.key=%lX\n", key, node, TREE[node].key);
-            printf("lit=%02X ~lit=%02X\n", (int)DIC[TREE[node].key+max_match], (int)~DIC[TREE[node].key+max_match]);
-        }
         DIC[key+max_match]=~DIC[TREE[node].key+max_match];
         len63_t match_len=0;
         while(DIC[key+match_len]==DIC[TREE[node].key+match_len])
@@ -226,15 +271,15 @@ static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
         }
         if(match_len==max_match)
         { /* max_match gevonden, we are done */
-            TREE[smaller_node].c_right=TREE[node].c_right;
-            if(TREE[node].c_right!=NO_NODE)
-            {
-                TREE[TREE[node].c_right].parent=smaller_node;
-            }
-            TREE[bigger_node].c_left=TREE[node].c_left;
+            TREE[smaller_node].c_right=TREE[node].c_left;
             if(TREE[node].c_left!=NO_NODE)
             {
-                TREE[TREE[node].c_left].parent=bigger_node;
+                TREE[TREE[node].c_left].parent=smaller_node;
+            }
+            TREE[bigger_node].c_left=TREE[node].c_right;
+            if(TREE[node].c_right!=NO_NODE)
+            {
+                TREE[TREE[node].c_right].parent=bigger_node;
             }
             smaller_node=node;
             bigger_node=node;
@@ -263,6 +308,9 @@ static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
     TREE[node].c_right=TREE[node].c_left;
     TREE[node].c_left=smaller_node;
     DIC[key+max_match]=orig_lit;
+    com->mb63[match_buffer_pos].len=0;
+    com->mb63[match_buffer_pos].u.lit=DIC[key];
+    match_buffer_pos++;
     for(int i=0; i<MAX_BUCKETS; i++)
     {
         if(buckets[i].len!=0)
@@ -272,8 +320,5 @@ static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
             match_buffer_pos++;
         }
     }
-    com->mb63[match_buffer_pos].len=0;
-    com->mb63[match_buffer_pos].u.lit=DIC[key];
-    match_buffer_pos++;
     return match_buffer_pos;
 }

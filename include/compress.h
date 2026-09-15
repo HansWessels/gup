@@ -261,6 +261,8 @@ extern "C"
 {
 #endif
 
+typedef uint16_t symbol_t; /* type voor de symbols codes */
+#define MAX_SYMBOL_SIZE 1024 /* >=NLIT+MAX_MATCH+1 */
 typedef int16 c_codetype;   /* type waarin literals en lengths worden opgeslagen */
 typedef uint16 pointer_type; /* type waarin de pointers van pointer length in wordt opgeslagen */
 struct node_struct_t;
@@ -310,6 +312,18 @@ typedef struct
     } u;
 } match_buffer_t;
 
+typedef struct
+{
+    uint64_t kosten;
+    uint64_t huff_count;
+    match_len_t len;
+    union
+    {
+        pointer_type ptr;
+        uint8_t lit;
+    } u;
+} kosten63_t;
+
 /* definitions for the pack methods */
 
 #define STORE 0          /* general store */
@@ -357,6 +371,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
     uint16 n_ptr;                  /* maximum aantal pointers */
     uint16 m_ptr_bit;              /* aantal bits voor een pointer */
     uint16 max_match;              /* maximum match lengte voor gebruikte mode */
+    uint16_t min_match;            /* minimum match voor de gebruikte mode */
     c_codetype* chars;             /* buffer met code karakters */
     c_codetype* chars_backup;      /* buffer met code karakters, backup */
     c_codetype* charp;             /* pointer naar chars */
@@ -471,6 +486,9 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
 	size_t      mb63_size;          /* grootte van de matchbuffer */
 
 	node63_i*   hash_table63;       /* hash table voor de tree */
+
+	void*       kosten63_mem;       /* allocated memory voor kosten struct */
+	kosten63_t* kosten63;           /* pointer naar (virtueel) begin kosten struct */
 
 	pointer_t   max_ptr63;          /* maximum pointer distance */
 } packstruct;

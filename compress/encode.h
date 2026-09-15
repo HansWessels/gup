@@ -70,6 +70,7 @@ extern "C"
 #define MIN_MATCH 3                    /* Minimale match lengte */
 #define MAX_MATCH 258                  /* maximale match lengte = 258 */
 #define ARJ_MAX_MATCH 256              /* maximale match in ARJ (en LZH) files */
+#define ARJ_MIN_MATCH 3                /* minimale match bij ARJ */
 #define MATCH_CONV MAX_MATCH+1         /* array count start bij 0! */
 #define DIC_SIZE 2*65536
 
