@@ -420,6 +420,7 @@ typedef struct packstruct_t          /* Bij aanpassing van deze struct ook ENCOD
     pointer_type maxptr;           /* maximale afstand binnen de dictionary */
     long tree_size;                /* grootte van sld tree */
     unsigned long packed_size;     /* file size in bytes */
+    uint64_t header_size;          /* header size in bits */
     int16 bits_rest;               /* number of bits not counted jet */
     unsigned long bytes_packed;    /* bytes packed in file */
     int16 mode;                    /* pack mode 2B used */

@@ -86,7 +86,7 @@
 #if 0
   /* log literal en pointer len combi's */
 	static unsigned long log_pos_counter=0;
-	#define LOG_LITERAL(lit)  {printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
+	#define LOG_LITERAL(lit)  {if(((lit)>32) && ((lit)<127))printf("%lX Literal: %02X, %c\n", log_pos_counter, lit, lit); else printf("%lX Literal: %02X\n", log_pos_counter, lit); log_pos_counter++;}
 	#define LOG_PTR_LEN(len, ptr) {printf("%lX Len: %u, ptr: %u\n", log_pos_counter ,len, ptr); log_pos_counter+=len;}
 	#define LOG_BIT(bit) printf("bit = %i\n",bit);
   	#define LOG_RUN(run) printf("Run = %lu\n", run);
@@ -109,17 +109,17 @@ gup_result decode_n1(decode_struct *com);
 
 /*
  * ALIGN is a macro to align elements of e certain size in a molloced
- * array. The start of the array is guaranteed alignd with every possible 
+ * array. The start of the array is guaranteed alignd with every possible
  * object. So an object is aligned when it's position relative to the start
- * of the array is a multiple of it's size. Instead of the modulo operator 
- * the & operator is used. This assumes that the alignment of an object 
+ * of the array is a multiple of it's size. Instead of the modulo operator
+ * the & operator is used. This assumes that the alignment of an object
  * is the samlest power of to of its size; ie: sizeof(object)==3 -> alignment
  * is 1. sizeof(object)==6 ->alignment is 2.
  */
 #define ALIGN(start,ptr,size) ptr+=((size)-((ptr)-(start)))&((size)-1)
 
 #if 0
-  /* 
+  /*
     Trashbits function for Atari ST pure C,
     due to a terrible and unbeliveble compiler error
     the trashbits macro doesn't work in some cases in
@@ -224,7 +224,7 @@ gup_result init_decode(decode_struct *com)
   uint8 *buf;
   uint8 *start;
   unsigned long memneed=0;
-  
+
   memneed+=(3*65536UL+MAXMATCH)*sizeof(uint8);  /* buffer */
   ALIGN(0, memneed, sizeof(uint16));
   memneed+=65536UL * sizeof(uint16);            /* huff2kar */
@@ -313,7 +313,9 @@ gup_result decode(decode_struct *com)
     ret=n2_decode(com);
     break;
   case NI_MODE_9:
-    ret=n9_decode(com);
+    com->n_ptr=ARJ_NPT;
+    com->m_ptr_bit=ARJ_PBIT;
+    ret=decode_big(com);
     break;
   default:
     ret=GUP_HDR_UNKNOWN_METHOD;
@@ -379,7 +381,7 @@ gup_result decode_big(decode_struct *com)
       if((kar=com->huff2kar[bitbuf>>karshlvl])>0)
       { /* pointer length combinatie */
         uint16 ptr;
-        
+
         TRASHBITS(com->karlen[kar]);
         ptr=com->huff2ptr[bitbuf>>ptrshlvl];
         TRASHBITS(com->ptrlen[ptr]);
@@ -391,17 +393,19 @@ gup_result decode_big(decode_struct *com)
           ptr=(1<<ptr) + (pointer_type)(bitbuf>>(BITBUFSIZE-ptr));
           TRASHBITS(tmp);
         }
+        LOG_PTR_LEN(kar, ptr);
         {
           uint8* q=buff-ptr-1;
           do
           {
               *buff++=*q++;
-          } 
+          }
           while(--kar>0);
         }
       }
       else
       {
+        LOG_LITERAL(kar&0xff);
         *buff++=(uint8)kar;
         TRASHBITS(com->karlen[kar]);
       }
@@ -455,6 +459,7 @@ gup_result decode_big(decode_struct *com)
     }
     { /* read new huffman codes */
       huffcount=(uint16)(bitbuf>>(BITBUFSIZE-16));
+printf("huffcount=%i\n", huffcount);
       if(huffcount==0)
       { /* stream end code */
         /* eventueel kan hier de depacked size worden berekend */
@@ -967,7 +972,7 @@ gup_result decode_m0(decode_struct *com)
 		}													\
 	}														\
 }
-		
+
 
 gup_result decode_n1(decode_struct *com)
 {
@@ -1074,4 +1079,4 @@ gup_result decode_n1(decode_struct *com)
 	return GUP_OK; /* exit succes */
 }
 
-#endif 
+#endif

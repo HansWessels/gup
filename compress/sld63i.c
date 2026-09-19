@@ -57,7 +57,7 @@ static hash_t calc_hash(lit63_i key, packstruct* com);
 static node63_i key2node(lit63_i key);
 static node63_i init_node(node63_i node, lit63_i key, packstruct* com);
 static void remove_node(lit63_i key, packstruct* com);
-static mb63_i match63(packstruct* com, lit63_i key, match_buffer_i match_buffer_pos);
+static mb63_i match63(lit63_i key, mb63_i match_buffer_pos, packstruct* com);
 static int32_t ptr2bucket(pointer63_t ptr);
 
 #if 0
@@ -224,7 +224,7 @@ static void remove_node(lit63_i key, packstruct* com)
     //validate_tree(key, com);
 }
 
-static mb63_i match63(packstruct* com, lit63_i key, mb63_i match_buffer_pos)
+static mb63_i match63(lit63_i key, mb63_i match_buffer_pos, packstruct* com)
 {
     mb63_t buckets[MAX_BUCKETS]={0};
     lit63_i max_match;

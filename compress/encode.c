@@ -661,6 +661,7 @@ gup_result encode(packstruct *com)
 		res=n2_init(com);
 		return res;
 	case NI_MODE_9:
+	    com->close_packed_stream=close_m1_m7_stream;
 		res=n9_init(com);
 		return res;
 	case STORE:
@@ -748,6 +749,35 @@ gup_result announce(unsigned long bytes, packstruct *com)
     com->rbuf_tail=com->bw_buf->end;
   }
   return GUP_OK;
+}
+
+void store_bits(uint32_t val, int bit_count, packstruct *com)
+{
+    if(bit_count!=0)
+    {
+        com->bits_in_bitbuf += bit_count;
+        if(com->bits_in_bitbuf >= 32)
+        {
+            com->bits_in_bitbuf -= 32;
+            com->bitbuf += val >> com->bits_in_bitbuf;
+            *com->rbuf_current++ = (uint8) (com->bitbuf >> 24);
+            *com->rbuf_current++ = (uint8) (com->bitbuf >> 16);
+            *com->rbuf_current++ = (uint8) (com->bitbuf >> 8);
+            *com->rbuf_current++ = (uint8) (com->bitbuf);
+            if(com->bits_in_bitbuf!=0)
+            {
+                com->bitbuf = val << (32 - com->bits_in_bitbuf);
+            }
+            else
+            {
+                com->bitbuf=0;
+            }
+        }
+        else
+        {
+            com->bitbuf += val << (32 - com->bits_in_bitbuf);
+        }
+    }
 }
 
 #ifndef ST_BITS
@@ -1410,7 +1440,7 @@ gup_result compress_chars(packstruct *com)
         {
             make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
             make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
-            if(get_max_character(charfreq, NC)<=(NLIT+2))
+            if(get_max_character(com->charlen, NC)<=(NLIT+2))
             {
                 com->special_header=NORMAL_HEADER;
             }
@@ -1469,7 +1499,7 @@ gup_result compress_chars(packstruct *com)
         sort_opt=best_sort_opt;
         make_hufftable(com->charlen, com->char2huffman, charfreq, NC, MAX_HUFFLEN, (SORT_MASK_CHAR & sort_opt));
         make_hufftable(com->ptrlen, com->ptr2huffman, ptrfreq, com->n_ptr, MAX_HUFFLEN, (SORT_MASK_PTR & sort_opt));
-        if(get_max_character(charfreq, NC)<=(NLIT+2))
+        if(get_max_character(com->charlen, NC)<=(NLIT+2))
         {
             com->special_header=NORMAL_HEADER;
         }
@@ -1706,7 +1736,7 @@ gup_result compress_chars(packstruct *com)
         ST_BITS(entries, 16);
         { /*- special case 1, er is maar een character lengte */
             ST_BITS(0, 5);
-            ST_BITS(10, 5); /* charlen is 8! */
+            ST_BITS(10, 5); /* charlen is 8 */
         }
         {
             ST_BITS(256, 9); /* char count=256 */
@@ -1721,7 +1751,16 @@ gup_result compress_chars(packstruct *com)
     }
     else
     {
-        int charct=get_max_character(charfreq, NC);
+        int charct=get_max_character(com->charlen, NC);
+        if(charct==0)
+        {
+            c_codetype kar = com->chars[0];
+            if(kar < 0)
+            {
+                kar=com->matchstring[0];
+            }
+            charct=kar;
+        }
         /* vanaf hier hebben wij charfreq niet meer nodig! */
         ST_BITS(entries, 16); /* aantal huffman karakters */
         {
@@ -1776,17 +1815,14 @@ gup_result compress_chars(packstruct *com)
             if((vp < 2) || (nulct==0))
             { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case zowel voor vp<2 als nulct==0 */
                 ST_BITS(0, 5);
-                ST_BITS(*com->charlen + 2, 5);
+                ST_BITS(com->charlen[0] + 2, 5);
             }
             else
             {
-                long ptrct = NCPT;
+                long ptrct;// = NCPT;
                 int skip=0;
                 make_hufftable(com->ptrlen1, com->ptr2huffman1, charfreq, NCPT, MAX_HUFFLEN, (SORT_MASK_CHARPTR & sort_opt));
-                while(!com->ptrlen1[ptrct - 1])
-                {
-                    ptrct--;
-                }
+                ptrct=get_max_character(com->ptrlen1, NCPT);
                 if(com->ptrlen1[3] == 0)
                 {
                     skip=1;
@@ -1822,7 +1858,7 @@ gup_result compress_chars(packstruct *com)
             }
             /* charlen overgedragen, breng characters  */
             if(vp < 2)
-            { /*- special case 2, er is maar een karakter lengte */
+            { /*- special case 2, er is maar een karakter */
                 c_codetype kar=com->chars[0];
                 if(kar<0)
                 {
@@ -1894,6 +1930,10 @@ gup_result compress_chars(packstruct *com)
             }
             if(vp < 2)
             { /*- special case 3, er is maar een pointerlengte */
+                if(vp==1)
+                {
+                    com->ptrlen[ptrct]=0;
+                }
                 ST_BITS(0, com->m_ptr_bit);
                 ST_BITS(ptrct, com->m_ptr_bit);
             }
@@ -2343,8 +2383,15 @@ unsigned long count_bits(unsigned long *header_size,  /* komt header size in bit
   unsigned long header_bits = 0;
   unsigned long message_bits = 0;
   freq_t freq[NCPT];
-  int charct=get_max_character(charfreq, NC);
-
+  int charct=get_max_character(charlen, NC);
+  if(charct==0)
+  {
+      while(charfreq[charct]==0)
+      {
+          charct++;
+      }
+      charct++;
+  }
   { /*- bereken aantal bytes dat gepacked gaat worden */
     unsigned long packed = entries;    /* alle karakters + pointers          */
     int i;

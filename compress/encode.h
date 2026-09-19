@@ -101,6 +101,7 @@ void init_lz5_fast_log(packstruct *com);
 
 int32 first_bit_set32(uint32 u);
 gup_result announce(unsigned long bytes, packstruct *com);     /* kondigt aantal bytes in huffblok aan */
+void store_bits(uint32_t val, int bit_count, packstruct *com); /* maximum of 16 bits to store, bitcount <=16 */
 
 gup_result m4_init(packstruct *com);
 gup_result n0_init(packstruct *com);

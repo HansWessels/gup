@@ -17,12 +17,12 @@ static void make_huffman_codes(huffman_t huff_codes[], uint8_t* s_len, symbol_co
 
 #define MAX_FREQ_VALUE (~((freq_t)0))
 
-symbol_count_t get_max_character(freq_t freq[], symbol_count_t symbol_count)
+symbol_count_t get_max_character(uint8_t len[], symbol_count_t symbol_count)
 {
     while(symbol_count>0)
     {
         symbol_count--;
-        if(freq[symbol_count]!=0)
+        if(len[symbol_count]!=0)
         {
             return symbol_count+1;
         }
@@ -47,6 +47,19 @@ void set_maxlen(symbol_count_t symbol_count, uint8_t len[])
         if(len[i]==0)
         {
             len[i]=max_len;
+        }
+    }
+}
+
+void set_highlen(symbol_count_t symbol_count, uint8_t len[])
+{ /* zet iedere sybbol len die 0 is op 0xFF */
+    uint8 max_len=0;
+    symbol_count_t i;
+    for(i=0; i<symbol_count; i++)
+    {
+        if(len[i]==0)
+        {
+            len[i]=0xFF;
         }
     }
 }
