@@ -99,7 +99,7 @@ static void init_charlen(uint8_t* charlen, packstruct *com)
     {
         charlen[NLIT+i]=first_bit_set32(i);
     }
-    charlen[NLIT+com->max_match]=8;
+    charlen[NLIT+com->max_match]=4;
 }
 
 static void init_ptrlen(uint8_t* ptrlen)
@@ -831,12 +831,13 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
             { /* pointer len */
                 pointer63_t ptr=KOSTEN[start_pos].u.ptr;
                 LOG_PTR_LEN(len, ptr);
-                unsigned int bits=ptr_index(ptr);
+                int bits=ptr_index(ptr);
                 store_bits(com->char2huffman[NLIT+len], com->charlen[NLIT+len], com);
 //printf("len: %i len: %i huff %X\n", len, com->charlen[NLIT+len], com->char2huffman[NLIT+len]);
                 store_bits(com->ptr2huffman[bits], com->ptrlen[bits], com);
 //printf("ptr: %i len: %i huff %X\n", ptr, com->ptrlen[bits], com->ptr2huffman[bits]);
-                if(--bits>0)
+                bits--;
+                if(bits>0)
                 {
 //printf("bits: %i len: %i huff %X\n", bits, bits, (ptr & (0xffff >> (16 - bits))));
                     store_bits((ptr & (0xffff >> (16 - bits))), bits, com);

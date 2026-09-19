@@ -753,7 +753,7 @@ gup_result announce(unsigned long bytes, packstruct *com)
 
 void store_bits(uint32_t val, int bit_count, packstruct *com)
 {
-    if(bit_count!=0)
+    if(bit_count>0)
     {
         com->bits_in_bitbuf += bit_count;
         if(com->bits_in_bitbuf >= 32)

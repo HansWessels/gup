@@ -459,7 +459,6 @@ gup_result decode_big(decode_struct *com)
     }
     { /* read new huffman codes */
       huffcount=(uint16)(bitbuf>>(BITBUFSIZE-16));
-printf("huffcount=%i\n", huffcount);
       if(huffcount==0)
       { /* stream end code */
         /* eventueel kan hier de depacked size worden berekend */
