@@ -776,7 +776,7 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
             if(ptrct==0)
             { /*- special case 3, er is maar een pointerlengte */
                 store_bits(0, com->m_ptr_bit, com);
-                if(charct<NLIT)
+                if(charct<=NLIT)
                 { /* er zijn helemaal geen pointers */
                     LOG_TEXT("Special case 3\n");
                     store_bits(0, com->m_ptr_bit, com);
@@ -784,11 +784,11 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
                 else
                 { /* zoek een pointer */
                     lit63_i i=start_pos;
+                    LOG_TEXT("Special case 4\n");
                     while(KOSTEN[i].len==0)
                     { /* skip literals */
                         i++;
                     }
-                    LOG_TEXT("Special case 4\n");
                     store_bits(ptr_index(KOSTEN[i].u.ptr), com->m_ptr_bit, com);
                 }
             }
