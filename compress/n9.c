@@ -15,6 +15,7 @@
 #define N_PTR_BIT ARJ_PBIT
 #define LIT_LEN_SIZE (NLIT+TREE63_MAX_MATCH+1)
 #define HUFFMAN_BLOCK_SIZE 4096
+#define GLOBAL_INIT_LEN INIT_LEN_DEFAULT
 
 #define MAX_BUCKETS (N_PTR+1)
 
@@ -39,7 +40,8 @@ static int32_t ptr_index(pointer63_t ptr);
 	#define LOG_BIT(bit) /* */
 	#define LOG_RUN(run) /* */
  	#define LOG_COUNTER_RESET
-	#define LOG_TEXT(string) /* */
+	#define LOG_TEXT(string) printf(string);
+//	#define LOG_TEXT(string) /* */
 #endif
 
 
@@ -88,26 +90,141 @@ static int32_t ptr_index(pointer63_t ptr)
     return first_bit_set32(ptr);
 }
 
-static void init_charlen(uint8_t* charlen, packstruct *com)
-{ /* initial guess for charlen */
-    int i;
-    for(i=0; i<NLIT; i++)
-    {
-        charlen[i]=8;
-    }
-    for(i=0; i<com->max_match; i++)
-    {
-        charlen[NLIT+i]=first_bit_set32(i);
-    }
-    charlen[NLIT+com->max_match]=4;
-}
+enum init_len_const
+{
+    INIT_LEN_DEFAULT,
+    INIT_LEN_CHAR,
+    INIT_LEN_PTR,
+    INIT_LEN_STORE_0,
+    INIT_LEN_RETRIVE_0,
+    INIT_LEN_STORE_1,
+    INIT_LEN_RETRIVE_1,
+    INIT_LEN_LIT
+};
 
-static void init_ptrlen(uint8_t* ptrlen)
-{ /* initial guess for ptrlen */
-    int i;
-    for(i=0; i<MAX_NPT; i++)
+static void init_len(int type, uint8_t* ptrlen, uint8_t* charlen, packstruct *com)
+{
+    static uint8_t ptrlen0[MAX_NPT]={0};
+    static uint8_t charlen0[LIT_LEN_SIZE]={0};
+    static uint8_t ptrlen1[MAX_NPT]={0};
+    static uint8_t charlen1[LIT_LEN_SIZE]={0};
+
+    switch(type)
     {
-        ptrlen[i]=i;
+    default:
+    case INIT_LEN_DEFAULT:
+        {
+            for(int i=0; i<NLIT; i++)
+            {
+                charlen[i]=8;
+            }
+            for(int i=0; i<com->max_match; i++)
+            {
+                charlen[NLIT+i]=first_bit_set32(i);
+            }
+            charlen[NLIT+com->max_match]=8;
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=4;
+            }
+            break;
+        }
+    case INIT_LEN_CHAR:
+        {
+            for(int i=0; i<NLIT; i++)
+            {
+                charlen[i]=2;
+            }
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen[NLIT+i]=12;
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=7;
+            }
+            break;
+        }
+    case INIT_LEN_PTR:
+        {
+            for(int i=0; i<NLIT; i++)
+            {
+                charlen[i]=9;
+            }
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen[NLIT+i]=4;
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=2;
+            }
+            break;
+        }
+    case INIT_LEN_STORE_0:
+        {
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen0[i]=charlen[i];
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen0[i]=ptrlen[i];
+            }
+            break;
+        }
+    case INIT_LEN_RETRIVE_0:
+        {
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen[i]=charlen0[i];
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=ptrlen0[i];
+            }
+            break;
+        }
+    case INIT_LEN_STORE_1:
+        {
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen1[i]=charlen[i];
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen1[i]=ptrlen[i];
+            }
+            break;
+        }
+    case INIT_LEN_RETRIVE_1:
+        {
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen[i]=charlen1[i];
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=ptrlen1[i];
+            }
+            break;
+        }
+    case INIT_LEN_LIT:
+        {
+            for(int i=0; i<NLIT; i++)
+            {
+                charlen[i]=8;
+            }
+            for(int i=0; i<=com->max_match; i++)
+            {
+                charlen[NLIT+i]=0;
+            }
+            for(int i=0; i<com->n_ptr; i++)
+            {
+                ptrlen[i]=0;
+            }
+            break;
+        }
     }
 }
 
@@ -274,6 +391,8 @@ static uint64_t count_header_bits(lit63_i start_pos, packstruct *com)
                 { /*- special case 1, er is maar een character lengte, de mame testset triggert deze case */
                     header_bits+=5;
                     header_bits+=5;
+                    com->ptr2huffman1[charlen[0]+2]=0;
+                    com->ptrlen1[charlen[0]+2]=0;
                 }
                 else
                 {
@@ -433,7 +552,28 @@ static uint64_t path_frequency_count(lit63_i start_pos, lit63_i end_pos, packstr
     return totaal_bits;
 }
 
-static uint64_t optimize_huffman_block(lit63_i start_pos, lit63_i end_pos, int reset, uint64_t target, packstruct *com)
+static void huffman_literal_block(lit63_i start_pos, lit63_i end_pos, packstruct *com)
+{ /* maak een literal huffman block */
+    freq_t char_freq[LIT_LEN_SIZE]={0};
+    freq_t ptr_freq[MAX_NPT]={0};
+   /* We berekenen de kosten van achteren naar voren */
+    mb63_i mb_pos=find_mb_pos(end_pos, com)-1;
+    while(end_pos>start_pos)
+    {
+        end_pos--;
+        len63_t len=com->mb63[mb_pos].len;
+        while((len=com->mb63[mb_pos].len)!=0)
+        {
+            mb_pos--;
+        }
+        char_freq[com->mb63[mb_pos].u.lit]++;
+        mb_pos--;
+    }
+    make_hufftable(com->charlen, com->char2huffman, char_freq, LIT_LEN_SIZE, MAX_HUFFLEN, 0);
+    make_hufftable(com->ptrlen, com->ptr2huffman, ptr_freq, MAX_NPT, MAX_HUFFLEN, 0);
+}
+
+static uint64_t optimize_huffman_block(lit63_i start_pos, lit63_i end_pos, int init, uint64_t target, packstruct *com)
 { /* target waarde is nodig omdat de laatste ronde optimalisatie over de MAX_ENTRIES kan gaan */
     uint64_t totaal_bits=~0;
     uint64_t old_bits;
@@ -450,12 +590,38 @@ static uint64_t optimize_huffman_block(lit63_i start_pos, lit63_i end_pos, int r
         best_bits=8*(end_pos-start_pos)+MIN_ASCII_HEADER;
         com->special_header=SPECIAL_MIN_ASCII_HEADER;
         best_huffman=end_pos-start_pos;
+        if(best_bits<=target)
+        {
+            return best_bits;
+        }
+        init_len(INIT_LEN_LIT, com->ptrlen, com->charlen, com);
+        set_highlen(LIT_LEN_SIZE, com->charlen);
+        set_highlen(MAX_NPT, com->ptrlen);
+        find_path(start_pos, end_pos, com);
+        totaal_bits=path_frequency_count(start_pos, end_pos, com);
+        if(((totaal_bits+com->header_size)<best_bits) && (KOSTEN[start_pos].huff_count<=MAX_ENTRIES))
+        {
+            com->special_header=NORMAL_HEADER;
+            best_bits=totaal_bits+com->header_size;
+            if(best_bits<=target)
+            {
+                return best_bits;
+            }
+            best_huffman=KOSTEN[start_pos].huff_count;
+            for(int i=0; i<LIT_LEN_SIZE; i++)
+            {
+                best_charlen[i]=com->charlen[i];
+                best_char2huffman[i]=com->char2huffman[i];
+            }
+            for(int i=0; i<MAX_NPT; i++)
+            {
+                best_ptrlen[i]=com->ptrlen[i];
+                best_ptr2huffman[i]=com->ptr2huffman[i];
+            }
+        }
     }
-    if(reset!=0)
-    {
-        init_charlen(com->charlen, com);
-        init_ptrlen(com->ptrlen);
-    }
+    init_len(init, com->ptrlen, com->charlen, com);
+//    huffman_literal_block(start_pos, end_pos, com);
     do
     {
         old_bits=totaal_bits;
@@ -483,7 +649,6 @@ static uint64_t optimize_huffman_block(lit63_i start_pos, lit63_i end_pos, int r
                 best_ptr2huffman[i]=com->ptr2huffman[i];
             }
         }
-//        printf("bytes_to_do=%lu, old=%lu, kosten=%lu, verschil=%li, huff_count=%li\n", end_pos-start_pos, old_bits, totaal_bits, (int64_t)(old_bits-totaal_bits), KOSTEN[start_pos].huff_count);
     } while(totaal_bits<old_bits);
     if(best_huffman>0)
     {
@@ -502,7 +667,8 @@ static uint64_t optimize_huffman_block(lit63_i start_pos, lit63_i end_pos, int r
         find_path(start_pos, end_pos, com);
         if(KOSTEN[start_pos].huff_count<=MAX_ENTRIES)
         {
-            totaal_bits=path_frequency_count(start_pos, end_pos, com)+com->header_size;
+            totaal_bits=path_frequency_count(start_pos, end_pos, com);
+            totaal_bits+=com->header_size;
             if(totaal_bits<best_bits)
             {
                 return totaal_bits;
@@ -519,6 +685,7 @@ static void store_literal_block(lit63_i start_pos, lit63_i end_pos, packstruct *
     mb63_i mb_pos=find_mb_pos(start_pos, com);
 
     store_bits((end_pos-start_pos)&0xFFFF, 16, com);
+//printf("huffcount=%i\n", (int)(end_pos-start_pos)&0xFFFF);
     /*- special case 1, er is maar een character lengte */
     store_bits(0, 5, com);
     store_bits(10, 5, com); /* charlen is 8! */
@@ -528,6 +695,7 @@ static void store_literal_block(lit63_i start_pos, lit63_i end_pos, packstruct *
     store_bits(0, com->m_ptr_bit, com);
     while(start_pos<end_pos)
     {
+        LOG_LITERAL(KOSTEN[start_pos].u.lit);
         store_bits(com->mb63[mb_pos].u.lit, 8, com);
         start_pos++;
         mb_pos++;
@@ -543,7 +711,14 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
     uint64_t bits;
     uint64_t packed_size;
     uint64_t bits_size;
-    bits=optimize_huffman_block(start_pos, end_pos, 1, target, com);
+    for(int init=0; init<=INIT_LEN_PTR; init++)
+    {
+        bits=optimize_huffman_block(start_pos, end_pos, init, target, com);
+        if((bits!=0) && (bits<=target))
+        {
+            break;
+        }
+    }
     bits_size=bits;
     {
         /*
@@ -588,7 +763,7 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
     */
     if(com->special_header==SPECIAL_MIN_ASCII_HEADER)
     { /* minimale header, alles literal */
-    		printf("!!!!!!!!!!!!!\n");
+        LOG_TEXT("SPECIAL_MIN_ASCII_HEADER\n");
         store_literal_block(start_pos, end_pos, com);
         return GUP_OK;
     }
@@ -614,14 +789,14 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
             { /* er is maar 1 karakter */
                 charct=KOSTEN[start_pos].len;
                 if(charct==0)
-                {
+                { /* 1 literal */
                     LOG_TEXT("Special case 0\n");
                     charct=KOSTEN[start_pos].u.lit;
                 }
                 else
-                {
+                { /* 1 len */
                     LOG_TEXT("Special case 1\n");
-                    charct+=NLIT;
+                    charct+=NLIT-com->min_match;
                 }
                 store_bits(0, 5, com);
                 store_bits(2, 5, com);
@@ -680,6 +855,8 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
                     LOG_TEXT("Special case 2\n");
                     store_bits(0, 5, com);
                     store_bits(charlen[0] + 2, 5, com);
+                    com->ptr2huffman1[charlen[0]+2]=0;
+                    com->ptrlen1[charlen[0]+2]=0;
                 }
                 else
                 {
@@ -719,7 +896,6 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, uint64_t ta
                         }
                     }
                 }
-//printf("ptrlen1: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8-packed_size);
                 store_bits(charct, 9, com);
                 for(int_fast16_t i=0; i<charct; i++)
                 {
@@ -871,7 +1047,7 @@ static gup_result compress(lit63_i bytes_to_do, packstruct *com)
     { /* eerste ronde, optimize hele blok zodat het in huffman blokken verdeeld kan worden. */
         lit63_i totaal_huffman;
         lit63_i delta_huffman;
-        optimize_huffman_block(0, bytes_to_do, 1, 0, com);
+        optimize_huffman_block(0, bytes_to_do, 2, 0, com);
         totaal_huffman=KOSTEN[0].huff_count;
         totaal_huffman_count=1+totaal_huffman/HUFFMAN_BLOCK_SIZE;
         delta_huffman=totaal_huffman/totaal_huffman_count;
@@ -907,38 +1083,61 @@ static gup_result compress(lit63_i bytes_to_do, packstruct *com)
     { /* loop van achteren naar voren de huffman_kosten buffer door voor het ideale pad */
         lit63_i huffman_pos=totaal_huffman_count;
         huffman_kosten[totaal_huffman_count].kosten=0;
-        int reset=1;
         do
         {
             lit63_i huffman_end_pos;
             uint64_t block_kosten;
+            int delta=1;
             huffman_pos--;
 //            printf("huffman_pos=%4lu ", huffman_pos);
             huffman_kosten[huffman_pos].kosten=~0;
-            huffman_end_pos=huffman_pos;
+            huffman_end_pos=huffman_pos+1;
             do
             {
-                uint64_t kosten;
-                huffman_end_pos++;
-                kosten=huffman_kosten[huffman_end_pos].kosten;
-                block_kosten=optimize_huffman_block(huffman_kosten[huffman_pos].start_pos, huffman_kosten[huffman_end_pos].start_pos, reset, 0, com);
-//                reset=0;
-                if(block_kosten!=0)
+                //for(int init=0; init<=INIT_LEN_PTR; init++)
+                int init=INIT_LEN_PTR;
                 {
-                    kosten+=block_kosten;
-                    if(kosten<=huffman_kosten[huffman_pos].kosten)
-                    { /* nieuw optimum */
-//                        printf("!");
-                        huffman_kosten[huffman_pos].kosten=kosten;
-                        huffman_kosten[huffman_pos].end_pos=huffman_end_pos;
-                    }
-                    else
+                    uint64_t kosten;
+                    kosten=huffman_kosten[huffman_end_pos].kosten;
+                    block_kosten=optimize_huffman_block(huffman_kosten[huffman_pos].start_pos, huffman_kosten[huffman_end_pos].start_pos, init, 0, com);
+                    if(block_kosten!=0)
                     {
-//                        printf(".");
+                        kosten+=block_kosten;
+                        if(kosten<=huffman_kosten[huffman_pos].kosten)
+                        { /* nieuw optimum */
+//                            printf("!");
+                            huffman_kosten[huffman_pos].kosten=kosten;
+                            huffman_kosten[huffman_pos].end_pos=huffman_end_pos;
+                        }
+                        else
+                        {
+//                            printf(".");
+                        }
                     }
                 }
-            } while((huffman_end_pos<totaal_huffman_count) && (block_kosten!=0));
+                if(huffman_end_pos<totaal_huffman_count)
+                {
+                    huffman_end_pos+=delta;
+                    if(huffman_end_pos>totaal_huffman_count)
+                    {
+                        huffman_end_pos=totaal_huffman_count;
+                    }
+                    if(((huffman_end_pos-huffman_pos)*HUFFMAN_BLOCK_SIZE-64)>MAX_ENTRIES)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+                delta+=delta;
+            } while(0);
+//            } while(block_kosten!=0);
 //            printf("\n");
+			#ifndef PP_AFTER
+			com->print_progres(huffman_kosten[huffman_pos+1].start_pos-huffman_kosten[huffman_pos].start_pos, com->pp_propagator);
+			#endif
         } while(huffman_pos>0);
         printf("kosten=%i (bits) = %i (bytes)\n", (int)huffman_kosten[0].kosten, (int)(huffman_kosten[0].kosten+7)/8);
     }
@@ -990,7 +1189,6 @@ gup_result n9_init(packstruct *com)
     com->max_match=ARJ_MAX_MATCH;
     com->min_match=ARJ_MIN_MATCH;
     printf("\n");
-
 	if(res!=GUP_OK)
 	{
 		return res;
@@ -1013,9 +1211,6 @@ gup_result n9_init(packstruct *com)
 			{
 				return GUP_READ_ERROR; /* ("Read error"); */
 			}
-			#ifndef PP_AFTER
-			com->print_progres(byte_count, com->pp_propagator);
-			#endif
 		}
 		orig_size = (uint64_t)byte_count;
 		bytes_to_do = orig_size;
@@ -1042,8 +1237,6 @@ gup_result n9_init(packstruct *com)
 
 	com->rbuf_tail=com->bw_buf->end;
 	com->mv_bits_left=0;
-
-
 	com->bw_buf->current=com->rbuf_current;
     free_dictionary63(com);
 	return res;

@@ -459,6 +459,7 @@ gup_result decode_big(decode_struct *com)
     }
     { /* read new huffman codes */
       huffcount=(uint16)(bitbuf>>(BITBUFSIZE-16));
+//printf("huffcount=%i\n", huffcount);
       if(huffcount==0)
       { /* stream end code */
         /* eventueel kan hier de depacked size worden berekend */
@@ -579,7 +580,7 @@ gup_result decode_big(decode_struct *com)
           uint8 ptr=(uint8)(bitbuf>>(BITBUFSIZE-5));
           TRASHBITS(5);
           ptrshlvl=(int)(BITBUFSIZE-1); /* we mogen niet over BITBUFSIZE schuiven */
-          *com->huff2ptr=ptr;  /* zet dus de pointer voor nul en een */
+          com->huff2ptr[0]=ptr;  /* zet dus de pointer voor nul en een */
           com->huff2ptr[1]=ptr;
           com->ptrlen[ptr]=0;
         }
@@ -629,7 +630,7 @@ gup_result decode_big(decode_struct *com)
           }
           memset(p, 0, CHARS+MAXMATCH+1-count); /* clear rest karlen */
           memmove(com->karlen+3, com->karlen, 256); /* fix voor speciale tabel, 256 wegens gnuzip */
-          *com->karlen=0;    /* anders foute huffmantabel */
+          com->karlen[0]=0;    /* anders foute huffmantabel */
           com->karlen[1]=0;
           com->karlen[2]=0;
           count+=3;
