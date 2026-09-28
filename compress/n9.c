@@ -1139,7 +1139,7 @@ static gup_result compress(lit63_i bytes_to_do, packstruct *com)
 			com->print_progres(huffman_kosten[huffman_pos+1].start_pos-huffman_kosten[huffman_pos].start_pos, com->pp_propagator);
 			#endif
         } while(huffman_pos>0);
-        printf("kosten=%i (bits) = %i (bytes)\n", (int)huffman_kosten[0].kosten, (int)(huffman_kosten[0].kosten+7)/8);
+//        printf("kosten=%i (bits) = %i (bytes)\n", (int)huffman_kosten[0].kosten, (int)(huffman_kosten[0].kosten+7)/8);
     }
     { /* comprimeer gevonden pad */
         lit63_i huffman_pos=0;
@@ -1188,7 +1188,6 @@ gup_result n9_init(packstruct *com)
     com->maxptr=0xffff;
     com->max_match=ARJ_MAX_MATCH;
     com->min_match=ARJ_MIN_MATCH;
-    printf("\n");
 	if(res!=GUP_OK)
 	{
 		return res;
