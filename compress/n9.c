@@ -690,11 +690,11 @@ static gup_result compress_chars(lit63_i start_pos, lit63_i end_pos, int init, u
     uint64_t bits_size;
 
 printf("%i", init);
-printf("cc: start_pos=%li, end_pos=%li, init=%i, target=%lu\n", start_pos, end_pos, init, target);
+//printf("cc: start_pos=%li, end_pos=%li, init=%i, target=%lu\n", start_pos, end_pos, init, target);
     bits=optimize_huffman_block(start_pos, end_pos, init, target, com);
-printf("optimize done\n");
+//printf("optimize done\n");
     bits_size=bits;
-printf("bits_size=%lu\n", bits_size);
+//printf("bits_size=%lu\n", bits_size);
     {
         /*
         ** we weten nu hoveel bits er aan komen, passen deze nog in de buffer,
@@ -745,8 +745,8 @@ printf("bits_size=%lu\n", bits_size);
     else
     {
         symbol_count_t charct;
-printf("huffcount=%i\n", (int)KOSTEN[start_pos].huff_count);
-printf("start: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8-packed_size);
+//printf("huffcount=%i\n", (int)KOSTEN[start_pos].huff_count);
+//printf("start: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8-packed_size);
         store_bits(KOSTEN[start_pos].huff_count, 16, com); /* aantal huffman karakters */
         {
             uint8 charlen[LIT_LEN_SIZE];  /* karakter lengte, offset MAX_MATCH moet bereikbaar zijn */
@@ -916,13 +916,13 @@ printf("start: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8
                 }
             }
         }
-printf("charlen: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8-packed_size);
+//printf("charlen: %lu\n", com->bits_in_bitbuf+(com->rbuf_current-com->rbuf_start)*8-packed_size);
         /*
         ** charlen is overgestuurd, nu weer een ptrlen
         */
         {   /* wat is de specialcase voor de pointers? 1 er is maar een pointerlengte */
             int ptrct=get_max_character(com->ptrlen, com->n_ptr);
-printf("ptrct=%i\n", (int)ptrct);
+//printf("ptrct=%i\n", (int)ptrct);
 //for(int i=0; i<ptrct;i++)printf("ptrlen[%i]=%i\n", i, (int)com->ptrlen[i]);
             if(ptrct==0)
             { /*- special case 3, er is maar een pointerlengte */
